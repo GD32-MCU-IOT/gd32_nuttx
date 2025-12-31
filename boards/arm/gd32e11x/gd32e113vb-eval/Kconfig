@@ -1,0 +1,82 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+if ARCH_BOARD_GD32E113VB_EVAL
+
+choice
+	prompt "Select Console wiring."
+	default GD32E113VB_EVAL_CONSOLE_BOARD
+	---help---
+		Select where you will connect the console.
+
+		Eval COM Port:
+
+		BOARD USART Connector:
+
+		Advantage: You have a shield so it is easy.
+
+		Disadvantage: You loose the use of the
+		other functions on PA9, PA10
+
+				GD32E113VB_EVAL
+			USART0 GPIO
+			-- ----- --------- ----
+			RX    USART0_RX PA10
+			TX    USART0_TX PA9
+			-- ----- --------- ---
+
+config GD32E113VB_EVAL_CONSOLE_BOARD
+	bool "Eval Com Connector"
+	select GD32E11X_USART0
+	select USART0_SERIALDRIVER
+
+config GD32E113VB_EVAL_CONSOLE_VIRTUAL
+	bool "Virtual ComPort"
+	select GD32E11X_USART1
+	select USART1_SERIALDRIVER
+
+config GD32E113VB_EVAL_CONSOLE_NONE
+	bool "No Serial Console"
+
+endchoice # "Select Console wiring"
+
+choice
+	prompt "GD32E113 MCU Crystal Selected"
+	default GD32E113_BOARD_USE_HXTAL
+
+config GD32E113_BOARD_USE_HXTAL
+	bool "Use Hxtal as clock source"
+
+config GD32E113_BOARD_USE_IRC8M
+	bool "Use IRC8M as clock source"
+
+endchoice # Crystal Selection
+
+config GD32E113_BOARD_HXTAL_VALUE
+	int "GD32E113 Eval Board Hxtal Value"
+	default 8000000
+	depends on GD32E113_BOARD_USE_HXTAL
+	---help---
+		GD32E113 Eval Board Hxtal Value, default is 8MHz.
+
+choice
+	prompt "GD32E113 MCU System Frequency"
+	default GD32E113_120MHZ
+
+config GD32E113_120MHZ
+	bool "120 MHz"
+
+config GD32E113_108MHZ
+	bool "108 MHz"
+
+config GD32E113_96MHZ
+	bool "96 MHz"
+
+config GD32E113_72MHZ
+	bool "72 MHz"
+
+endchoice # CPU Frequency
+
+endif # ARCH_BOARD_GD32E113VB_EVAL
