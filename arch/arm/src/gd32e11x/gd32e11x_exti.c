@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/gd32f4/gd32f4xx_exti.c
+ * arch/arm/src/gd32e11x/gd32e11x_exti.c
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,8 +29,8 @@
 #include <nuttx/irq.h>
 
 #include "chip.h"
-#include "gd32f4xx_exti.h"
-#include "gd32f4xx.h"
+#include "gd32e11x_exti.h"
+#include "gd32e11x.h"
 
 /****************************************************************************
  * Public Data
@@ -70,7 +70,7 @@ static const uint8_t g_exti_gpio_irqs[16] =
   GD32_IRQ_EXTI10_15
 };
 
-/* Interrupt handlers attached to each EXTI */
+/* Interrupt handlers attached to each EXTI (GPIO lines 0..15 only) */
 
 static struct gd32_gpio_irq_s g_gpio_irq_s[16];
 
@@ -79,14 +79,26 @@ static struct gd32_gpio_irq_s g_gpio_irq_s[16];
  ****************************************************************************/
 
 /****************************************************************************
- * GPIO EXTI linex interrupt handler
+ * Name: gd32_exti0_irqhandler
+ *
+ * Description:
+ *   EXTI line 0 interrupt handler.
+ *
+ * Input Parameters:
+ *   irq     - IRQ number
+ *   context - Context data
+ *   arg     - Argument
+ *
+ * Returned Value:
+ *   OK on success; A negated errno value on failure.
+ *
  ****************************************************************************/
 
 static int gd32_exti0_irqhandler(int irq, void *context, void *arg)
 {
   int ret = OK;
 
-  /* Clear EXTI line0 pend flag */
+  /* Clear EXTI line 0 interrupt flag */
 
   gd32_exti_interrupt_flag_clear(EXTI_0);
 
@@ -101,11 +113,19 @@ static int gd32_exti0_irqhandler(int irq, void *context, void *arg)
   return ret;
 }
 
+/****************************************************************************
+ * Name: gd32_exti1_irqhandler
+ *
+ * Description:
+ *   EXTI line 1 interrupt handler.
+ *
+ ****************************************************************************/
+
 static int gd32_exti1_irqhandler(int irq, void *context, void *arg)
 {
   int ret = OK;
 
-  /* Clear EXTI line1 pend flag */
+  /* Clear EXTI line 1 interrupt flag */
 
   gd32_exti_interrupt_flag_clear(EXTI_1);
 
@@ -120,11 +140,19 @@ static int gd32_exti1_irqhandler(int irq, void *context, void *arg)
   return ret;
 }
 
+/****************************************************************************
+ * Name: gd32_exti2_irqhandler
+ *
+ * Description:
+ *   EXTI line 2 interrupt handler.
+ *
+ ****************************************************************************/
+
 static int gd32_exti2_irqhandler(int irq, void *context, void *arg)
 {
   int ret = OK;
 
-  /* Clear EXTI line2 pend flag */
+  /* Clear EXTI line 2 interrupt flag */
 
   gd32_exti_interrupt_flag_clear(EXTI_2);
 
@@ -139,11 +167,19 @@ static int gd32_exti2_irqhandler(int irq, void *context, void *arg)
   return ret;
 }
 
+/****************************************************************************
+ * Name: gd32_exti3_irqhandler
+ *
+ * Description:
+ *   EXTI line 3 interrupt handler.
+ *
+ ****************************************************************************/
+
 static int gd32_exti3_irqhandler(int irq, void *context, void *arg)
 {
   int ret = OK;
 
-  /* Clear EXTI line0 pend flag */
+  /* Clear EXTI line 3 interrupt flag */
 
   gd32_exti_interrupt_flag_clear(EXTI_3);
 
@@ -158,11 +194,19 @@ static int gd32_exti3_irqhandler(int irq, void *context, void *arg)
   return ret;
 }
 
+/****************************************************************************
+ * Name: gd32_exti4_irqhandler
+ *
+ * Description:
+ *   EXTI line 4 interrupt handler.
+ *
+ ****************************************************************************/
+
 static int gd32_exti4_irqhandler(int irq, void *context, void *arg)
 {
   int ret = OK;
 
-  /* Clear EXTI line0 pend flag */
+  /* Clear EXTI line 4 interrupt flag */
 
   gd32_exti_interrupt_flag_clear(EXTI_4);
 
@@ -177,27 +221,33 @@ static int gd32_exti4_irqhandler(int irq, void *context, void *arg)
   return ret;
 }
 
+/****************************************************************************
+ * Name: gd32_exti5_9_irqhandler
+ *
+ * Description:
+ *   EXTI lines 5-9 shared interrupt handler.
+ *
+ ****************************************************************************/
+
 static int gd32_exti5_9_irqhandler(int irq, void *context, void *arg)
 {
   int ret = OK;
   uint32_t pd_flag;
   uint8_t irq_pin;
 
+  /* Get pending flags for EXTI lines 5-9 */
+
   pd_flag = getreg32(GD32_EXTI_PD);
 
   for (irq_pin = 5; irq_pin <= 9; irq_pin++)
     {
-      /* Check interrupt pend bit */
+      uint32_t pd_bit = (1u << irq_pin);
 
-      uint32_t pd_bit = (1 << irq_pin);
+      /* Check if this line has a pending interrupt */
 
       if ((pd_flag & pd_bit) != 0)
         {
-          /* Clear interrupt pend bit */
-
           gd32_exti_interrupt_flag_clear(pd_bit);
-
-          /* Handle the interrupt */
 
           if (g_gpio_irq_s[irq_pin].irqhandler != NULL)
             {
@@ -223,22 +273,22 @@ static int gd32_exti5_9_irqhandler(int irq, void *context, void *arg)
 static int gd32_exti10_15_irqhandler(int irq, void *context, void *arg)
 {
   int ret = OK;
-  uint32_t pd_flag = getreg32(GD32_EXTI_PD);
+  uint32_t pd_flag;
   uint8_t irq_pin;
+
+  /* Get pending flags for EXTI lines 10-15 */
+
+  pd_flag = getreg32(GD32_EXTI_PD);
 
   for (irq_pin = 10; irq_pin <= 15; irq_pin++)
     {
-      /* Check interrupt pend bit */
+      uint32_t pd_bit = (1u << irq_pin);
 
-      uint32_t pd_bit = (1 << irq_pin);
+      /* Check if this line has a pending interrupt */
 
       if ((pd_flag & pd_bit) != 0)
         {
-          /* Clear interrupt pend bit */
-
           gd32_exti_interrupt_flag_clear(pd_bit);
-
-          /* Handle the interrupt */
 
           if (g_gpio_irq_s[irq_pin].irqhandler != NULL)
             {
@@ -254,7 +304,7 @@ static int gd32_exti10_15_irqhandler(int irq, void *context, void *arg)
 }
 
 /****************************************************************************
- * Public Function Prototypes
+ * Public Functions
  ****************************************************************************/
 
 /****************************************************************************
@@ -264,10 +314,14 @@ static int gd32_exti10_15_irqhandler(int irq, void *context, void *arg)
  *   Initialize the EXTI gpio irq.
  *
  * Input Parameters:
- *  - cfgset: GPIO pin
- *  - exti_mode: interrupt or event mode
- *  - trig_type: interrupt trigger type
- *  - irqnum: pointer to GPIO pin irq
+ *   cfgset    - GPIO pin configuration
+ *   exti_mode - Interrupt or event mode (EXTI_INTERRUPT or EXTI_EVENT)
+ *   trig_type - Interrupt trigger type (EXTI_TRIG_RISING, EXTI_TRIG_FALLING,
+ *               EXTI_TRIG_BOTH, or EXTI_TRIG_NONE)
+ *   irqnum    - Pointer to store GPIO pin irq number (can be NULL)
+ *
+ * Returned Value:
+ *   OK on success; A negated errno value on failure.
  *
  ****************************************************************************/
 
@@ -278,7 +332,7 @@ int gd32_exti_gpioirq_init(uint32_t cfgset, uint8_t exti_mode,
   uint8_t port;
   uint8_t pin;
 
-  /* Verify that this hardware supports the select GPIO port */
+  /* Verify that this hardware supports the selected GPIO port */
 
   port = (cfgset & GPIO_CFG_PORT_MASK) >> GPIO_CFG_PORT_SHIFT;
   if (port >= GD32_NGPIO_PORTS)
@@ -286,27 +340,28 @@ int gd32_exti_gpioirq_init(uint32_t cfgset, uint8_t exti_mode,
       return -EINVAL;
     }
 
-  /* Get the exti line number */
-
   pin = (cfgset & GPIO_CFG_PIN_MASK) >> GPIO_CFG_PIN_SHIFT;
+  if (pin > 15)
+    {
+      return -EINVAL;
+    }
 
   if (irqnum != NULL)
     {
       *irqnum = pin;
     }
 
-  exti_linex = (1 << pin);
+  exti_linex = (1u << pin);
 
   gd32_syscfg_clock_enable();
 
-  /* Connect key EXTI line to key GPIO pin */
+  /* Connect EXTI line to selected GPIO port */
 
   gd32_syscfg_exti_line_config(port, pin);
 
-  /* Configure the interrupt */
+  /* Configure the interrupt/event */
 
   gd32_exti_init(exti_linex, exti_mode, trig_type);
-
   gd32_exti_interrupt_flag_clear(exti_linex);
 
   return OK;
@@ -319,46 +374,62 @@ int gd32_exti_gpioirq_init(uint32_t cfgset, uint8_t exti_mode,
  *   Attach the EXTI gpio irq handler.
  *
  * Input Parameters:
- *  - irqpin: GPIO irq pin
- *  - irqhandler: irq handler
- *  - arg: Argument passed to the interrupt callback
+ *   irqpin     - GPIO irq pin (0-15)
+ *   irqhandler - IRQ handler function
+ *   arg        - Argument passed to the interrupt callback
+ *
+ * Returned Value:
+ *   OK on success; A negated errno value on failure.
  *
  ****************************************************************************/
 
-int gd32_exti_gpio_irq_attach(uint8_t irqpin, xcpt_t irqhandler,
-                              void *arg)
+int gd32_exti_gpio_irq_attach(uint8_t irqpin, xcpt_t irqhandler, void *arg)
 {
+  /* Verify IRQ pin is in valid range */
+
+  if (irqpin > 15)
+    {
+      return -EINVAL;
+    }
+
+  /* Attach the appropriate IRQ handler based on the pin */
+
   switch (g_exti_gpio_irqs[irqpin])
     {
       case GD32_IRQ_EXTI0:
         irq_attach(GD32_IRQ_EXTI0, gd32_exti0_irqhandler, NULL);
         break;
+
       case GD32_IRQ_EXTI1:
         irq_attach(GD32_IRQ_EXTI1, gd32_exti1_irqhandler, NULL);
         break;
+
       case GD32_IRQ_EXTI2:
         irq_attach(GD32_IRQ_EXTI2, gd32_exti2_irqhandler, NULL);
         break;
+
       case GD32_IRQ_EXTI3:
         irq_attach(GD32_IRQ_EXTI3, gd32_exti3_irqhandler, NULL);
         break;
+
       case GD32_IRQ_EXTI4:
         irq_attach(GD32_IRQ_EXTI4, gd32_exti4_irqhandler, NULL);
         break;
+
       case GD32_IRQ_EXTI5_9:
         irq_attach(GD32_IRQ_EXTI5_9, gd32_exti5_9_irqhandler, NULL);
         break;
+
       case GD32_IRQ_EXTI10_15:
         irq_attach(GD32_IRQ_EXTI10_15, gd32_exti10_15_irqhandler, NULL);
         break;
+
       default:
         break;
     }
 
-  /* Get the old GPIO pin irq handler and set the new GPIO pin irq handler */
-
   g_gpio_irq_s[irqpin].irqhandler = irqhandler;
-  g_gpio_irq_s[irqpin].arg     = arg;
+  g_gpio_irq_s[irqpin].arg        = arg;
 
   return OK;
 }
@@ -367,52 +438,56 @@ int gd32_exti_gpio_irq_attach(uint8_t irqpin, xcpt_t irqhandler,
  * Name: gd32_exti_init
  *
  * Description:
- *   Initialize the EXTI.
+ *   Initialize the EXTI line.
  *
  * Input Parameters:
- *  - linex: EXTI line number
- *  - exti_mode: interrupt or event mode
- *  - trig_type: interrupt trigger type
+ *   linex     - EXTI line number (bit mask, e.g., EXTI_0, EXTI_1, etc.)
+ *   exti_mode - Interrupt or event mode (EXTI_INTERRUPT or EXTI_EVENT)
+ *   trig_type - Interrupt trigger type (EXTI_TRIG_RISING, EXTI_TRIG_FALLING,
+ *               EXTI_TRIG_BOTH, or EXTI_TRIG_NONE)
  *
  ****************************************************************************/
 
 void gd32_exti_init(uint32_t linex, uint8_t exti_mode, uint8_t trig_type)
 {
+  /* Clear interrupt, event, and trigger configuration */
+
   modifyreg32(GD32_EXTI_INTEN, linex, 0);
   modifyreg32(GD32_EXTI_EVEN, linex, 0);
   modifyreg32(GD32_EXTI_RTEN, linex, 0);
   modifyreg32(GD32_EXTI_FTEN, linex, 0);
 
-  /* set the EXTI mode and enable the interrupts or events from
-   * EXTI line x
-   */
+  /* Configure EXTI mode */
 
   switch (exti_mode)
     {
       case EXTI_INTERRUPT:
         modifyreg32(GD32_EXTI_INTEN, 0, linex);
         break;
+
       case EXTI_EVENT:
         modifyreg32(GD32_EXTI_EVEN, 0, linex);
         break;
+
       default:
         break;
-  }
-
-  /* set the EXTI trigger type */
+    }
 
   switch (trig_type)
     {
       case EXTI_TRIG_RISING:
         modifyreg32(GD32_EXTI_RTEN, 0, linex);
         break;
+
       case EXTI_TRIG_FALLING:
         modifyreg32(GD32_EXTI_FTEN, 0, linex);
         break;
+
       case EXTI_TRIG_BOTH:
         modifyreg32(GD32_EXTI_RTEN, 0, linex);
         modifyreg32(GD32_EXTI_FTEN, 0, linex);
         break;
+
       case EXTI_TRIG_NONE:
       default:
         break;
@@ -423,7 +498,14 @@ void gd32_exti_init(uint32_t linex, uint8_t exti_mode, uint8_t trig_type)
  * Name: gd32_gpio_exti_linex_get
  *
  * Description:
- *   Get EXTI GPIO port and linex from GPIO pin.
+ *   Get EXTI line number from GPIO pin configuration.
+ *
+ * Input Parameters:
+ *   cfgset - GPIO pin configuration
+ *   linex  - Pointer to store EXTI line number (bit mask)
+ *
+ * Returned Value:
+ *   OK on success; A negated errno value on failure.
  *
  ****************************************************************************/
 
@@ -432,7 +514,14 @@ int gd32_gpio_exti_linex_get(uint32_t cfgset, uint32_t *linex)
   uint8_t port;
   uint8_t pin;
 
-  /* Verify that this hardware supports the select GPIO port */
+  /* Verify output pointer is valid */
+
+  if (linex == NULL)
+    {
+      return -EINVAL;
+    }
+
+  /* Verify that this hardware supports the selected GPIO port */
 
   port = (cfgset & GPIO_CFG_PORT_MASK) >> GPIO_CFG_PORT_SHIFT;
   if (port >= GD32_NGPIO_PORTS)
@@ -440,12 +529,13 @@ int gd32_gpio_exti_linex_get(uint32_t cfgset, uint32_t *linex)
       return -EINVAL;
     }
 
-  /* Get the pin number */
-
   pin = (cfgset & GPIO_CFG_PIN_MASK) >> GPIO_CFG_PIN_SHIFT;
+  if (pin > 15)
+    {
+      return -EINVAL;
+    }
 
-  *linex = (1 << pin);
-
+  *linex = (1u << pin);
   return OK;
 }
 
@@ -453,7 +543,14 @@ int gd32_gpio_exti_linex_get(uint32_t cfgset, uint32_t *linex)
  * Name: gd32_gpio_exti_irqnum_get
  *
  * Description:
- *   Get EXTI GPIO irq number from GPIO pin.
+ *   Get IRQ number from GPIO pin configuration.
+ *
+ * Input Parameters:
+ *   cfgset - GPIO pin configuration
+ *   irqnum - Pointer to store IRQ number
+ *
+ * Returned Value:
+ *   OK on success; A negated errno value on failure.
  *
  ****************************************************************************/
 
@@ -462,7 +559,14 @@ int gd32_gpio_exti_irqnum_get(uint32_t cfgset, uint8_t *irqnum)
   uint8_t port;
   uint8_t pin;
 
-  /* Verify that this hardware supports the select GPIO port */
+  /* Verify output pointer is valid */
+
+  if (irqnum == NULL)
+    {
+      return -EINVAL;
+    }
+
+  /* Verify that this hardware supports the selected GPIO port */
 
   port = (cfgset & GPIO_CFG_PORT_MASK) >> GPIO_CFG_PORT_SHIFT;
   if (port >= GD32_NGPIO_PORTS)
@@ -470,12 +574,13 @@ int gd32_gpio_exti_irqnum_get(uint32_t cfgset, uint8_t *irqnum)
       return -EINVAL;
     }
 
-  /* Get the pin number */
-
   pin = (cfgset & GPIO_CFG_PIN_MASK) >> GPIO_CFG_PIN_SHIFT;
+  if (pin > 15)
+    {
+      return -EINVAL;
+    }
 
   *irqnum = g_exti_gpio_irqs[pin];
-
   return OK;
 }
 
@@ -483,10 +588,10 @@ int gd32_gpio_exti_irqnum_get(uint32_t cfgset, uint8_t *irqnum)
  * Name: gd32_exti_interrupt_enable
  *
  * Description:
- *   Enable the interrupts from EXTI line x.
+ *   Enable the interrupts from EXTI line.
  *
  * Input Parameters:
- *  - linex: EXTI line number
+ *   linex - EXTI line number (bit mask)
  *
  ****************************************************************************/
 
@@ -499,10 +604,10 @@ void gd32_exti_interrupt_enable(uint32_t linex)
  * Name: gd32_exti_interrupt_disable
  *
  * Description:
- *   Disable the interrupts from EXTI line x.
+ *   Disable the interrupts from EXTI line.
  *
  * Input Parameters:
- *  - linex: EXTI line number
+ *   linex - EXTI line number (bit mask)
  *
  ****************************************************************************/
 
@@ -515,10 +620,10 @@ void gd32_exti_interrupt_disable(uint32_t linex)
  * Name: gd32_exti_event_enable
  *
  * Description:
- *   Enable the events from EXTI line x.
+ *   Enable the events from EXTI line.
  *
  * Input Parameters:
- *  - linex: EXTI line number
+ *   linex - EXTI line number (bit mask)
  *
  ****************************************************************************/
 
@@ -531,10 +636,10 @@ void gd32_exti_event_enable(uint32_t linex)
  * Name: gd32_exti_event_disable
  *
  * Description:
- *   Disable the events from EXTI line x.
+ *   Disable the events from EXTI line.
  *
  * Input Parameters:
- *  - linex: EXTI line number
+ *   linex - EXTI line number (bit mask)
  *
  ****************************************************************************/
 
@@ -550,7 +655,7 @@ void gd32_exti_event_disable(uint32_t linex)
  *   Enable EXTI software interrupt event.
  *
  * Input Parameters:
- *  - linex: EXTI line number
+ *   linex - EXTI line number (bit mask)
  *
  ****************************************************************************/
 
@@ -566,7 +671,7 @@ void gd32_exti_software_interrupt_enable(uint32_t linex)
  *   Disable EXTI software interrupt event.
  *
  * Input Parameters:
- *  - linex: EXTI line number
+ *   linex - EXTI line number (bit mask)
  *
  ****************************************************************************/
 
@@ -611,7 +716,7 @@ bool gd32_exti_interrupt_flag_get(uint32_t linex)
  * Name: gd32_exti_interrupt_flag_clear
  *
  * Description:
- *   Clear EXTI lines pending flag.
+ *   Clear EXTI interrupt flag.
  *
  * Input Parameters:
  *  - linex: EXTI line number
@@ -620,6 +725,8 @@ bool gd32_exti_interrupt_flag_get(uint32_t linex)
 
 void gd32_exti_interrupt_flag_clear(uint32_t linex)
 {
+  /* Clear interrupt flag by writing 1 to the pending register */
+
   putreg32(linex, GD32_EXTI_PD);
 }
 
