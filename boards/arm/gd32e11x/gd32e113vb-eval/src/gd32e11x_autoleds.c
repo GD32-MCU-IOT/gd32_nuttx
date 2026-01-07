@@ -26,162 +26,50 @@
 
 #include <nuttx/config.h>
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <debug.h>
+
+#include <sys/param.h>
 
 #include <nuttx/board.h>
 #include <arch/board/board.h>
 
-#include "chip.h"
-#include "arm_internal.h"
-#include "gd32e11x.h"
+#include "gd32e11x_gpio.h"
 #include "gd32e113v_eval.h"
-
 #ifdef CONFIG_ARCH_LEDS
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-/* The following definitions map the encoded LED setting to bit sets used to
- * manipulate the LEDs.
- */
-
-#define ON_SETBITS_SHIFT  (0)
-#define ON_CLRBITS_SHIFT  (4)
-#define OFF_SETBITS_SHIFT (8)
-#define OFF_CLRBITS_SHIFT (12)
-
-#define ON_BITS(v)        ((v) & 0x0f)
-#define OFF_BITS(v)       (((v) >> 8) & 0x0f)
-#define SETBITS(b)        ((b) & 0x0f)
-#define CLRBITS(b)        (((b) >> 4) & 0x0f)
-
-#define ON_SETBITS(v)     (SETBITS(ON_BITS(v))
-#define ON_CLRBITS(v)     (CLRBITS(ON_BITS(v))
-#define OFF_SETBITS(v)    (SETBITS(OFF_BITS(v))
-#define OFF_CLRBITS(v)    (CLRBITS(OFF_BITS(v))
-
-#define LED_STARTED_ON_SETBITS       ((0) << ON_SETBITS_SHIFT)
-#define LED_STARTED_ON_CLRBITS       ((BOARD_LED1_BIT | BOARD_LED2_BIT | BOARD_LED3_BIT | BOARD_LED4_BIT) << ON_CLRBITS_SHIFT)
-#define LED_STARTED_OFF_SETBITS      (0 << OFF_SETBITS_SHIFT)
-#define LED_STARTED_OFF_CLRBITS      ((BOARD_LED1_BIT | BOARD_LED2_BIT | BOARD_LED3_BIT | BOARD_LED4_BIT) << OFF_CLRBITS_SHIFT)
-
-#define LED_HEAPALLOCATE_ON_SETBITS  ((BOARD_LED1_BIT) << ON_SETBITS_SHIFT)
-#define LED_HEAPALLOCATE_ON_CLRBITS  ((BOARD_LED2_BIT | BOARD_LED3_BIT | BOARD_LED4_BIT) << ON_CLRBITS_SHIFT)
-#define LED_HEAPALLOCATE_OFF_SETBITS ((BOARD_LED2_BIT | BOARD_LED3_BIT | BOARD_LED4_BIT) << OFF_SETBITS_SHIFT)
-#define LED_HEAPALLOCATE_OFF_CLRBITS ((BOARD_LED1_BIT) << OFF_CLRBITS_SHIFT)
-
-#define LED_IRQSENABLED_ON_SETBITS   ((BOARD_LED2_BIT) << ON_SETBITS_SHIFT)
-#define LED_IRQSENABLED_ON_CLRBITS   ((BOARD_LED1_BIT | BOARD_LED3_BIT | BOARD_LED4_BIT) << ON_CLRBITS_SHIFT)
-#define LED_IRQSENABLED_OFF_SETBITS  ((BOARD_LED1_BIT | BOARD_LED3_BIT | BOARD_LED4_BIT) << OFF_SETBITS_SHIFT)
-#define LED_IRQSENABLED_OFF_CLRBITS  ((BOARD_LED2_BIT) << OFF_CLRBITS_SHIFT)
-
-#define LED_STACKCREATED_ON_SETBITS  ((BOARD_LED3_BIT) << ON_SETBITS_SHIFT)
-#define LED_STACKCREATED_ON_CLRBITS  ((BOARD_LED1_BIT | BOARD_LED2_BIT | BOARD_LED4_BIT) << ON_CLRBITS_SHIFT)
-#define LED_STACKCREATED_OFF_SETBITS ((BOARD_LED1_BIT | BOARD_LED2_BIT | BOARD_LED4_BIT) << OFF_SETBITS_SHIFT)
-#define LED_STACKCREATED_OFF_CLRBITS ((BOARD_LED3_BIT) << OFF_CLRBITS_SHIFT)
-
-#define LED_INIRQ_ON_SETBITS         ((BOARD_LED1_BIT | BOARD_LED2_BIT) << ON_SETBITS_SHIFT)
-#define LED_INIRQ_ON_CLRBITS         ((BOARD_LED3_BIT | BOARD_LED4_BIT) << ON_CLRBITS_SHIFT)
-#define LED_INIRQ_OFF_SETBITS        ((BOARD_LED3_BIT | BOARD_LED4_BIT) << OFF_SETBITS_SHIFT)
-#define LED_INIRQ_OFF_CLRBITS        ((BOARD_LED1_BIT | BOARD_LED2_BIT) << OFF_CLRBITS_SHIFT)
-
-#define LED_SIGNAL_ON_SETBITS        ((BOARD_LED1_BIT | BOARD_LED3_BIT) << ON_SETBITS_SHIFT)
-#define LED_SIGNAL_ON_CLRBITS        ((BOARD_LED2_BIT | BOARD_LED4_BIT) << ON_CLRBITS_SHIFT)
-#define LED_SIGNAL_OFF_SETBITS       ((BOARD_LED2_BIT | BOARD_LED4_BIT) << OFF_SETBITS_SHIFT)
-#define LED_SIGNAL_OFF_CLRBITS       ((BOARD_LED1_BIT | BOARD_LED3_BIT) << OFF_CLRBITS_SHIFT)
-
-#define LED_ASSERTION_ON_SETBITS     ((BOARD_LED2_BIT | BOARD_LED3_BIT) << ON_SETBITS_SHIFT)
-#define LED_ASSERTION_ON_CLRBITS     ((BOARD_LED1_BIT | BOARD_LED4_BIT) << ON_CLRBITS_SHIFT)
-#define LED_ASSERTION_OFF_SETBITS    ((BOARD_LED1_BIT | BOARD_LED4_BIT) << OFF_SETBITS_SHIFT)
-#define LED_ASSERTION_OFF_CLRBITS    ((BOARD_LED2_BIT | BOARD_LED3_BIT) << OFF_CLRBITS_SHIFT)
-
-#define LED_PANIC_ON_SETBITS         ((BOARD_LED2_BIT | BOARD_LED3_BIT | BOARD_LED4_BIT) << ON_SETBITS_SHIFT)
-#define LED_PANIC_ON_CLRBITS         ((0) << ON_CLRBITS_SHIFT)
-#define LED_PANIC_OFF_SETBITS        ((0) << OFF_SETBITS_SHIFT)
-#define LED_PANIC_OFF_CLRBITS        ((BOARD_LED1_BIT) << OFF_CLRBITS_SHIFT)
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
 
-static const uint16_t g_ledbits[8] =
+/* LED index */
+
+static const uint32_t g_led_map[BOARD_LEDS] =
 {
-  (LED_STARTED_ON_SETBITS       | LED_STARTED_ON_CLRBITS |
-   LED_STARTED_OFF_SETBITS      | LED_STARTED_OFF_CLRBITS),
-
-  (LED_HEAPALLOCATE_ON_SETBITS  | LED_HEAPALLOCATE_ON_CLRBITS |
-   LED_HEAPALLOCATE_OFF_SETBITS | LED_HEAPALLOCATE_OFF_CLRBITS),
-
-  (LED_IRQSENABLED_ON_SETBITS   | LED_IRQSENABLED_ON_CLRBITS |
-   LED_IRQSENABLED_OFF_SETBITS  | LED_IRQSENABLED_OFF_CLRBITS),
-
-  (LED_STACKCREATED_ON_SETBITS  | LED_STACKCREATED_ON_CLRBITS |
-   LED_STACKCREATED_OFF_SETBITS | LED_STACKCREATED_OFF_CLRBITS),
-
-  (LED_INIRQ_ON_SETBITS         | LED_INIRQ_ON_CLRBITS |
-   LED_INIRQ_OFF_SETBITS        | LED_INIRQ_OFF_CLRBITS),
-
-  (LED_SIGNAL_ON_SETBITS        | LED_SIGNAL_ON_CLRBITS |
-   LED_SIGNAL_OFF_SETBITS       | LED_SIGNAL_OFF_CLRBITS),
-
-  (LED_ASSERTION_ON_SETBITS     | LED_ASSERTION_ON_CLRBITS |
-   LED_ASSERTION_OFF_SETBITS    | LED_ASSERTION_OFF_CLRBITS),
-
-  (LED_PANIC_ON_SETBITS         | LED_PANIC_ON_CLRBITS |
-   LED_PANIC_OFF_SETBITS        | LED_PANIC_OFF_CLRBITS)
+  LED1,
+  LED2,
+  LED3,
+  LED4
 };
+
+static bool g_initialized;
 
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
 
-static inline void led_clrbits(unsigned int clrbits)
+/* Turn on selected led */
+
+static void gd32_eval_led_on(led_typedef_enum led_num)
 {
-  if ((clrbits & BOARD_LED1_BIT) != 0)
-    {
-      gd32_gpio_write(GPIO_LED1, false);
-    }
-
-  if ((clrbits & BOARD_LED2_BIT) != 0)
-    {
-      gd32_gpio_write(GPIO_LED2, false);
-    }
-
-  if ((clrbits & BOARD_LED3_BIT) != 0)
-    {
-      gd32_gpio_write(GPIO_LED3, false);
-    }
-
-  if ((clrbits & BOARD_LED4_BIT) != 0)
-    {
-      gd32_gpio_write(GPIO_LED4, false);
-    }
+  gd32_gpio_write(g_led_map[led_num], true);
 }
 
-static inline void led_setbits(unsigned int setbits)
+/* Turn off selected led */
+
+static void gd32_eval_led_off(led_typedef_enum led_num)
 {
-  if ((setbits & BOARD_LED1_BIT) != 0)
-    {
-      gd32_gpio_write(GPIO_LED1, true);
-    }
-
-  if ((setbits & BOARD_LED2_BIT) != 0)
-    {
-      gd32_gpio_write(GPIO_LED2, true);
-    }
-
-  if ((setbits & BOARD_LED3_BIT) != 0)
-    {
-      gd32_gpio_write(GPIO_LED3, true);
-    }
-
-  if ((setbits & BOARD_LED4_BIT) != 0)
-    {
-      gd32_gpio_write(GPIO_LED4, true);
-    }
+  gd32_gpio_write(g_led_map[led_num], false);
 }
 
 /****************************************************************************
@@ -194,12 +82,14 @@ static inline void led_setbits(unsigned int setbits)
 
 void board_autoled_initialize(void)
 {
-  /* Configure LED1-4 GPIOs for output */
+  int i;
 
-  gd32_gpio_config(GPIO_LED1);
-  gd32_gpio_config(GPIO_LED2);
-  gd32_gpio_config(GPIO_LED3);
-  gd32_gpio_config(GPIO_LED4);
+  /* Configure the LED GPIO for output. */
+
+  for (i = 0; i < nitems(g_led_map); i++)
+    {
+      gd32_gpio_config(g_led_map[i]);
+    }
 }
 
 /****************************************************************************
@@ -208,8 +98,70 @@ void board_autoled_initialize(void)
 
 void board_autoled_on(int led)
 {
-  led_clrbits(CLRBITS(ON_BITS(g_ledbits[led])));
-  led_setbits(SETBITS(ON_BITS(g_ledbits[led])));
+  switch (led)
+    {
+    default:
+      break;
+
+    /* LED_STARTED: All LEDs should be OFF */
+
+    case LED_STARTED:
+      break;
+
+    /* LED_HEAPALLOCATE: LED1 ON, others OFF */
+
+    case LED_HEAPALLOCATE:
+      gd32_eval_led_on(BOARD_LED1);
+      break;
+
+    /* LED_IRQSENABLED: LED2 ON, others OFF */
+
+    case LED_IRQSENABLED:
+      gd32_eval_led_on(BOARD_LED2);
+      break;
+
+    /* LED_STACKCREATED: LED3 ON, others OFF */
+
+    case LED_STACKCREATED:
+      gd32_eval_led_on(BOARD_LED3);
+      g_initialized = true;
+      break;
+
+    /* LED_INIRQ: LED1 and LED2 ON */
+
+    case LED_INIRQ:
+      gd32_eval_led_on(BOARD_LED1);
+      gd32_eval_led_on(BOARD_LED2);
+      break;
+
+    /* LED_SIGNAL: LED1 and LED3 ON */
+
+    case LED_SIGNAL:
+      gd32_eval_led_on(BOARD_LED1);
+      gd32_eval_led_on(BOARD_LED3);
+      break;
+
+    /* LED_ASSERTION: LED2 and LED3 ON */
+
+    case LED_ASSERTION:
+      gd32_eval_led_on(BOARD_LED2);
+      gd32_eval_led_on(BOARD_LED3);
+      break;
+
+    /* LED_PANIC: LED2, LED3 and LED4 ON (LED1 will flash) */
+
+    case LED_PANIC:
+      gd32_eval_led_on(BOARD_LED2);
+      gd32_eval_led_on(BOARD_LED3);
+      gd32_eval_led_on(BOARD_LED4);
+      break;
+
+    /* LED_IDLE: LED2 will flash */
+
+    case LED_IDLE:
+      gd32_eval_led_on(BOARD_LED2);
+      break;
+    }
 }
 
 /****************************************************************************
@@ -218,8 +170,59 @@ void board_autoled_on(int led)
 
 void board_autoled_off(int led)
 {
-  led_clrbits(CLRBITS(OFF_BITS(g_ledbits[led])));
-  led_setbits(SETBITS(OFF_BITS(g_ledbits[led])));
+  switch (led)
+    {
+    default:
+      break;
+
+    case LED_STARTED:
+      gd32_eval_led_off(BOARD_LED1);
+      gd32_eval_led_off(BOARD_LED2);
+      gd32_eval_led_off(BOARD_LED3);
+      gd32_eval_led_off(BOARD_LED4);
+      break;
+
+    case LED_HEAPALLOCATE:
+      gd32_eval_led_off(BOARD_LED2);
+      gd32_eval_led_off(BOARD_LED3);
+      gd32_eval_led_off(BOARD_LED4);
+      break;
+
+    case LED_IRQSENABLED:
+      gd32_eval_led_off(BOARD_LED1);
+      gd32_eval_led_off(BOARD_LED3);
+      gd32_eval_led_off(BOARD_LED4);
+      break;
+
+    case LED_STACKCREATED:
+      gd32_eval_led_off(BOARD_LED1);
+      gd32_eval_led_off(BOARD_LED2);
+      gd32_eval_led_off(BOARD_LED4);
+      break;
+
+    case LED_SIGNAL:
+      gd32_eval_led_off(BOARD_LED1);
+      gd32_eval_led_off(BOARD_LED3);
+      break;
+
+    case LED_INIRQ:
+      gd32_eval_led_off(BOARD_LED1);
+      gd32_eval_led_off(BOARD_LED2);
+      break;
+
+    case LED_ASSERTION:
+      gd32_eval_led_off(BOARD_LED2);
+      gd32_eval_led_off(BOARD_LED3);
+      break;
+
+    case LED_PANIC:
+      gd32_eval_led_off(BOARD_LED1);
+      break;
+
+    case LED_IDLE:
+      gd32_eval_led_off(BOARD_LED2);
+      break;
+    }
 }
 
 #endif /* CONFIG_ARCH_LEDS */

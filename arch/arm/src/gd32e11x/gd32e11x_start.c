@@ -83,7 +83,8 @@ void __start(void)
     }
 
   for (src = (const uint32_t *)_eronly,
-       dest = (uint32_t *)_sdata; dest < (uint32_t *)_edata; )
+       dest = (uint32_t *)_sdata; dest < (uint32_t *)_edata;
+      )
     {
       *dest++ = *src++;
     }
@@ -92,9 +93,15 @@ void __start(void)
   arm_stack_check_init();
 #endif
 
+#ifdef CONFIG_ARCH_PERF_EVENTS
+  up_perf_init((void *)GD32_SYSCLK_FREQUENCY);
+#endif
+
   /* Clock + low-level UART for early logging */
 
   gd32_clockconfig();
+  arm_fpuconfig();
+  gd32_gpio_remap();
   gd32_lowsetup();
   showprogress('A');
 

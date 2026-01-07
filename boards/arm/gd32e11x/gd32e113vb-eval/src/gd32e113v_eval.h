@@ -58,10 +58,14 @@
  * LED1 - PC0, LED2 - PC2, LED3 - PE0, LED4 - PE1
  */
 
-#define GPIO_LED1       (GPIO_CFG_PORT_C | GPIO_CFG_OUTPUT_RESET | GPIO_PIN0_OUTPUT)
-#define GPIO_LED2       (GPIO_CFG_PORT_C | GPIO_CFG_OUTPUT_RESET | GPIO_PIN2_OUTPUT)
-#define GPIO_LED3       (GPIO_CFG_PORT_E | GPIO_CFG_OUTPUT_RESET | GPIO_PIN0_OUTPUT)
-#define GPIO_LED4       (GPIO_CFG_PORT_E | GPIO_CFG_OUTPUT_RESET | GPIO_PIN1_OUTPUT)
+#define GPIO_LED1       (GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTPP | GPIO_CFG_MODE_OSPEED_50MHZ | \
+                         GPIO_CFG_OUTPUT_CLEAR | GPIO_CFG_PORT_C | GPIO_CFG_PIN_0)
+#define GPIO_LED2       (GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTPP | GPIO_CFG_MODE_OSPEED_50MHZ | \
+                         GPIO_CFG_OUTPUT_CLEAR | GPIO_CFG_PORT_C | GPIO_CFG_PIN_2)
+#define GPIO_LED3       (GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTPP | GPIO_CFG_MODE_OSPEED_50MHZ | \
+                         GPIO_CFG_OUTPUT_CLEAR | GPIO_CFG_PORT_E | GPIO_CFG_PIN_0)
+#define GPIO_LED4       (GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTPP | GPIO_CFG_MODE_OSPEED_50MHZ | \
+                         GPIO_CFG_OUTPUT_CLEAR | GPIO_CFG_PORT_E | GPIO_CFG_PIN_1)
 
 #define LED1            GPIO_LED1
 #define LED2            GPIO_LED2
@@ -81,9 +85,12 @@
  *       an interrupt on this IO.
  */
 
-#define GPIO_BTN_WAKEUP    (GPIO_CFG_PORT_A | GPIO_CFG_EXTI | GPIO_PIN0_INPUT)
-#define GPIO_BTN_TAMPER    (GPIO_CFG_PORT_C | GPIO_CFG_EXTI | GPIO_PIN13_INPUT)
-#define GPIO_BTN_USER      (GPIO_CFG_PORT_B | GPIO_CFG_EXTI | GPIO_PIN14_INPUT)
+#define GPIO_BTN_WAKEUP    (GPIO_CFG_INPUT | GPIO_CFG_CTL_INFLOAT | GPIO_CFG_EXTI | \
+                            GPIO_CFG_PORT_A | GPIO_CFG_PIN_0)
+#define GPIO_BTN_TAMPER    (GPIO_CFG_INPUT | GPIO_CFG_CTL_INFLOAT | GPIO_CFG_EXTI | \
+                            GPIO_CFG_PORT_C | GPIO_CFG_PIN_13)
+#define GPIO_BTN_USER      (GPIO_CFG_INPUT | GPIO_CFG_CTL_INFLOAT | GPIO_CFG_EXTI | \
+                            GPIO_CFG_PORT_B | GPIO_CFG_PIN_14)
 
 /* GPIO pins used by the GPIO Subsystem */
 
@@ -91,10 +98,11 @@
 #define BOARD_NGPIOOUT    1 /* Amount of GPIO Output pins */
 #define BOARD_NGPIOINT    1 /* Amount of GPIO Input w/ Interruption pins */
 
-#define GPIO_IN1          (GPIO_CFG_MODE_INPUT | GPIO_CFG_PUPD_NONE | GPIO_CFG_PORT_B | GPIO_CFG_PIN_0)
-#define GPIO_OUT1         (GPIO_CFG_MODE_OUTPUT | GPIO_CFG_OUTPUT_SET | GPIO_CFG_SPEED_50MHZ | \
-                           GPIO_CFG_PORT_B | GPIO_CFG_PIN_1)
-#define GPIO_INT1         (GPIO_CFG_MODE_INPUT | GPIO_CFG_PUPD_NONE | GPIO_CFG_PORT_B | GPIO_CFG_PIN_2)
+#define GPIO_IN1          (GPIO_CFG_INPUT | GPIO_CFG_CTL_INFLOAT | GPIO_CFG_PORT_B | GPIO_CFG_PIN_0)
+#define GPIO_OUT1         (GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTPP | GPIO_CFG_MODE_OSPEED_50MHZ | \
+                           GPIO_CFG_OUTPUT_SET | GPIO_CFG_PORT_B | GPIO_CFG_PIN_1)
+#define GPIO_INT1         (GPIO_CFG_INPUT | GPIO_CFG_CTL_INFLOAT | GPIO_CFG_EXTI | \
+                           GPIO_CFG_PORT_B | GPIO_CFG_PIN_2)
 
 /****************************************************************************
  * Public Function Prototypes

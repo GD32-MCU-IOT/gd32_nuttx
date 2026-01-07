@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include "hardware/gd32e11x_rcu.h"
 
 /* Default clock assumptions for minimal bring-up.
  * Boards can override these by defining the macros before including this
@@ -47,7 +48,7 @@
 #endif
 
 #ifndef GD32_PCLK1_FREQUENCY
-#  define GD32_PCLK1_FREQUENCY   GD32_HCLK_FREQUENCY
+#  define GD32_PCLK1_FREQUENCY   (GD32_HCLK_FREQUENCY/2)
 #endif
 
 #ifndef GD32_PCLK2_FREQUENCY
@@ -65,7 +66,56 @@ extern "C"
 #define EXTERN extern
 #endif
 
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: gd32_clockconfig
+ *
+ * Description:
+ *   Called to initialize the GD32E11X.  This does whatever setup is needed
+ *   to put the MCU in a usable state.  This includes the initialization of
+ *   clocking using the settings in board.h.
+ *
+ ****************************************************************************/
+
 void gd32_clockconfig(void);
+
+/****************************************************************************
+ * Name: gd32_rcu_periph_clock_enable
+ *
+ * Description:
+ *   Enable the peripherals clock.
+ *
+ ****************************************************************************/
+
+void gd32_rcu_periph_clock_enable(uint32_t periph);
+
+/****************************************************************************
+ * Name: gd32_rcu_periph_clock_disable
+ *
+ * Description:
+ *   Disable the peripherals clock.
+ *
+ ****************************************************************************/
+
+void gd32_rcu_periph_clock_disable(uint32_t periph);
+
+/****************************************************************************
+ * Name: gd32_clock_enable
+ *
+ * Description:
+ *   Re-enable the clock and restore the clock settings based on settings
+ *   in board.h. This function is only available to support low-power
+ *   modes of operation:  When re-awakening from deep-sleep modes, it is
+ *   necessary to re-enable/re-start the PLL
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_PM
+void gd32_clock_enable(void);
+#endif
 
 #undef EXTERN
 #if defined(__cplusplus)

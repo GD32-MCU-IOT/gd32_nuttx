@@ -61,6 +61,13 @@ config GD32E113_BOARD_HXTAL_VALUE
 	---help---
 		GD32E113 Eval Board Hxtal Value, default is 8MHz.
 
+config GD32E113_BOARD_PREDIV0_SELECT_PLL1
+	bool "GD32E113 Eval Board select PREDIV0 from PLL1"
+	default y
+	depends on GD32E113_BOARD_USE_HXTAL
+	---help---
+		GD32E113 Eval Board select PREDIV0 source, default is PLL1.
+
 choice
 	prompt "GD32E113 MCU System Frequency"
 	default GD32E113_120MHZ

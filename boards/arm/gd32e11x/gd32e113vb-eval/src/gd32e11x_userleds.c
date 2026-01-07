@@ -26,18 +26,58 @@
 
 #include <nuttx/config.h>
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <debug.h>
 
+#include <sys/param.h>
+
+#include <nuttx/board.h>
 #include <arch/board/board.h>
 
-#include "chip.h"
-#include "arm_internal.h"
-#include "gd32e11x.h"
+#include "gd32e11x_gpio.h"
 #include "gd32e113v_eval.h"
 
 #ifndef CONFIG_ARCH_LEDS
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+/* LED index */
+
+static const uint32_t g_led_map[BOARD_LEDS] =
+{
+  LED1,
+  LED2,
+  LED3,
+  LED4
+};
+
+static const uint32_t g_led_setmap[BOARD_LEDS] =
+{
+  BOARD_LED1_BIT,
+  BOARD_LED2_BIT,
+  BOARD_LED3_BIT,
+  BOARD_LED4_BIT
+};
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/* Turn on selected led */
+
+static void gd32_eval_led_on(led_typedef_enum led_num)
+{
+  gd32_gpio_write(g_led_map[led_num], true);
+}
+
+/* Turn off selected led */
+
+static void gd32_eval_led_off(led_typedef_enum led_num)
+{
+  gd32_gpio_write(g_led_map[led_num], false);
+}
 
 /****************************************************************************
  * Public Functions
@@ -45,55 +85,69 @@
 
 /****************************************************************************
  * Name: board_userled_initialize
+ *
+ * Description:
+ *   If CONFIG_ARCH_LEDS is defined, then NuttX will control the on-board
+ *   LEDs.  If CONFIG_ARCH_LEDS is not defined, then the
+ *   board_userled_initialize() is available to initialize the LED from user
+ *   application logic.
+ *
  ****************************************************************************/
 
 uint32_t board_userled_initialize(void)
 {
-  /* Configure LED1-4 GPIOs for output */
+  int i;
 
-  gd32_gpio_config(GPIO_LED1);
-  gd32_gpio_config(GPIO_LED2);
-  gd32_gpio_config(GPIO_LED3);
-  gd32_gpio_config(GPIO_LED4);
+  /* Configure the LED GPIO for output. */
+
+  for (i = 0; i < nitems(g_led_map); i++)
+    {
+      gd32_gpio_config(g_led_map[i]);
+    }
+
   return BOARD_LEDS;
 }
 
 /****************************************************************************
  * Name: board_userled
+ *
+ * Description:
+ *   If CONFIG_ARCH_LEDS is defined, then NuttX will control the on-board
+ *  LEDs.  If CONFIG_ARCH_LEDS is not defined, then the board_userled() is
+ *  available to control the LED from user application logic.
+ *
  ****************************************************************************/
 
 void board_userled(int led, bool ledon)
 {
-  switch (led)
+  if ((unsigned)led < nitems(g_led_map))
     {
-      case BOARD_LED1:
-        gd32_gpio_write(GPIO_LED1, ledon);
-        break;
-
-      case BOARD_LED2:
-        gd32_gpio_write(GPIO_LED2, ledon);
-        break;
-
-      case BOARD_LED3:
-        gd32_gpio_write(GPIO_LED3, ledon);
-        break;
-
-      case BOARD_LED4:
-        gd32_gpio_write(GPIO_LED4, ledon);
-        break;
+      gd32_gpio_write(g_led_map[led], ledon);
     }
 }
 
 /****************************************************************************
  * Name: board_userled_all
+ *
+ * Description:
+ *   If CONFIG_ARCH_LEDS is defined, then NuttX will control the on-board
+ *  LEDs.  If CONFIG_ARCH_LEDS is not defined, then the board_userled_all()
+ *  is available to control the LED from user application logic.
+ *  NOTE:  since there are four LEDs on-board, this function controls all
+ *  of them.
+ *
  ****************************************************************************/
 
 void board_userled_all(uint32_t ledset)
 {
-  gd32_gpio_write(GPIO_LED1, (ledset & BOARD_LED1_BIT) != 0);
-  gd32_gpio_write(GPIO_LED2, (ledset & BOARD_LED2_BIT) != 0);
-  gd32_gpio_write(GPIO_LED3, (ledset & BOARD_LED3_BIT) != 0);
-  gd32_gpio_write(GPIO_LED4, (ledset & BOARD_LED4_BIT) != 0);
+  int i;
+
+  /* Configure LED1-4 GPIOs for output */
+
+  for (i = 0; i < nitems(g_led_map); i++)
+    {
+      gd32_gpio_write(g_led_map[i], (ledset & g_led_setmap[i]) != 0);
+    }
 }
 
 #endif /* !CONFIG_ARCH_LEDS */

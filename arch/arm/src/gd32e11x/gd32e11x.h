@@ -39,6 +39,7 @@
 #include "chip.h"
 
 #include "gd32e11x_exti.h"
+#include "gd32e11x_fmc.h"
 #include "gd32e11x_gpio.h"
 #include "gd32e11x_rcu.h"
 #include "gd32e11x_syscfg.h"

@@ -36,8 +36,7 @@
 #include "gd32e11x_rcu.h"
 #include "gd32e11x_lowputc.h"
 
-#include "hardware/gd32e11x_rcu.h"
-#include "hardware/gd32e11x_usart.h"
+#include "gd32e11x_serial.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -231,7 +230,7 @@ void arm_lowputc(char ch)
 
 void gd32_lowsetup(void)
 {
-#ifdef HAVE_CONSOLE
+#ifdef HAVE_SERIALDRIVER
 #ifndef CONFIG_SUPPRESS_UART_CONFIG
   uint32_t regval;
   uint32_t udiv;

@@ -49,6 +49,10 @@
 #define GD32_RCU_AHBRST_OFFSET         0x0028  /* AHB reset register */
 #define GD32_RCU_CFG1_OFFSET           0x002c  /* Clock configuration register 1 */
 #define GD32_RCU_DSV_OFFSET            0x0034  /* Deep-sleep mode voltage register */
+#define GD32_RCU_ADDCTL_OFFSET         0x00c0  /* Additional clock control register */
+#define GD32_RCU_ADDINT_OFFSET         0x00cc  /* Additional clock interrupt register */
+#define GD32_RCU_ADDAPB1RST_OFFSET     0x00e0  /* APB1 additional reset register */
+#define GD32_RCU_ADDAPB1EN_OFFSET      0x00e4  /* APB1 additional enable register */
 
 /* Register Addresses *******************************************************/
 
@@ -65,6 +69,10 @@
 #define GD32_RCU_AHBRST                (GD32_RCU_BASE+GD32_RCU_AHBRST_OFFSET)
 #define GD32_RCU_CFG1                  (GD32_RCU_BASE+GD32_RCU_CFG1_OFFSET)
 #define GD32_RCU_DSV                   (GD32_RCU_BASE+GD32_RCU_DSV_OFFSET)
+#define GD32_RCU_ADDCTL                (GD32_RCU_BASE+GD32_RCU_ADDCTL_OFFSET)
+#define GD32_RCU_ADDINT                (GD32_RCU_BASE+GD32_RCU_ADDINT_OFFSET)
+#define GD32_RCU_ADDAPB1RST            (GD32_RCU_BASE+GD32_RCU_ADDAPB1RST_OFFSET)
+#define GD32_RCU_ADDAPB1EN             (GD32_RCU_BASE+GD32_RCU_ADDAPB1EN_OFFSET)
 
 /* Register Bitfield Definitions ********************************************/
 
@@ -91,49 +99,67 @@
 
 #define RCU_CFG0_SCS_SHIFT             (0)             /* System clock switch */
 #define RCU_CFG0_SCS_MASK              (0x3 << RCU_CFG0_SCS_SHIFT)
-#  define RCU_CFG0_SCS_IRC8M           (0x0 << RCU_CFG0_SCS_SHIFT)
-#  define RCU_CFG0_SCS_HXTAL           (0x1 << RCU_CFG0_SCS_SHIFT)
-#  define RCU_CFG0_SCS_PLL             (0x2 << RCU_CFG0_SCS_SHIFT)
+#  define RCU_CFG0_SCS(n)              ((n) << RCU_CFG0_SCS_SHIFT)
+#  define RCU_CFG0_SCS_IRC8M           RCU_CFG0_SCS(0)
+#  define RCU_CFG0_SCS_HXTAL           RCU_CFG0_SCS(1)
+#  define RCU_CFG0_SCS_PLL             RCU_CFG0_SCS(2)
 
 #define RCU_CFG0_SCSS_SHIFT            (2)             /* System clock switch status */
 #define RCU_CFG0_SCSS_MASK             (0x3 << RCU_CFG0_SCSS_SHIFT)
+#  define RCU_CFG0_SCSS(n)             ((n) << RCU_CFG0_SCSS_SHIFT)
+#  define RCU_CFG0_SCSS_IRC8M          RCU_CFG0_SCSS(0)
+#  define RCU_CFG0_SCSS_HXTAL          RCU_CFG0_SCSS(1)
+#  define RCU_CFG0_SCSS_PLL            RCU_CFG0_SCSS(2)
 
 #define RCU_CFG0_AHBPSC_SHIFT          (4)             /* AHB prescaler */
 #define RCU_CFG0_AHBPSC_MASK           (0xf << RCU_CFG0_AHBPSC_SHIFT)
-#  define RCU_CFG0_AHBPSC_DIV1         (0x0 << RCU_CFG0_AHBPSC_SHIFT)
-#  define RCU_CFG0_AHBPSC_DIV2         (0x8 << RCU_CFG0_AHBPSC_SHIFT)
-#  define RCU_CFG0_AHBPSC_DIV4         (0x9 << RCU_CFG0_AHBPSC_SHIFT)
-#  define RCU_CFG0_AHBPSC_DIV8         (0xa << RCU_CFG0_AHBPSC_SHIFT)
-#  define RCU_CFG0_AHBPSC_DIV16        (0xb << RCU_CFG0_AHBPSC_SHIFT)
-#  define RCU_CFG0_AHBPSC_DIV64        (0xc << RCU_CFG0_AHBPSC_SHIFT)
-#  define RCU_CFG0_AHBPSC_DIV128       (0xd << RCU_CFG0_AHBPSC_SHIFT)
-#  define RCU_CFG0_AHBPSC_DIV256       (0xe << RCU_CFG0_AHBPSC_SHIFT)
-#  define RCU_CFG0_AHBPSC_DIV512       (0xf << RCU_CFG0_AHBPSC_SHIFT)
+#  define RCU_CFG0_AHBPSC(n)           ((n) << RCU_CFG0_AHBPSC_SHIFT)
+#  define RCU_CFG0_AHBPSC_DIV1         RCU_CFG0_AHBPSC(0)
+#  define RCU_CFG0_AHBPSC_DIV2         RCU_CFG0_AHBPSC(8)
+#  define RCU_CFG0_AHBPSC_DIV4         RCU_CFG0_AHBPSC(9)
+#  define RCU_CFG0_AHBPSC_DIV8         RCU_CFG0_AHBPSC(10)
+#  define RCU_CFG0_AHBPSC_DIV16        RCU_CFG0_AHBPSC(11)
+#  define RCU_CFG0_AHBPSC_DIV64        RCU_CFG0_AHBPSC(12)
+#  define RCU_CFG0_AHBPSC_DIV128       RCU_CFG0_AHBPSC(13)
+#  define RCU_CFG0_AHBPSC_DIV256       RCU_CFG0_AHBPSC(14)
+#  define RCU_CFG0_AHBPSC_DIV512       RCU_CFG0_AHBPSC(15)
 
 #define RCU_CFG0_APB1PSC_SHIFT         (8)             /* APB1 prescaler */
 #define RCU_CFG0_APB1PSC_MASK          (0x7 << RCU_CFG0_APB1PSC_SHIFT)
-#  define RCU_CFG0_APB1PSC_DIV1        (0x0 << RCU_CFG0_APB1PSC_SHIFT)
-#  define RCU_CFG0_APB1PSC_DIV2        (0x4 << RCU_CFG0_APB1PSC_SHIFT)
-#  define RCU_CFG0_APB1PSC_DIV4        (0x5 << RCU_CFG0_APB1PSC_SHIFT)
-#  define RCU_CFG0_APB1PSC_DIV8        (0x6 << RCU_CFG0_APB1PSC_SHIFT)
-#  define RCU_CFG0_APB1PSC_DIV16       (0x7 << RCU_CFG0_APB1PSC_SHIFT)
+#  define RCU_CFG0_APB1PSC(n)          ((n) << RCU_CFG0_APB1PSC_SHIFT)
+#  define RCU_CFG0_APB1PSC_DIV1        RCU_CFG0_APB1PSC(0)
+#  define RCU_CFG0_APB1PSC_DIV2        RCU_CFG0_APB1PSC(4)
+#  define RCU_CFG0_APB1PSC_DIV4        RCU_CFG0_APB1PSC(5)
+#  define RCU_CFG0_APB1PSC_DIV8        RCU_CFG0_APB1PSC(6)
+#  define RCU_CFG0_APB1PSC_DIV16       RCU_CFG0_APB1PSC(7)
 
 #define RCU_CFG0_APB2PSC_SHIFT         (11)            /* APB2 prescaler */
 #define RCU_CFG0_APB2PSC_MASK          (0x7 << RCU_CFG0_APB2PSC_SHIFT)
-#  define RCU_CFG0_APB2PSC_DIV1        (0x0 << RCU_CFG0_APB2PSC_SHIFT)
-#  define RCU_CFG0_APB2PSC_DIV2        (0x4 << RCU_CFG0_APB2PSC_SHIFT)
-#  define RCU_CFG0_APB2PSC_DIV4        (0x5 << RCU_CFG0_APB2PSC_SHIFT)
-#  define RCU_CFG0_APB2PSC_DIV8        (0x6 << RCU_CFG0_APB2PSC_SHIFT)
-#  define RCU_CFG0_APB2PSC_DIV16       (0x7 << RCU_CFG0_APB2PSC_SHIFT)
+#  define RCU_CFG0_APB2PSC(n)          ((n) << RCU_CFG0_APB2PSC_SHIFT)
+#  define RCU_CFG0_APB2PSC_DIV1        RCU_CFG0_APB2PSC(0)
+#  define RCU_CFG0_APB2PSC_DIV2        RCU_CFG0_APB2PSC(4)
+#  define RCU_CFG0_APB2PSC_DIV4        RCU_CFG0_APB2PSC(5)
+#  define RCU_CFG0_APB2PSC_DIV8        RCU_CFG0_APB2PSC(6)
+#  define RCU_CFG0_APB2PSC_DIV16       RCU_CFG0_APB2PSC(7)
 
 #define RCU_CFG0_ADCPSC_SHIFT          (14)            /* ADC prescaler */
 #define RCU_CFG0_ADCPSC_MASK           (0x3 << RCU_CFG0_ADCPSC_SHIFT)
+#  define RCU_CFG0_ADCPSC(n)           ((n) << RCU_CFG0_ADCPSC_SHIFT)
 
 #define RCU_CFG0_PLLSEL                (1 << 16)       /* PLL clock source selection */
+#  define RCU_PLL_PLLSEL_IRC16M        (0)
+#  define RCU_PLL_PLLSEL_HXTAL_IRC48M  RCU_CFG0_PLLSEL
+
 #define RCU_CFG0_PREDV0_LSB            (1 << 17)       /* PREDV0 LSB */
 
 #define RCU_CFG0_PLLMF_SHIFT           (18)            /* PLL multiply factor */
 #define RCU_CFG0_PLLMF_MASK            (0xf << RCU_CFG0_PLLMF_SHIFT)
+#  define RCU_CFG0_PLLMF(n)            ((n) << RCU_CFG0_PLLMF_SHIFT)
+
+/* PREDV0 divider values (bit 17 + CFG1 bits) - simplified for now */
+
+#  define RCU_CFG0_PREDV0_DIV1         (0 << 17)       /* PREDV0 input not divided */
+#  define RCU_CFG0_PREDV0_DIV2         (1 << 17)       /* PREDV0 input divided by 2 */
 
 #define RCU_CFG0_USBFSPSC_SHIFT        (22)            /* USBFS prescaler */
 #define RCU_CFG0_USBFSPSC_MASK         (0x3 << RCU_CFG0_USBFSPSC_SHIFT)
@@ -142,6 +168,40 @@
 #define RCU_CFG0_CKOUT0SEL_MASK        (0xf << RCU_CFG0_CKOUT0SEL_SHIFT)
 
 #define RCU_CFG0_PLLMF_MSB             (1 << 29)       /* PLL multiply factor MSB */
+
+/* PLL multiply factor values (bits 18-21, 29) */
+
+#  define RCU_CFG0_PLLMF_MUL2          RCU_CFG0_PLLMF(0)                         /* PLL x2 */
+#  define RCU_CFG0_PLLMF_MUL3          RCU_CFG0_PLLMF(1)                         /* PLL x3 */
+#  define RCU_CFG0_PLLMF_MUL4          RCU_CFG0_PLLMF(2)                         /* PLL x4 */
+#  define RCU_CFG0_PLLMF_MUL5          RCU_CFG0_PLLMF(3)                         /* PLL x5 */
+#  define RCU_CFG0_PLLMF_MUL6          RCU_CFG0_PLLMF(4)                         /* PLL x6 */
+#  define RCU_CFG0_PLLMF_MUL7          RCU_CFG0_PLLMF(5)                         /* PLL x7 */
+#  define RCU_CFG0_PLLMF_MUL8          RCU_CFG0_PLLMF(6)                         /* PLL x8 */
+#  define RCU_CFG0_PLLMF_MUL9          RCU_CFG0_PLLMF(7)                         /* PLL x9 */
+#  define RCU_CFG0_PLLMF_MUL10         RCU_CFG0_PLLMF(8)                         /* PLL x10 */
+#  define RCU_CFG0_PLLMF_MUL11         RCU_CFG0_PLLMF(9)                         /* PLL x11 */
+#  define RCU_CFG0_PLLMF_MUL12         RCU_CFG0_PLLMF(10)                        /* PLL x12 */
+#  define RCU_CFG0_PLLMF_MUL13         RCU_CFG0_PLLMF(11)                        /* PLL x13 */
+#  define RCU_CFG0_PLLMF_MUL14         RCU_CFG0_PLLMF(12)                        /* PLL x14 */
+#  define RCU_CFG0_PLLMF_MUL6_5        RCU_CFG0_PLLMF(13)                        /* PLL x6.5 */
+#  define RCU_CFG0_PLLMF_MUL16         RCU_CFG0_PLLMF(14)                        /* PLL x16 */
+#  define RCU_CFG0_PLLMF_MUL17         (RCU_CFG0_PLLMF(0) | RCU_CFG0_PLLMF_MSB)  /* PLL x17 */
+#  define RCU_CFG0_PLLMF_MUL18         (RCU_CFG0_PLLMF(1) | RCU_CFG0_PLLMF_MSB)  /* PLL x18 */
+#  define RCU_CFG0_PLLMF_MUL19         (RCU_CFG0_PLLMF(2) | RCU_CFG0_PLLMF_MSB)  /* PLL x19 */
+#  define RCU_CFG0_PLLMF_MUL20         (RCU_CFG0_PLLMF(3) | RCU_CFG0_PLLMF_MSB)  /* PLL x20 */
+#  define RCU_CFG0_PLLMF_MUL21         (RCU_CFG0_PLLMF(4) | RCU_CFG0_PLLMF_MSB)  /* PLL x21 */
+#  define RCU_CFG0_PLLMF_MUL22         (RCU_CFG0_PLLMF(5) | RCU_CFG0_PLLMF_MSB)  /* PLL x22 */
+#  define RCU_CFG0_PLLMF_MUL23         (RCU_CFG0_PLLMF(6) | RCU_CFG0_PLLMF_MSB)  /* PLL x23 */
+#  define RCU_CFG0_PLLMF_MUL24         (RCU_CFG0_PLLMF(7) | RCU_CFG0_PLLMF_MSB)  /* PLL x24 */
+#  define RCU_CFG0_PLLMF_MUL25         (RCU_CFG0_PLLMF(8) | RCU_CFG0_PLLMF_MSB)  /* PLL x25 */
+#  define RCU_CFG0_PLLMF_MUL26         (RCU_CFG0_PLLMF(9) | RCU_CFG0_PLLMF_MSB)  /* PLL x26 */
+#  define RCU_CFG0_PLLMF_MUL27         (RCU_CFG0_PLLMF(10) | RCU_CFG0_PLLMF_MSB) /* PLL x27 */
+#  define RCU_CFG0_PLLMF_MUL28         (RCU_CFG0_PLLMF(11) | RCU_CFG0_PLLMF_MSB) /* PLL x28 */
+#  define RCU_CFG0_PLLMF_MUL29         (RCU_CFG0_PLLMF(12) | RCU_CFG0_PLLMF_MSB) /* PLL x29 */
+#  define RCU_CFG0_PLLMF_MUL30         (RCU_CFG0_PLLMF(13) | RCU_CFG0_PLLMF_MSB) /* PLL x30 */
+#  define RCU_CFG0_PLLMF_MUL31         (RCU_CFG0_PLLMF(14) | RCU_CFG0_PLLMF_MSB) /* PLL x31 */
+
 #define RCU_CFG0_PLLDV                 (1 << 31)       /* PLL divide by 2 for clock */
 
 /* Clock interrupt register (INT) */
@@ -169,6 +229,48 @@
 #define RCU_INT_PLL1STBIC              (1 << 21)       /* PLL1 stabilization interrupt clear */
 #define RCU_INT_PLL2STBIC              (1 << 22)       /* PLL2 stabilization interrupt clear */
 #define RCU_INT_CKMIC                  (1 << 23)       /* Clock monitor interrupt clear */
+
+/* APB2 reset register (APB2RST) */
+
+#define RCU_APB2RST_AFRST              (1 << 0)        /* Alternate function I/O reset */
+#define RCU_APB2RST_PARST              (1 << 2)        /* GPIO port A reset */
+#define RCU_APB2RST_PBRST              (1 << 3)        /* GPIO port B reset */
+#define RCU_APB2RST_PCRST              (1 << 4)        /* GPIO port C reset */
+#define RCU_APB2RST_PDRST              (1 << 5)        /* GPIO port D reset */
+#define RCU_APB2RST_PERST              (1 << 6)        /* GPIO port E reset */
+#define RCU_APB2RST_ADC0RST            (1 << 9)        /* ADC0 reset */
+#define RCU_APB2RST_ADC1RST            (1 << 10)       /* ADC1 reset */
+#define RCU_APB2RST_TIMER0RST          (1 << 11)       /* TIMER0 reset */
+#define RCU_APB2RST_SPI0RST            (1 << 12)       /* SPI0 reset */
+#define RCU_APB2RST_TIMER7RST          (1 << 13)       /* TIMER7 reset */
+#define RCU_APB2RST_USART0RST          (1 << 14)       /* USART0 reset */
+#define RCU_APB2RST_TIMER8RST          (1 << 19)       /* TIMER8 reset */
+#define RCU_APB2RST_TIMER9RST          (1 << 20)       /* TIMER9 reset */
+#define RCU_APB2RST_TIMER10RST         (1 << 21)       /* TIMER10 reset */
+
+/* APB1 reset register (APB1RST) */
+
+#define RCU_APB1RST_TIMER1RST          (1 << 0)        /* TIMER1 reset */
+#define RCU_APB1RST_TIMER2RST          (1 << 1)        /* TIMER2 reset */
+#define RCU_APB1RST_TIMER3RST          (1 << 2)        /* TIMER3 reset */
+#define RCU_APB1RST_TIMER4RST          (1 << 3)        /* TIMER4 reset */
+#define RCU_APB1RST_TIMER5RST          (1 << 4)        /* TIMER5 reset */
+#define RCU_APB1RST_TIMER6RST          (1 << 5)        /* TIMER6 reset */
+#define RCU_APB1RST_TIMER11RST         (1 << 6)        /* TIMER11 reset */
+#define RCU_APB1RST_TIMER12RST         (1 << 7)        /* TIMER12 reset */
+#define RCU_APB1RST_TIMER13RST         (1 << 8)        /* TIMER13 reset */
+#define RCU_APB1RST_WWDGTRST           (1 << 11)       /* Window watchdog timer reset */
+#define RCU_APB1RST_SPI1RST            (1 << 14)       /* SPI1 reset */
+#define RCU_APB1RST_SPI2RST            (1 << 15)       /* SPI2 reset */
+#define RCU_APB1RST_USART1RST          (1 << 17)       /* USART1 reset */
+#define RCU_APB1RST_USART2RST          (1 << 18)       /* USART2 reset */
+#define RCU_APB1RST_UART3RST           (1 << 19)       /* UART3 reset */
+#define RCU_APB1RST_UART4RST           (1 << 20)       /* UART4 reset */
+#define RCU_APB1RST_I2C0RST            (1 << 21)       /* I2C0 reset */
+#define RCU_APB1RST_I2C1RST            (1 << 22)       /* I2C1 reset */
+#define RCU_APB1RST_BKPIRST            (1 << 27)       /* Backup interface reset */
+#define RCU_APB1RST_PMURST             (1 << 28)       /* Power control reset */
+#define RCU_APB1RST_DACRST             (1 << 29)       /* DAC reset */
 
 /* AHB enable register (AHBEN) */
 
@@ -222,65 +324,25 @@
 #define RCU_APB1EN_PMUEN               (1 << 28)       /* Power control clock enable */
 #define RCU_APB1EN_DACEN               (1 << 29)       /* DAC clock enable */
 
-/* APB2 reset register (APB2RST) */
-
-#define RCU_APB2RST_AFRST              (1 << 0)        /* Alternate function I/O reset */
-#define RCU_APB2RST_PARST              (1 << 2)        /* GPIO port A reset */
-#define RCU_APB2RST_PBRST              (1 << 3)        /* GPIO port B reset */
-#define RCU_APB2RST_PCRST              (1 << 4)        /* GPIO port C reset */
-#define RCU_APB2RST_PDRST              (1 << 5)        /* GPIO port D reset */
-#define RCU_APB2RST_PERST              (1 << 6)        /* GPIO port E reset */
-#define RCU_APB2RST_ADC0RST            (1 << 9)        /* ADC0 reset */
-#define RCU_APB2RST_ADC1RST            (1 << 10)       /* ADC1 reset */
-#define RCU_APB2RST_TIMER0RST          (1 << 11)       /* TIMER0 reset */
-#define RCU_APB2RST_SPI0RST            (1 << 12)       /* SPI0 reset */
-#define RCU_APB2RST_TIMER7RST          (1 << 13)       /* TIMER7 reset */
-#define RCU_APB2RST_USART0RST          (1 << 14)       /* USART0 reset */
-#define RCU_APB2RST_TIMER8RST          (1 << 19)       /* TIMER8 reset */
-#define RCU_APB2RST_TIMER9RST          (1 << 20)       /* TIMER9 reset */
-#define RCU_APB2RST_TIMER10RST         (1 << 21)       /* TIMER10 reset */
-
-/* APB1 reset register (APB1RST) */
-
-#define RCU_APB1RST_TIMER1RST          (1 << 0)        /* TIMER1 reset */
-#define RCU_APB1RST_TIMER2RST          (1 << 1)        /* TIMER2 reset */
-#define RCU_APB1RST_TIMER3RST          (1 << 2)        /* TIMER3 reset */
-#define RCU_APB1RST_TIMER4RST          (1 << 3)        /* TIMER4 reset */
-#define RCU_APB1RST_TIMER5RST          (1 << 4)        /* TIMER5 reset */
-#define RCU_APB1RST_TIMER6RST          (1 << 5)        /* TIMER6 reset */
-#define RCU_APB1RST_TIMER11RST         (1 << 6)        /* TIMER11 reset */
-#define RCU_APB1RST_TIMER12RST         (1 << 7)        /* TIMER12 reset */
-#define RCU_APB1RST_TIMER13RST         (1 << 8)        /* TIMER13 reset */
-#define RCU_APB1RST_WWDGTRST           (1 << 11)       /* Window watchdog timer reset */
-#define RCU_APB1RST_SPI1RST            (1 << 14)       /* SPI1 reset */
-#define RCU_APB1RST_SPI2RST            (1 << 15)       /* SPI2 reset */
-#define RCU_APB1RST_USART1RST          (1 << 17)       /* USART1 reset */
-#define RCU_APB1RST_USART2RST          (1 << 18)       /* USART2 reset */
-#define RCU_APB1RST_UART3RST           (1 << 19)       /* UART3 reset */
-#define RCU_APB1RST_UART4RST           (1 << 20)       /* UART4 reset */
-#define RCU_APB1RST_I2C0RST            (1 << 21)       /* I2C0 reset */
-#define RCU_APB1RST_I2C1RST            (1 << 22)       /* I2C1 reset */
-#define RCU_APB1RST_BKPIRST            (1 << 27)       /* Backup interface reset */
-#define RCU_APB1RST_PMURST             (1 << 28)       /* Power control reset */
-#define RCU_APB1RST_DACRST             (1 << 29)       /* DAC reset */
-
-/* AHB reset register (AHBRST) */
-
-#define RCU_AHBRST_USBFSRST            (1 << 12)       /* USBFS reset */
-
 /* Backup domain control register (BDCTL) */
 
-#define RCU_BDCTL_LXTALEN              (1 << 0)        /* LXTAL enable */
-#define RCU_BDCTL_LXTALSTB             (1 << 1)        /* LXTAL stabilization flag */
-#define RCU_BDCTL_LXTALBPS             (1 << 2)        /* LXTAL bypass mode enable */
-#define RCU_BDCTL_RTCSRC_SHIFT         (8)             /* RTC clock entry selection */
+#define RCU_BDCTL_LXTALEN              (1 << 0)                           /* LXTAL enable */
+#define RCU_BDCTL_LXTALSTB             (1 << 1)                           /* LXTAL stabilization flag */
+#define RCU_BDCTL_LXTALBPS             (1 << 2)                           /* LXTAL bypass mode enable */
+#define RCU_BDCTL_LXTALDRI_SHIFT       (3)                                /* LXTAL drive capability */
+#define RCU_BDCTL_LXTALDRI_MASK        (0x3 << RCU_BDCTL_LXTALDRI_SHIFT)
+#  define RCU_BDCTL_LXTALDRI_LOW       (0x0 << RCU_BDCTL_LXTALDRI_SHIFT)  /* Lower driving capability */
+#  define RCU_BDCTL_LXTALDRI_MED_LOW   (0x1 << RCU_BDCTL_LXTALDRI_SHIFT)  /* Medium low driving capability */
+#  define RCU_BDCTL_LXTALDRI_MED_HIGH  (0x2 << RCU_BDCTL_LXTALDRI_SHIFT)  /* Medium high driving capability */
+#  define RCU_BDCTL_LXTALDRI_HIGH      (0x3 << RCU_BDCTL_LXTALDRI_SHIFT)  /* Higher driving capability */
+#define RCU_BDCTL_RTCSRC_SHIFT         (8)                                /* RTC clock entry selection */
 #define RCU_BDCTL_RTCSRC_MASK          (0x3 << RCU_BDCTL_RTCSRC_SHIFT)
 #  define RCU_BDCTL_RTCSRC_NONE        (0x0 << RCU_BDCTL_RTCSRC_SHIFT)
 #  define RCU_BDCTL_RTCSRC_LXTAL       (0x1 << RCU_BDCTL_RTCSRC_SHIFT)
 #  define RCU_BDCTL_RTCSRC_IRC40K      (0x2 << RCU_BDCTL_RTCSRC_SHIFT)
 #  define RCU_BDCTL_RTCSRC_HXTAL       (0x3 << RCU_BDCTL_RTCSRC_SHIFT)
-#define RCU_BDCTL_RTCEN                (1 << 15)       /* RTC clock enable */
-#define RCU_BDCTL_BKPRST               (1 << 16)       /* Backup domain reset */
+#define RCU_BDCTL_RTCEN                (1 << 15)                          /* RTC clock enable */
+#define RCU_BDCTL_BKPRST               (1 << 16)                          /* Backup domain reset */
 
 /* Reset source / clock register (RSTSCK) */
 
@@ -293,5 +355,122 @@
 #define RCU_RSTSCK_FWDGTRSTF           (1 << 29)       /* Free watchdog timer reset flag */
 #define RCU_RSTSCK_WWDGTRSTF           (1 << 30)       /* Window watchdog timer reset flag */
 #define RCU_RSTSCK_LPRSTF              (1 << 31)       /* Low-power reset flag */
+
+/* AHB reset register (AHBRST) */
+
+#define RCU_AHBRST_USBFSRST            (1 << 12)       /* USBFS reset */
+
+/* Clock configuration register 1 (CFG1) */
+
+#define RCU_CFG1_PREDV0_SHIFT          (0)                    /* PREDV0 division factor */
+#define RCU_CFG1_PREDV0_MASK           (0xf << RCU_CFG1_PREDV0_SHIFT)
+#  define RCU_CFG1_PREDV0(n)           ((n) << RCU_CFG1_PREDV0_SHIFT)
+#  define RCU_CFG1_PREDV0_DIV1         (RCU_CFG1_PREDV0(0))   /* PREDV0 input not divided */
+#  define RCU_CFG1_PREDV0_DIV2         (RCU_CFG1_PREDV0(1))   /* PREDV0 input divided by 2 */
+#  define RCU_CFG1_PREDV0_DIV3         (RCU_CFG1_PREDV0(2))   /* PREDV0 input divided by 3 */
+#  define RCU_CFG1_PREDV0_DIV4         (RCU_CFG1_PREDV0(3))   /* PREDV0 input divided by 4 */
+#  define RCU_CFG1_PREDV0_DIV5         (RCU_CFG1_PREDV0(4))   /* PREDV0 input divided by 5 */
+#  define RCU_CFG1_PREDV0_DIV6         (RCU_CFG1_PREDV0(5))   /* PREDV0 input divided by 6 */
+#  define RCU_CFG1_PREDV0_DIV7         (RCU_CFG1_PREDV0(6))   /* PREDV0 input divided by 7 */
+#  define RCU_CFG1_PREDV0_DIV8         (RCU_CFG1_PREDV0(7))   /* PREDV0 input divided by 8 */
+#  define RCU_CFG1_PREDV0_DIV9         (RCU_CFG1_PREDV0(8))   /* PREDV0 input divided by 9 */
+#  define RCU_CFG1_PREDV0_DIV10        (RCU_CFG1_PREDV0(9))   /* PREDV0 input divided by 10 */
+#  define RCU_CFG1_PREDV0_DIV11        (RCU_CFG1_PREDV0(10))  /* PREDV0 input divided by 11 */
+#  define RCU_CFG1_PREDV0_DIV12        (RCU_CFG1_PREDV0(11))  /* PREDV0 input divided by 12 */
+#  define RCU_CFG1_PREDV0_DIV13        (RCU_CFG1_PREDV0(12))  /* PREDV0 input divided by 13 */
+#  define RCU_CFG1_PREDV0_DIV14        (RCU_CFG1_PREDV0(13))  /* PREDV0 input divided by 14 */
+#  define RCU_CFG1_PREDV0_DIV15        (RCU_CFG1_PREDV0(14))  /* PREDV0 input divided by 15 */
+#  define RCU_CFG1_PREDV0_DIV16        (RCU_CFG1_PREDV0(15))  /* PREDV0 input divided by 16 */
+
+#define RCU_CFG1_PREDV1_SHIFT          (4)             /* PREDV1 division factor */
+#define RCU_CFG1_PREDV1_MASK           (0xf << RCU_CFG1_PREDV1_SHIFT)
+#  define RCU_CFG1_PREDV1_DIV1         (0x0 << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input not divided */
+#  define RCU_CFG1_PREDV1_DIV2         (0x1 << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 2 */
+#  define RCU_CFG1_PREDV1_DIV3         (0x2 << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 3 */
+#  define RCU_CFG1_PREDV1_DIV4         (0x3 << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 4 */
+#  define RCU_CFG1_PREDV1_DIV5         (0x4 << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 5 */
+#  define RCU_CFG1_PREDV1_DIV6         (0x5 << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 6 */
+#  define RCU_CFG1_PREDV1_DIV7         (0x6 << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 7 */
+#  define RCU_CFG1_PREDV1_DIV8         (0x7 << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 8 */
+#  define RCU_CFG1_PREDV1_DIV9         (0x8 << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 9 */
+#  define RCU_CFG1_PREDV1_DIV10        (0x9 << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 10 */
+#  define RCU_CFG1_PREDV1_DIV11        (0xa << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 11 */
+#  define RCU_CFG1_PREDV1_DIV12        (0xb << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 12 */
+#  define RCU_CFG1_PREDV1_DIV13        (0xc << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 13 */
+#  define RCU_CFG1_PREDV1_DIV14        (0xd << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 14 */
+#  define RCU_CFG1_PREDV1_DIV15        (0xe << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 15 */
+#  define RCU_CFG1_PREDV1_DIV16        (0xf << RCU_CFG1_PREDV1_SHIFT)  /* PREDV1 input divided by 16 */
+
+#define RCU_CFG1_PLL1MF_SHIFT          (8)             /* PLL1 clock multiplication factor */
+#define RCU_CFG1_PLL1MF_MASK           (0xf << RCU_CFG1_PLL1MF_SHIFT)
+#  define RCU_CFG1_PLL1MF_MUL8         (0x6 << RCU_CFG1_PLL1MF_SHIFT)  /* PLL1 x8 */
+#  define RCU_CFG1_PLL1MF_MUL9         (0x7 << RCU_CFG1_PLL1MF_SHIFT)  /* PLL1 x9 */
+#  define RCU_CFG1_PLL1MF_MUL10        (0x8 << RCU_CFG1_PLL1MF_SHIFT)  /* PLL1 x10 */
+#  define RCU_CFG1_PLL1MF_MUL11        (0x9 << RCU_CFG1_PLL1MF_SHIFT)  /* PLL1 x11 */
+#  define RCU_CFG1_PLL1MF_MUL12        (0xa << RCU_CFG1_PLL1MF_SHIFT)  /* PLL1 x12 */
+#  define RCU_CFG1_PLL1MF_MUL13        (0xb << RCU_CFG1_PLL1MF_SHIFT)  /* PLL1 x13 */
+#  define RCU_CFG1_PLL1MF_MUL14        (0xc << RCU_CFG1_PLL1MF_SHIFT)  /* PLL1 x14 */
+#  define RCU_CFG1_PLL1MF_MUL16        (0xe << RCU_CFG1_PLL1MF_SHIFT)  /* PLL1 x16 */
+#  define RCU_CFG1_PLL1MF_MUL20        (0xf << RCU_CFG1_PLL1MF_SHIFT)  /* PLL1 x20 */
+
+#define RCU_CFG1_PLL2MF_SHIFT          (12)            /* PLL2 clock multiplication factor */
+#define RCU_CFG1_PLL2MF_MASK           (0xf << RCU_CFG1_PLL2MF_SHIFT)
+#  define RCU_CFG1_PLL2MF_MUL8         (0x6 << RCU_CFG1_PLL2MF_SHIFT)  /* PLL2 x8 */
+#  define RCU_CFG1_PLL2MF_MUL9         (0x7 << RCU_CFG1_PLL2MF_SHIFT)  /* PLL2 x9 */
+#  define RCU_CFG1_PLL2MF_MUL10        (0x8 << RCU_CFG1_PLL2MF_SHIFT)  /* PLL2 x10 */
+#  define RCU_CFG1_PLL2MF_MUL11        (0x9 << RCU_CFG1_PLL2MF_SHIFT)  /* PLL2 x11 */
+#  define RCU_CFG1_PLL2MF_MUL12        (0xa << RCU_CFG1_PLL2MF_SHIFT)  /* PLL2 x12 */
+#  define RCU_CFG1_PLL2MF_MUL13        (0xb << RCU_CFG1_PLL2MF_SHIFT)  /* PLL2 x13 */
+#  define RCU_CFG1_PLL2MF_MUL14        (0xc << RCU_CFG1_PLL2MF_SHIFT)  /* PLL2 x14 */
+#  define RCU_CFG1_PLL2MF_MUL16        (0xe << RCU_CFG1_PLL2MF_SHIFT)  /* PLL2 x16 */
+#  define RCU_CFG1_PLL2MF_MUL20        (0xf << RCU_CFG1_PLL2MF_SHIFT)  /* PLL2 x20 */
+
+#define RCU_CFG1_PREDV0SEL                 (1 << 16)           /* PREDV0 input clock source selection */
+#  define RCU_CFG1_PREDV0SEL_HXTAL_IRC48M  (0)                 /* HXTAL or IRC48M as PREDV0 input */
+#  define RCU_CFG1_PREDV0SEL_PLL1          RCU_CFG1_PREDV0SEL  /* PLL1 as PREDV0 input */
+
+#define RCU_CFG1_I2S1SEL              (1 << 17)        /* I2S1 clock source selection */
+#  define RCU_CFG1_I2S1SEL_CKSYS      (0)              /* System clock as I2S1 source */
+#  define RCU_CFG1_I2S1SEL_PLL2       RCU_CFG1_I2S1SEL /* PLL2 x2 as I2S1 source */
+
+#define RCU_CFG1_I2S2SEL               (1 << 18)       /* I2S2 clock source selection */
+#  define RCU_CFG1_I2S2SEL_CKSYS      (0)              /* System clock as I2S2 source */
+#  define RCU_CFG1_I2S2SEL_PLL2       RCU_CFG1_I2S2SEL /* PLL2 x2 as I2S2 source */
+
+#define RCU_CFG1_ADCPSC_MSB            (1 << 29)         /* ADC prescaler MSB (bit 4 of ADCPSC) */
+#define RCU_CFG1_PLLPRESEL             (1 << 30)         /* PLL clock source selection */
+#  define RCU_CFG1_PLLPRESEL_HXTAL    (0)                /* HXTAL as PLL source */
+#  define RCU_CFG1_PLLPRESEL_IRC48M   RCU_CFG1_PLLPRESEL /* IRC48M as PLL source */
+
+/* Deep-sleep mode voltage register (DSV) */
+
+#define RCU_DSV_DSLPVS_SHIFT           (0)                            /* Deep-sleep mode voltage select */
+#define RCU_DSV_DSLPVS_MASK            (0x3 << RCU_DSV_DSLPVS_SHIFT)
+#  define RCU_DSV_DSLPVS_1_0           (0x0 << RCU_DSV_DSLPVS_SHIFT)  /* Core voltage 1.0V */
+#  define RCU_DSV_DSLPVS_0_9           (0x1 << RCU_DSV_DSLPVS_SHIFT)  /* Core voltage 0.9V */
+#  define RCU_DSV_DSLPVS_0_8           (0x2 << RCU_DSV_DSLPVS_SHIFT)  /* Core voltage 0.8V */
+#  define RCU_DSV_DSLPVS_1_2           (0x3 << RCU_DSV_DSLPVS_SHIFT)  /* Core voltage 1.2V */
+
+/* Additional clock control register (ADDCTL) */
+
+#define RCU_ADDCTL_CK48MSEL            (1 << 0)        /* 48MHz clock selection */
+#define RCU_ADDCTL_IRC48MEN            (1 << 16)       /* IRC48M enable */
+#define RCU_ADDCTL_IRC48MSTB           (1 << 17)       /* IRC48M stabilization flag */
+#define RCU_ADDCTL_IRC48MCAL_SHIFT     (24)            /* IRC48M calibration value */
+#define RCU_ADDCTL_IRC48MCAL_MASK      (0xff << RCU_ADDCTL_IRC48MCAL_SHIFT)
+
+/* Additional clock interrupt register (ADDINT) */
+
+#define RCU_ADDINT_IRC48MSTBIF         (1 << 6)        /* IRC48M stabilization interrupt flag */
+#define RCU_ADDINT_IRC48MSTBIE         (1 << 14)       /* IRC48M stabilization interrupt enable */
+#define RCU_ADDINT_IRC48MSTBIC         (1 << 22)       /* IRC48M stabilization interrupt clear */
+
+/* APB1 additional reset register (ADDAPB1RST) */
+
+#define RCU_ADDAPB1RST_CTCRST          (1 << 27)       /* CTC reset */
+
+/* APB1 additional enable register (ADDAPB1EN) */
+
+#define RCU_ADDAPB1EN_CTCEN            (1 << 27)       /* CTC clock enable */
 
 #endif /* __ARCH_ARM_SRC_GD32E11X_HARDWARE_GD32E11X_RCU_H */

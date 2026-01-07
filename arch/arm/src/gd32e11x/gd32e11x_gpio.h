@@ -23,6 +23,10 @@
 #ifndef __ARCH_ARM_SRC_GD32E11X_GD32E11X_GPIO_H
 #define __ARCH_ARM_SRC_GD32E11X_GD32E11X_GPIO_H
 
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
 #include <nuttx/config.h>
 
 #ifndef __ASSEMBLY__
@@ -30,108 +34,245 @@
 #  include <stdbool.h>
 #endif
 
-/* Bit-encoded GPIO configuration (STM32F1/GD32E11x style).
- * Encoding (16-bit):
+#include "chip.h"
+#include "hardware/gd32e11x_gpio.h"
+
+/****************************************************************************
+ * Pre-Processor Declarations
+ ****************************************************************************/
+
+/* Bit-encoded input to gd32_configgpio() */
+
+/* Bit-encoded GPIO configuration (GD32E11x style, 16-bit).
+ *
+ * Encoding:    1111 1100 0000 0000
+ *              5432 1098 7654 3210
+ * ENCODING     OFFS SAX. VPPP BBBB
+ *
+ */
+
+/* Output/Input mode:
  *
  * 1111 1100 0000 0000
  * 5432 1098 7654 3210
  * ---- ---- ---- ----
- * OFFS SX.. VPPP BBBB
+ * O... .... .... ....
  */
 
-/* Input/output select */
+#define GPIO_CFG_INPUT                (1 << 15)               /* Bit15: 1=input mode */
+#define GPIO_CFG_OUTPUT               (0)                     /*        0=output mode */
+#define GPIO_CFG_AF                   (0)                     /*        0=alternate function mode */
 
-#define GPIO_INPUT                    (1 << 15)                  /* 1=input mode */
-#define GPIO_OUTPUT                   (0)
-#define GPIO_ALT                      (0)
+/* Output set/clear */
 
-/* Output set/clear (also used for input pull-up/down selection) */
+/* If the pin is a GPIO digital output, then this identifies the initial
+ * output value.  If the pin is an input, this bit is overloaded to
+ * provide the qualifier to\ distinguish input pull-up and -down:
+ *
+ * 1111 1100 0000 0000
+ * 5432 1098 7654 3210
+ * ---- ---- ---- ----
+ * .... .... V... ....
+ */
 
-#define GPIO_OUTPUT_SET               (1 << 7)
-#define GPIO_OUTPUT_CLEAR             (0)
+#define GPIO_CFG_OUTPUT_SET           (1 << 7)
+#define GPIO_CFG_OUTPUT_CLEAR         (0)
 
-/* CNF bits (function) */
+/* These bits set the primary function of the pin:
+ *
+ * 1111 1100 0000 0000
+ * 5432 1098 7654 3210
+ * ---- ---- ---- ----
+ * .FF. .... .... ....
+ */
 
-#define GPIO_CNF_SHIFT                13
-#define GPIO_CNF_MASK                 (3 << GPIO_CNF_SHIFT)
+#define GPIO_CFG_CTL_SHIFT            13                               /* Bits 13-14: GPIO pin control configuration */
+#define GPIO_CFG_CTL_MASK             (3 << GPIO_CFG_CTL_SHIFT)
 
-#  define GPIO_CNF_ANALOGIN           (0 << GPIO_CNF_SHIFT)
-#  define GPIO_CNF_INFLOAT            (1 << GPIO_CNF_SHIFT)
-#  define GPIO_CNF_INPULLUD           (2 << GPIO_CNF_SHIFT)
-#  define GPIO_CNF_INPULLDWN          (2 << GPIO_CNF_SHIFT)
-#  define GPIO_CNF_INPULLUP           ((2 << GPIO_CNF_SHIFT) | GPIO_OUTPUT_SET)
+#  define GPIO_CFG_CTL_AIN            (0 << GPIO_CFG_CTL_SHIFT)       /* Analog input mode */
+#  define GPIO_CFG_CTL_INFLOAT        (1 << GPIO_CFG_CTL_SHIFT)       /* Input floating mode */
+#  define GPIO_CFG_CTL_IPUD           (2 << GPIO_CFG_CTL_SHIFT)       /* Input pull-up/down general bit, since up is composed of two parts */
+#  define GPIO_CFG_CTL_IPD            (2 << GPIO_CFG_CTL_SHIFT)       /* Input pull-down mode */
+#  define GPIO_CFG_CTL_IPU            ((2 << GPIO_CFG_CTL_SHIFT) \
+                                       | GPIO_CFG_OUTPUT_SET)          /* Input pull-up mode */
 
-#  define GPIO_CNF_OUTPP              (0 << GPIO_CNF_SHIFT)
-#  define GPIO_CNF_OUTOD              (1 << GPIO_CNF_SHIFT)
-#  define GPIO_CNF_AFPP               (2 << GPIO_CNF_SHIFT)
-#  define GPIO_CNF_AFOD               (3 << GPIO_CNF_SHIFT)
+#  define GPIO_CFG_CTL_OUTPP          (0 << GPIO_CFG_CTL_SHIFT)       /* Output push-pull mode */
+#  define GPIO_CFG_CTL_OUTOD          (1 << GPIO_CFG_CTL_SHIFT)       /* Output open-drain mode */
+#  define GPIO_CFG_CTL_AFPP           (2 << GPIO_CFG_CTL_SHIFT)       /* Alternate function push-pull mode */
+#  define GPIO_CFG_CTL_AFOD           (3 << GPIO_CFG_CTL_SHIFT)       /* Alternate function open-drain mode */
 
-/* MODE bits (speed) */
+/* Maximum frequency selection:
+ *
+ * 1111 1100 0000 0000
+ * 5432 1098 7654 3210
+ * ---- ---- ---- ----
+ * ...S S... .... ....
+ */
 
-#define GPIO_MODE_SHIFT               11
-#define GPIO_MODE_MASK                (3 << GPIO_MODE_SHIFT)
-#  define GPIO_MODE_INPUT             (0 << GPIO_MODE_SHIFT)
-#  define GPIO_MODE_10MHz             (1 << GPIO_MODE_SHIFT)
-#  define GPIO_MODE_2MHz              (2 << GPIO_MODE_SHIFT)
-#  define GPIO_MODE_50MHz             (3 << GPIO_MODE_SHIFT)
+#define GPIO_CFG_MODE_SHIFT           11                               /* Bits 11-12: GPIO pin speed */
+#define GPIO_CFG_MODE_MASK            (3 << GPIO_CFG_MODE_SHIFT)
+#  define GPIO_CFG_MODE_INPUT         (0 << GPIO_CFG_MODE_SHIFT)     /* Input mode (reset state) */
+#  define GPIO_CFG_MODE_OSPEED_10MHZ  (1 << GPIO_CFG_MODE_SHIFT)     /* Output mode, max speed 10 MHz */
+#  define GPIO_CFG_MODE_OSPEED_2MHZ   (2 << GPIO_CFG_MODE_SHIFT)     /* Output mode, max speed 2 MHz */
+#  define GPIO_CFG_MODE_OSPEED_50MHZ  (3 << GPIO_CFG_MODE_SHIFT)     /* Output mode, max speed 50 MHz */
+#  define GPIO_CFG_MODE_OSPEED_MAX    ((3 << GPIO_CFG_MODE_SHIFT) \
+                                       | GPIO_CFG_OSPEED_A)            /* Output mode, max speed more than 50 MHz */
 
-/* Compatibility spelling used by some pinmap headers */
+#define GPIO_ADJUST_CFG_MODE(cfg, spd) (((cfg) & ~GPIO_CFG_MODE_MASK) | (spd))
 
-#  define GPIO_MODE_50MHZ             GPIO_MODE_50MHz
+/* GPIO MAX output speed (Addional definitions for GPIO speed):
+ *
+ * 1111 1100 0000 0000
+ * 5432 1098 7654 3210
+ * ---- ---- ---- ----
+ * .... .A.. .... ....
+ */
 
-/* EXTI selection */
+#define GPIO_CFG_OSPEED_A             (1 << 10)                        /* Bit 10: Additional definitions for MAX OSPEED */
 
-#define GPIO_EXTI                     (1 << 10)
+/* External interrupt selection (GPIO inputs only):
+ *
+ * 1111 1100 0000 0000
+ * 5432 1098 7654 3210
+ * ---- ---- ---- ----
+ * .... ..X. .... ....
+ */
 
-/* Port selection */
+#define GPIO_CFG_EXTI                 (1 << 9)                         /* Bit 9: Configure as EXTI interrupt */
 
-#define GPIO_PORT_SHIFT               4
-#define GPIO_PORT_MASK                (7 << GPIO_PORT_SHIFT)
-#  define GPIO_PORTA                  (0 << GPIO_PORT_SHIFT)
-#  define GPIO_PORTB                  (1 << GPIO_PORT_SHIFT)
-#  define GPIO_PORTC                  (2 << GPIO_PORT_SHIFT)
-#  define GPIO_PORTD                  (3 << GPIO_PORT_SHIFT)
-#  define GPIO_PORTE                  (4 << GPIO_PORT_SHIFT)
+/* This identifies the GPIO port:
+ *
+ * 1111 1100 0000 0000
+ * 5432 1098 7654 3210
+ * ---- ---- ---- ----
+ * .... .... .PPP ....
+ */
 
-/* Pin selection */
+#define GPIO_CFG_PORT_SHIFT           4                                /* Bit 4-6:  Port number */
+#define GPIO_CFG_PORT_MASK            (7 << GPIO_CFG_PORT_SHIFT)
+#  define GPIO_CFG_PORT_A             (0 << GPIO_CFG_PORT_SHIFT)       /* GPIOA */
+#  define GPIO_CFG_PORT_B             (1 << GPIO_CFG_PORT_SHIFT)       /* GPIOB */
+#  define GPIO_CFG_PORT_C             (2 << GPIO_CFG_PORT_SHIFT)       /* GPIOC */
+#  define GPIO_CFG_PORT_D             (3 << GPIO_CFG_PORT_SHIFT)       /* GPIOD */
+#  define GPIO_CFG_PORT_E             (4 << GPIO_CFG_PORT_SHIFT)       /* GPIOE */
 
-#define GPIO_PIN_SHIFT                0
-#define GPIO_PIN_MASK                 (15 << GPIO_PIN_SHIFT)
-#define GPIO_PIN0                     (0 << GPIO_PIN_SHIFT)
-#define GPIO_PIN1                     (1 << GPIO_PIN_SHIFT)
-#define GPIO_PIN2                     (2 << GPIO_PIN_SHIFT)
-#define GPIO_PIN3                     (3 << GPIO_PIN_SHIFT)
-#define GPIO_PIN4                     (4 << GPIO_PIN_SHIFT)
-#define GPIO_PIN5                     (5 << GPIO_PIN_SHIFT)
-#define GPIO_PIN6                     (6 << GPIO_PIN_SHIFT)
-#define GPIO_PIN7                     (7 << GPIO_PIN_SHIFT)
-#define GPIO_PIN8                     (8 << GPIO_PIN_SHIFT)
-#define GPIO_PIN9                     (9 << GPIO_PIN_SHIFT)
-#define GPIO_PIN10                    (10 << GPIO_PIN_SHIFT)
-#define GPIO_PIN11                    (11 << GPIO_PIN_SHIFT)
-#define GPIO_PIN12                    (12 << GPIO_PIN_SHIFT)
-#define GPIO_PIN13                    (13 << GPIO_PIN_SHIFT)
-#define GPIO_PIN14                    (14 << GPIO_PIN_SHIFT)
-#define GPIO_PIN15                    (15 << GPIO_PIN_SHIFT)
+/* This identifies the bit in the port:
+ *
+ * 1111 1100 0000 0000
+ * 5432 1098 7654 3210
+ * ---- ---- ---- ----
+ * .... .... .... BBBB
+ */
+
+#define GPIO_CFG_PIN_SHIFT            0                                /* Bits 0-3: GPIO number: 0-15 */
+#define GPIO_CFG_PIN_MASK             (15 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_0                (0 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_1                (1 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_2                (2 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_3                (3 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_4                (4 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_5                (5 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_6                (6 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_7                (7 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_8                (8 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_9                (9 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_10               (10 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_11               (11 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_12               (12 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_13               (13 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_14               (14 << GPIO_CFG_PIN_SHIFT)
+#define GPIO_CFG_PIN_15               (15 << GPIO_CFG_PIN_SHIFT)
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
 
 #ifndef __ASSEMBLY__
 
-int  gd32_configgpio(uint32_t cfgset);
-int  gd32_unconfiggpio(uint32_t cfgset);
-void gd32_gpiowrite(uint32_t cfgset, bool value);
-
-/* Compatibility wrappers used by the GD32F4-style lowputc logic */
-
-static inline int gd32_gpio_config(uint32_t cfgset)
+#undef EXTERN
+#if defined(__cplusplus)
+#define EXTERN extern "C"
+extern "C"
 {
-  return gd32_configgpio(cfgset);
-}
+#else
+#define EXTERN extern
+#endif
 
-static inline void gd32_gpio_write(uint32_t cfgset, bool value)
-{
-  gd32_gpiowrite(cfgset, value);
+/* Base addresses for each GPIO block */
+
+EXTERN const uint32_t g_gpio_base[GD32_NGPIO_PORTS];
+
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: gd32_gpio_config
+ *
+ * Description:
+ *   Configure a GPIO pin based on bit-encoded description of the pin.
+ *
+ * Return value:
+ *   OK on success
+ *   A negated errno value on invalid port or mode.
+ *
+ ****************************************************************************/
+
+int gd32_gpio_config(uint32_t cfgset);
+
+/****************************************************************************
+ * Name: gd32_gpio_unconfig
+ *
+ * Description:
+ *   Unconfigure a GPIO pin based on bit-encoded description of the pin, set
+ *   it into default HiZ state.
+ *
+ * Returned Value:
+ *  OK on success
+ *  A negated errno value on invalid port or mode
+ ****************************************************************************/
+
+int gd32_gpio_unconfig(uint32_t cfgset);
+
+/****************************************************************************
+ * Name: gd32_gpiowrite
+ *
+ * Description:
+ *   Write one or zero to the selected GPIO pin
+ *
+ ****************************************************************************/
+
+void gd32_gpio_write(uint32_t pinset, bool value);
+
+/****************************************************************************
+ * Name: gd32_gpio_read
+ *
+ * Description:
+ *   Read one or zero from the selected GPIO pin
+ *
+ ****************************************************************************/
+
+bool gd32_gpio_read(uint32_t pinset);
+
+/****************************************************************************
+ * Function:  gd32_dump_gpio
+ *
+ * Description:
+ *   Dump all GPIO registers associated with the base address of the provided
+ *   pinset.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_DEBUG_FEATURES
+int gd32_dump_gpio(uint32_t pinset, const char *msg);
+#else
+#  define gd32_dump_gpio(p,m)
+#endif
+
+#undef EXTERN
+#if defined(__cplusplus)
 }
+#endif
 
 #endif /* __ASSEMBLY__ */
-
 #endif /* __ARCH_ARM_SRC_GD32E11X_GD32E11X_GPIO_H */

@@ -30,24 +30,10 @@
 #include <nuttx/config.h>
 #include "chip.h"
 
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-/* Alternate Pin Functions.  All members of the GD32E11x family share the
- * same pin multiplexing (although they may differ in the pins physically
- * available).
- *
- * Alternative pin selections are provided with a numeric suffix like _1, _2,
- * etc.  Drivers, however, will use the pin selection without the numeric
- * suffix.  Additional definitions are required in the board.h file.
- */
-
 /* Select the pinmap based on the configured chip */
 
 #if defined(CONFIG_ARCH_CHIP_GD32E113VB) || defined(CONFIG_ARCH_CHIP_GD32E113)
-#  include "gd32e113v_pinmap.h"
-
+#include "gd32e113v_pinmap.h"
 #else
 #  error "No pinmap file for this GD32E11x chip"
 #endif

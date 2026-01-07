@@ -77,11 +77,18 @@
 
 #if defined(CONFIG_GD32E11X_GD32E11X)
 
-/* Set the end of system SRAM
- * GD32E113VB: 32KB SRAM at 0x20000000-0x20007fff
- */
+/* Set the end of system SRAM */
 
-#  define SRAM_END 0x20008000
+#  if defined(CONFIG_GD32E11X_GD32E113XB)
+     /* GD32E113VB: 32KB SRAM at 0x20000000-0x20007fff */
+#    define SRAM_END 0x20008000
+
+#  elif defined(CONFIG_GD32E11X_GD32E113X8)
+     /* GD32E113X8: 20KB SRAM at 0x20000000-0x20004fff */
+#    define SRAM_END 0x20005000
+#  else
+#    error "Unsupported GD32E11x chip"
+#endif
 
 /* There are 2 possible SRAM configuration cases:
  *

@@ -67,27 +67,201 @@ extern "C"
  * Public Function Prototypes
  ****************************************************************************/
 
+/****************************************************************************
+ * Name: gd32_exti_gpioirq_init
+ *
+ * Description:
+ *   Initialize the EXTI gpio irq.
+ *
+ * Input Parameters:
+ *   cfgset    - GPIO pin configuration
+ *   exti_mode - Interrupt or event mode (EXTI_INTERRUPT or EXTI_EVENT)
+ *   trig_type - Interrupt trigger type (EXTI_TRIG_RISING, EXTI_TRIG_FALLING,
+ *               EXTI_TRIG_BOTH, or EXTI_TRIG_NONE)
+ *   irqnum    - Pointer to store GPIO pin irq number (can be NULL)
+ *
+ * Returned Value:
+ *   OK on success; A negated errno value on failure.
+ *
+ ****************************************************************************/
+
 int gd32_exti_gpioirq_init(uint32_t cfgset, uint8_t exti_mode,
-						   uint8_t trig_type, uint8_t *irqnum);
+                           uint8_t trig_type, uint8_t *irqnum);
+
+/****************************************************************************
+ * Name: gd32_exti_gpio_irq_attach
+ *
+ * Description:
+ *   Attach the EXTI gpio irq handler.
+ *
+ * Input Parameters:
+ *   irqpin     - GPIO irq pin (0-15)
+ *   irqhandler - IRQ handler function
+ *   arg        - Argument passed to the interrupt callback
+ *
+ * Returned Value:
+ *   OK on success; A negated errno value on failure.
+ *
+ ****************************************************************************/
 
 int gd32_exti_gpio_irq_attach(uint8_t irqpin, xcpt_t irqhandler,
-							  void *arg);
+                              void *arg);
+
+/****************************************************************************
+ * Name: gd32_exti_init
+ *
+ * Description:
+ *   Initialize the EXTI line.
+ *
+ * Input Parameters:
+ *   linex     - EXTI line number (bit mask, e.g., EXTI_0, EXTI_1, etc.)
+ *   exti_mode - Interrupt or event mode (EXTI_INTERRUPT or EXTI_EVENT)
+ *   trig_type - Interrupt trigger type (EXTI_TRIG_RISING, EXTI_TRIG_FALLING,
+ *               EXTI_TRIG_BOTH, or EXTI_TRIG_NONE)
+ *
+ ****************************************************************************/
 
 void gd32_exti_init(uint32_t linex, uint8_t exti_mode, uint8_t trig_type);
 
+/****************************************************************************
+ * Name: gd32_gpio_exti_linex_get
+ *
+ * Description:
+ *   Get EXTI line number from GPIO pin configuration.
+ *
+ * Input Parameters:
+ *   cfgset - GPIO pin configuration
+ *   linex  - Pointer to store EXTI line number (bit mask)
+ *
+ * Returned Value:
+ *   OK on success; A negated errno value on failure.
+ *
+ ****************************************************************************/
+
 int gd32_gpio_exti_linex_get(uint32_t cfgset, uint32_t *linex);
+
+/****************************************************************************
+ * Name: gd32_gpio_exti_irqnum_get
+ *
+ * Description:
+ *   Get IRQ number from GPIO pin configuration.
+ *
+ * Input Parameters:
+ *   cfgset - GPIO pin configuration
+ *   irqnum - Pointer to store IRQ number
+ *
+ * Returned Value:
+ *   OK on success; A negated errno value on failure.
+ *
+ ****************************************************************************/
+
 int gd32_gpio_exti_irqnum_get(uint32_t cfgset, uint8_t *irqnum);
 
+/****************************************************************************
+ * Name: gd32_exti_interrupt_enable
+ *
+ * Description:
+ *   Enable the interrupts from EXTI line.
+ *
+ * Input Parameters:
+ *   linex - EXTI line number (bit mask)
+ *
+ ****************************************************************************/
+
 void gd32_exti_interrupt_enable(uint32_t linex);
+
+/****************************************************************************
+ * Name: gd32_exti_interrupt_disable
+ *
+ * Description:
+ *   Disable the interrupts from EXTI line.
+ *
+ * Input Parameters:
+ *   linex - EXTI line number (bit mask)
+ *
+ ****************************************************************************/
+
 void gd32_exti_interrupt_disable(uint32_t linex);
 
+/****************************************************************************
+ * Name: gd32_exti_event_enable
+ *
+ * Description:
+ *   Enable the events from EXTI line.
+ *
+ * Input Parameters:
+ *   linex - EXTI line number (bit mask)
+ *
+ ****************************************************************************/
+
 void gd32_exti_event_enable(uint32_t linex);
+
+/****************************************************************************
+ * Name: gd32_exti_event_disable
+ *
+ * Description:
+ *   Disable the events from EXTI line.
+ *
+ * Input Parameters:
+ *   linex - EXTI line number (bit mask)
+ *
+ ****************************************************************************/
+
 void gd32_exti_event_disable(uint32_t linex);
 
+/****************************************************************************
+ * Name: gd32_exti_software_interrupt_enable
+ *
+ * Description:
+ *   Enable EXTI software interrupt event.
+ *
+ * Input Parameters:
+ *   linex - EXTI line number (bit mask)
+ *
+ ****************************************************************************/
+
 void gd32_exti_software_interrupt_enable(uint32_t linex);
+
+/****************************************************************************
+ * Name: gd32_exti_software_interrupt_disable
+ *
+ * Description:
+ *   Disable EXTI software interrupt event.
+ *
+ * Input Parameters:
+ *   linex - EXTI line number (bit mask)
+ *
+ ****************************************************************************/
+
 void gd32_exti_software_interrupt_disable(uint32_t linex);
 
+/****************************************************************************
+ * Name: gd32_exti_interrupt_flag_get
+ *
+ * Description:
+ *   Get EXTI interrupt flag status.
+ *
+ * Input Parameters:
+ *   linex - EXTI line number (bit mask)
+ *
+ * Returned Value:
+ *   true if interrupt flag is set; false otherwise.
+ *
+ ****************************************************************************/
+
 bool gd32_exti_interrupt_flag_get(uint32_t linex);
+
+/****************************************************************************
+ * Name: gd32_exti_interrupt_flag_clear
+ *
+ * Description:
+ *   Clear EXTI interrupt flag.
+ *
+ * Input Parameters:
+ *   linex - EXTI line number (bit mask)
+ *
+ ****************************************************************************/
+
 void gd32_exti_interrupt_flag_clear(uint32_t linex);
 
 #undef EXTERN

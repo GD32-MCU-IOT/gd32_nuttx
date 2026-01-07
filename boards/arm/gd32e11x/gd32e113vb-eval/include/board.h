@@ -33,7 +33,11 @@
 #  include <stdint.h>
 #endif
 
+#if (CONFIG_GD32E113_BOARD_USE_HXTAL)
 #define GD32_BOARD_SYSCLK_PLL_HXTAL
+#elif (CONFIG_GD32E113_BOARD_USE_IRC8M)
+#define GD32_BOARD_SYSCLK_PLL_IRC8M
+#endif
 
 /* Do not include GD32E11X header files here */
 
@@ -80,14 +84,25 @@
  *
  * PLL source is HXTAL
  * PLL_VCO = (GD32_HXTAL_VALUE / PREDV0) * PLLMF
- *         = (8,000,000 / 2) * 30
- *         = 120,000,000
+ *         = 4 MHz * 30
+ *         = 120 MHz
+ * PREDV0 = (GD32_HXTAL_VALUE / 2) * GD32_RCU_PLL1_MULF / GD32_RCU_PREDV0_DIV
+ *        = (8 Hz / 2) * 10 / 10
+ *        = 4 MHz
  * SYSCLK  = PLL_VCO
- *         = 120,000,000
+ *         = 120 MHz
  */
 
-#define GD32_RCU_CFG0_PREDV0   RCU_CFG0_PREDV0_DIV2
 #define GD32_RCU_CFG0_PLLMF    RCU_CFG0_PLLMF_MUL30
+#if defined(CONFIG_GD32E113_BOARD_PREDIV0_SELECT_PLL1)
+#define GD32_RCU_PLL1_MULF     RCU_CFG1_PLL1MF_MUL10
+#define GD32_RCU_PREDV0_DIV    RCU_CFG1_PREDV0_DIV10
+#define GD32_RCU_PREDV1_DIV    RCU_CFG1_PREDV1_DIV2
+#else
+#define GD32_RCU_PREDV0_DIV    RCU_CFG1_PREDV0_DIV2
+#endif
+
+#define GD32_FMC_WAIT_STATE   FMC_WS_WSCNT_7
 
 #define GD32_SYSCLK_FREQUENCY  120000000ul
 
@@ -97,14 +112,25 @@
  *
  * PLL source is HXTAL
  * PLL_VCO = (GD32_HXTAL_VALUE / PREDV0) * PLLMF
- *         = (8,000,000 / 2) * 27
- *         = 108,000,000
+ *         = 4 MHz * 27
+ *         = 108 MHz
+ * PREDV0 = (GD32_HXTAL_VALUE / 2) * GD32_RCU_PLL1_MULF / GD32_RCU_PREDV0_DIV
+ *        = (8 Hz / 2) * 10 / 10
+ *        = 4 MHz
  * SYSCLK  = PLL_VCO
- *         = 108,000,000
+ *         = 108 MHz
  */
 
-#define GD32_RCU_CFG0_PREDV0   RCU_CFG0_PREDV0_DIV2
+ #if defined(CONFIG_GD32E113_BOARD_PREDIV0_SELECT_PLL1)
 #define GD32_RCU_CFG0_PLLMF    RCU_CFG0_PLLMF_MUL27
+#define GD32_RCU_PLL1_MULF     RCU_CFG1_PLL1MF_MUL10
+#define GD32_RCU_PREDV0_DIV    RCU_CFG1_PREDV0_DIV10
+#define GD32_RCU_PREDV1_DIV    RCU_CFG1_PREDV1_DIV2
+#else
+#define GD32_RCU_PREDV0_DIV    RCU_CFG1_PREDV0_DIV2
+#endif
+
+#define GD32_FMC_WAIT_STATE   FMC_WS_WSCNT_7
 
 #define GD32_SYSCLK_FREQUENCY  108000000ul
 
@@ -114,14 +140,25 @@
  *
  * PLL source is HXTAL
  * PLL_VCO = (GD32_HXTAL_VALUE / PREDV0) * PLLMF
- *         = (8,000,000 / 2) * 24
- *         = 96,000,000
+ *         = 4 MHz * 24
+ *         = 96 MHz
+ * PREDV0 = (GD32_HXTAL_VALUE / 2) * GD32_RCU_PLL1_MULF / GD32_RCU_PREDV0_DIV
+ *        = (8 Hz / 2) * 10 / 10
+ *        = 4 MHz
  * SYSCLK  = PLL_VCO
- *         = 96,000,000
+ *         = 96 MHz
  */
 
-#define GD32_RCU_CFG0_PREDV0   RCU_CFG0_PREDV0_DIV2
+ #if defined(CONFIG_GD32E113_BOARD_PREDIV0_SELECT_PLL1)
 #define GD32_RCU_CFG0_PLLMF    RCU_CFG0_PLLMF_MUL24
+#define GD32_RCU_PLL1_MULF     RCU_CFG1_PLL1MF_MUL10
+#define GD32_RCU_PREDV0_DIV    RCU_CFG1_PREDV0_DIV10
+#define GD32_RCU_PREDV1_DIV    RCU_CFG1_PREDV1_DIV2
+#else
+#define GD32_RCU_PREDV0_DIV    RCU_CFG1_PREDV0_DIV2
+#endif
+
+#define GD32_FMC_WAIT_STATE   FMC_WS_WSCNT_7
 
 #define GD32_SYSCLK_FREQUENCY  96000000ul
 
@@ -131,14 +168,25 @@
  *
  * PLL source is HXTAL
  * PLL_VCO = (GD32_HXTAL_VALUE / PREDV0) * PLLMF
- *         = (8,000,000 / 2) * 18
- *         = 72,000,000
+ *         = 4 MHz * 18
+ *         = 72 MHz
+ * PREDV0 = (GD32_HXTAL_VALUE / 2) * GD32_RCU_PLL1_MULF / GD32_RCU_PREDV0_DIV
+ *        = (8 Hz / 2) * 10 / 10
+ *        = 4 MHz
  * SYSCLK  = PLL_VCO
- *         = 72,000,000
+ *         = 72 MHz
  */
 
-#define GD32_RCU_CFG0_PREDV0   RCU_CFG0_PREDV0_DIV2
+#if defined(CONFIG_GD32E113_BOARD_PREDIV0_SELECT_PLL1)
 #define GD32_RCU_CFG0_PLLMF    RCU_CFG0_PLLMF_MUL18
+#define GD32_RCU_PLL1_MULF     RCU_CFG1_PLL1MF_MUL10
+#define GD32_RCU_PREDV0_DIV    RCU_CFG1_PREDV0_DIV10
+#define GD32_RCU_PREDV1_DIV    RCU_CFG1_PREDV1_DIV2
+#else
+#define GD32_RCU_PREDV0_DIV    RCU_CFG1_PREDV0_DIV2
+#endif
+
+#define GD32_FMC_WAIT_STATE   FMC_WS_WSCNT_5
 
 #define GD32_SYSCLK_FREQUENCY  72000000ul
 
@@ -146,18 +194,18 @@
 
 /* AHB clock (HCLK) is SYSCLK */
 
-#define GD32_RCU_CFG0_AHB_PSC      RCU_CFG0_AHBPSC_CKSYS_DIV1  /* HCLK  = SYSCLK / 1 */
+#define GD32_RCU_CFG0_AHB_PSC      RCU_CFG0_AHBPSC_DIV1  /* HCLK  = SYSCLK / 1 */
 #define GD32_HCLK_FREQUENCY        GD32_SYSCLK_FREQUENCY
 
-/* APB2 clock (PCLK2) is HCLK/2 */
+/* APB2 clock (PCLK2) is HCLK/1 */
 
-#define GD32_RCU_CFG0_APB2_PSC     RCU_CFG0_APB2PSC_CKAHB_DIV2 /* PCLK2 = HCLK / 2 */
-#define GD32_PCLK2_FREQUENCY       (GD32_HCLK_FREQUENCY/2)
+#define GD32_RCU_CFG0_APB2_PSC     RCU_CFG0_APB2PSC_DIV1 /* PCLK2 = HCLK / 1 */
+#define GD32_PCLK2_FREQUENCY       (GD32_HCLK_FREQUENCY)
 
-/* APB1 clock (PCLK1) is HCLK/4 */
+/* APB1 clock (PCLK1) is HCLK/2 */
 
-#define GD32_RCU_CFG0_APB1_PSC     RCU_CFG0_APB1PSC_CKAHB_DIV4 /* PCLK1 = HCLK / 4 */
-#define GD32_PCLK1_FREQUENCY       (GD32_HCLK_FREQUENCY / 4)
+#define GD32_RCU_CFG0_APB1_PSC     RCU_CFG0_APB1PSC_DIV2 /* PCLK1 = HCLK / 2 */
+#define GD32_PCLK1_FREQUENCY       (GD32_HCLK_FREQUENCY / 2)
 
 /* Timers driven from APB1 will be twice PCLK1 */
 
@@ -230,7 +278,6 @@ typedef enum
  *
  *   SYMBOL                     Meaning                      LED state
  *                                                     LED1  LED2  LED3  LED4
- *   ----------------------  --------------------------  ----  ----  ----  ----
  */
 
 #define LED_STARTED        0 /* NuttX has been started   OFF   OFF   OFF   OFF  */
@@ -279,22 +326,22 @@ typedef enum
  *   -- ----- --------- -----
  */
 
-#  define GPIO_USART0_RX GPIO_USART0_RX_1
-#  define GPIO_USART0_TX GPIO_USART0_TX_1
+#  define GPIO_USART0_RX (GPIO_USART0_RX_0 | GPIO_CFG_MODE_OSPEED_50MHZ)
+#  define GPIO_USART0_TX (GPIO_USART0_TX_0 | GPIO_CFG_MODE_OSPEED_50MHZ)
 
 #if defined(CONFIG_SERIAL_IFLOWCONTROL) && defined(CONFIG_USART0_IFLOWCONTROL)
-#    define GPIO_USART0_RTS GPIO_USART0_RTS_1
+#    define GPIO_USART0_RTS (GPIO_USART0_RTS_0 | GPIO_CFG_MODE_OSPEED_50MHZ)
 #  endif
 #if defined(CONFIG_SERIAL_OFLOWCONTROL) && defined(CONFIG_USART0_OFLOWCONTROL)
-#    define GPIO_USART0_CTS GPIO_USART0_CTS_1
+#    define GPIO_USART0_CTS (GPIO_USART0_CTS_0 | GPIO_CFG_MODE_OSPEED_50MHZ)
 #  endif
 #endif
 
 #if CONFIG_GD32E11X_USART0_TXDMA
-#  define DMA_CHANNEL_USART0_TX    DMA_REQ_USART0_TX
+#  define DMA_CHANNEL_USART0_TX    DMA_REQ_USART0_TX_0
 #endif
 #if CONFIG_GD32E11X_USART0_RXDMA
-#  define DMA_CHANNEL_USART0_RX    DMA_REQ_USART0_RX_1
+#  define DMA_CHANNEL_USART0_RX    DMA_REQ_USART0_RX_0
 #endif
 
 #if defined(CONFIG_GD32E11X_USART_RXDMA) || defined(CONFIG_GD32E11X_USART_TXDMA)
@@ -306,8 +353,8 @@ typedef enum
  */
 
 #if defined(CONFIG_GD32E113VB_EVAL_CONSOLE_VIRTUAL)
-#  define GPIO_USART1_RX GPIO_USART1_RX_1
-#  define GPIO_USART1_TX GPIO_USART1_TX_1
+#  define GPIO_USART1_RX (GPIO_USART1_RX_0 | GPIO_CFG_MODE_OSPEED_50MHZ)
+#  define GPIO_USART1_TX (GPIO_USART1_TX_0 | GPIO_CFG_MODE_OSPEED_50MHZ)
 #endif
 
 #endif /* __BOARDS_ARM_GD32E113VB_EVAL_INCLUDE_BOARD_H */

@@ -48,9 +48,75 @@ extern "C"
 #define EXTERN extern
 #endif
 
-void gd32_syscfg_exti_line_config(uint8_t exti_port, uint8_t exti_pin);
+/****************************************************************************
+ * Name: gd32_syscfg_clock_enable
+ *
+ * Description:
+ *   This function enable the AFIO clock.
+ *
+ ****************************************************************************/
+
 void gd32_syscfg_clock_enable(void);
+
+/****************************************************************************
+ * Name: gd32_syscfg_clock_disable
+ *
+ * Description:
+ *   This function disable the AFIO clock.
+ *
+ ****************************************************************************/
+
 void gd32_syscfg_clock_disable(void);
+
+/****************************************************************************
+ * Name: gd32_syscfg_exti_line_config
+ *
+ * Description:
+ *   This function configure the GPIO pin as EXTI Line.
+ *
+ * Input Parameters:
+ *   exti_port - EXTI port source (GPIO_PORT_x)
+ *   exti_pin  - EXTI pin source (GPIO_PIN_x)
+ *
+ ****************************************************************************/
+
+void gd32_syscfg_exti_line_config(uint8_t exti_port, uint8_t exti_pin);
+
+/****************************************************************************
+ * Name: gd32_gpio_remap
+ *
+ * Description:
+ *   Configure GPIO remap for alternate functions.
+ *
+ ****************************************************************************/
+
+void gd32_gpio_remap(void);
+
+/****************************************************************************
+ * Name: gd32_gpio_compensation_config
+ *
+ * Description:
+ *   Enable or disable the I/O compensation cell.
+ *
+ * Input Parameters:
+ *   compensation - GPIO_COMPENSATION_ENABLE or GPIO_COMPENSATION_DISABLE
+ *
+ ****************************************************************************/
+
+void gd32_gpio_compensation_config(uint32_t compensation);
+
+/****************************************************************************
+ * Name: gd32_gpio_compensation_flag_get
+ *
+ * Description:
+ *   Check if I/O compensation cell is ready.
+ *
+ * Returned Value:
+ *   true if ready, false otherwise
+ *
+ ****************************************************************************/
+
+bool gd32_gpio_compensation_flag_get(void);
 
 #undef EXTERN
 #if defined(__cplusplus)

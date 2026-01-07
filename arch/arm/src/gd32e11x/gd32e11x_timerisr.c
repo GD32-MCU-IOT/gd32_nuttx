@@ -20,6 +20,10 @@
  *
  ****************************************************************************/
 
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
 #include <nuttx/config.h>
 
 #include <stdint.h>
@@ -34,15 +38,45 @@
 #include "arm_internal.h"
 
 #include "chip.h"
-#include "gd32e11x_rcu.h"
+#include "gd32e11x.h"
 
-/* SysTick runs from HCLK; configure it for CLK_TCK interrupts */
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* The desired timer interrupt frequency is provided by the definition
+ * CLK_TCK (see include/time.h).  CLK_TCK defines the desired number of
+ * system clock ticks per second.  That value is a user configurable setting
+ * that defaults to 1000 (1000 ticks per second = 1 MS interval).
+ *
+ * The RCU feeds the Cortex System Timer (SysTick) with the AHB clock (HCLK)
+ * divided by 8.  The SysTick can work either with this clock or with the
+ * Cortex clock (HCLK), configurable in the SysTick Control and Status
+ * register.
+ */
 
 #define SYSTICK_RELOAD ((GD32_SYSCLK_FREQUENCY / CLK_TCK) - 1)
+
+/* The size of the reload field is 24 bits.  Verify that the reload value
+ * will fit in the reload register.
+ */
 
 #if SYSTICK_RELOAD > 0x00ffffff
 #  error SYSTICK_RELOAD exceeds the range of the RELOAD register
 #endif
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Function:  gd32_timerisr
+ *
+ * Description:
+ *   The timer ISR will perform a variety of services for various portions
+ *   of the systems.
+ *
+ ****************************************************************************/
 
 #if !defined(CONFIG_ARMV7M_SYSTICK) && !defined(CONFIG_TIMER_ARCH)
 static int gd32_timerisr(int irq, void *context, void *arg)
@@ -52,11 +86,24 @@ static int gd32_timerisr(int irq, void *context, void *arg)
 }
 #endif
 
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Function:  up_timer_initialize
+ *
+ * Description:
+ *   This function is called during start-up to initialize
+ *   the timer interrupt.
+ *
+ ****************************************************************************/
+
 void up_timer_initialize(void)
 {
   uint32_t regval;
 
-	/* Set SysTick interrupt to default priority */
+  /* Set SysTick interrupt to default priority */
 
   regval = getreg32(NVIC_SYSH12_15_PRIORITY);
   regval &= ~NVIC_SYSH_PRIORITY_PR15_MASK;
@@ -64,7 +111,8 @@ void up_timer_initialize(void)
   putreg32(regval, NVIC_SYSH12_15_PRIORITY);
 
 #if defined(CONFIG_ARMV7M_SYSTICK) && defined(CONFIG_TIMER_ARCH)
-	up_timer_set_lowerhalf(systick_initialize(true, GD32_SYSCLK_FREQUENCY, -1));
+  up_timer_set_lowerhalf(systick_initialize(true, GD32_SYSCLK_FREQUENCY,
+                         -1));
 #else
   /* Configure SysTick to interrupt at the requested rate */
 

@@ -27,7 +27,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-/* GD32E113 Address Blocks ************************************************/
+/* GD32E113 Address Blocks **************************************************/
 
 #define GD32_CODE_BASE       0x00000000     /* 0x00000000-0x1fffffff: 512Mb code block */
 #define GD32_SRAM_BASE       0x20000000     /* 0x20000000-0x3fffffff: 512Mb sram block */

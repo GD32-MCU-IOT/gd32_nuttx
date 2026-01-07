@@ -70,24 +70,24 @@
 /* Pin mode (MD) - Bits [1:0] for each pin in CTL0/CTL1 */
 
 #define GPIO_MODE_INPUT                  (0) /* Input mode */
-#define GPIO_MODE_OUTPUT_10MHZ           (1) /* Output mode, max speed 10 MHz */
-#define GPIO_MODE_OUTPUT_2MHZ            (2) /* Output mode, max speed 2 MHz */
-#define GPIO_MODE_OUTPUT_50MHZ           (3) /* Output mode, max speed 50 MHz */
+#define GPIO_MODE_OSPEED_10MHZ           (1) /* Output mode, max speed 10 MHz */
+#define GPIO_MODE_OSPEED_2MHZ            (2) /* Output mode, max speed 2 MHz */
+#define GPIO_MODE_OSPEED_50MHZ           (3) /* Output mode, max speed 50 MHz */
 
 /* Pin configuration (CTL) - Bits [3:2] for each pin in CTL0/CTL1 */
 
 /* Input mode configuration */
 
-#define GPIO_CNF_IN_ANALOG               (0 << 2) /* Analog input mode */
-#define GPIO_CNF_IN_FLOATING             (1 << 2) /* Floating input mode */
-#define GPIO_CNF_IN_PUPD                 (2 << 2) /* Pull-up/pull-down input mode */
+#define GPIO_CTL_AIN                    (0 << 2) /* Analog input mode */
+#define GPIO_CTL_IN_FLOATING            (1 << 2) /* Floating input mode */
+#define GPIO_CTL_IN_PUPD                (2 << 2) /* Pull-up/pull-down input mode */
 
 /* Output mode configuration */
 
-#define GPIO_CNF_OUT_PP                  (0 << 2) /* GPIO output push-pull */
-#define GPIO_CNF_OUT_OD                  (1 << 2) /* GPIO output open-drain */
-#define GPIO_CNF_AF_PP                   (2 << 2) /* Alternate function output push-pull */
-#define GPIO_CNF_AF_OD                   (3 << 2) /* Alternate function output open-drain */
+#define GPIO_CTL_OUT_PP                 (0 << 2) /* GPIO output push-pull */
+#define GPIO_CTL_OUT_OD                 (1 << 2) /* GPIO output open-drain */
+#define GPIO_CTL_AF_PP                  (2 << 2) /* Alternate function output push-pull */
+#define GPIO_CTL_AF_OD                  (3 << 2) /* Alternate function output open-drain */
 
 /* CTL0 register bit field definitions (pins 0-7) */
 
@@ -95,6 +95,9 @@
 #define GPIO_CTL0_MD_MASK(n)             (0x3 << GPIO_CTL0_MD_SHIFT(n))
 #define GPIO_CTL0_CTL_SHIFT(n)           (((n) << 2) + 2)
 #define GPIO_CTL0_CTL_MASK(n)            (0x3 << GPIO_CTL0_CTL_SHIFT(n))
+
+#define GPIO_CTL0_MDCTL_SHIFT(n)         ((n) << 2)
+#define GPIO_CTL0_MDCTL_MASK(n)          (0x0f << GPIO_CTL0_MDCTL_SHIFT(n))
 
 #define GPIO_CTL0_MD0_SHIFT              (0)
 #define GPIO_CTL0_MD0_MASK               (0x3 << GPIO_CTL0_MD0_SHIFT)
@@ -199,13 +202,10 @@
 
 #define GPIO_BOP_SET(n)                  (1 << (n))
 #define GPIO_BOP_CLEAR(n)                (1 << ((n)+16))
-#define GPIO_BOP_BOP(n)                  (1 << (n))       /* Port set bit */
-#define GPIO_BOP_CR(n)                   (1 << ((n)+16))  /* Port clear bit */
 
 /* GPIO bit clear register (BC) */
 
 #define GPIO_BC_SET(n)                   (1 << (n))
-#define GPIO_BC_CR(n)                    (1 << (n))       /* Port clear bit */
 
 /* GPIO port configuration lock register (LOCK) */
 
