@@ -34,7 +34,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GD32_NEXTI                        20
+#define GD32_NEXTI                        19
 #define GD32_EXTI_MASK                    0x000fffff
 
 #define GD32_EXTI_BIT(n)                  (1 << (n))
@@ -123,5 +123,16 @@
 #define EXTI_16                          GD32_EXTI_BIT(16)     /* EXTI line 16 */
 #define EXTI_17                          GD32_EXTI_BIT(17)     /* EXTI line 17 */
 #define EXTI_18                          GD32_EXTI_BIT(18)     /* EXTI line 18 */
+
+/* External interrupt and event  */
+
+#define EXTI_INTERRUPT                   0                     /* EXTI interrupt mode */
+#define EXTI_EVENT                       1                     /* EXTI event mode */
+
+/* Interrupt trigger mode */
+#define EXTI_TRIG_RISING                 0                     /* EXTI rising edge trigger */
+#define EXTI_TRIG_FALLING                1                     /* EXTI falling edge trigger */
+#define EXTI_TRIG_BOTH                   2                     /* EXTI rising and falling edge trigger */
+#define EXTI_TRIG_NONE                   3                     /* None EXTI edge trigger */
 
 #endif /* __ARCH_ARM_SRC_GD32E11X_HARDWARE_GD32E11X_EXTI_H */

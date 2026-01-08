@@ -38,11 +38,15 @@
 
 #include "chip.h"
 
+#include "gd32e11x_dma.h"
 #include "gd32e11x_exti.h"
 #include "gd32e11x_fmc.h"
 #include "gd32e11x_gpio.h"
-#include "gd32e11x_rcu.h"
-#include "gd32e11x_syscfg.h"
 #include "gd32e11x_lowputc.h"
+#include "gd32e11x_pmu.h"
+#include "gd32e11x_rcu.h"
+#include "gd32e11x_serial.h"
+#include "gd32e11x_start.h"
+#include "gd32e11x_syscfg.h"
 
 #endif /* __ARCH_ARM_SRC_GD32E11X_GD32E11X_H */

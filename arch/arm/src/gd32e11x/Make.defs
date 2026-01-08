@@ -29,3 +29,15 @@ CHIP_CSRCS += gd32e11x_gpio.c gd32e11x_irq.c gd32e11x_exti.c gd32e11x_syscfg.c
 ifneq ($(CONFIG_SCHED_TICKLESS),y)
 CHIP_CSRCS += gd32e11x_timerisr.c
 endif
+
+ifneq ($(CONFIG_ARCH_IDLE_CUSTOM),y)
+CHIP_CSRCS += gd32e11x_idle.c
+endif
+
+ifeq ($(CONFIG_GD32E11X_SPI),y)
+CHIP_CSRCS += gd32fe11x_spi.c
+endif
+
+ifeq ($(CONFIG_GD32E11X_I2C),y)
+CHIP_CSRCS += gd32e11x_i2c.c
+endif

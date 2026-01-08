@@ -2291,6 +2291,35 @@ static int up_pm_prepare(struct pm_callback_s *cb, int domain,
  * Public Functions
  ****************************************************************************/
 
+#ifdef USE_SERIALDRIVER
+
+/****************************************************************************
+ * Name: gd32_serial_get_uart
+ *
+ * Description:
+ *   Get serial driver structure for GD32 USART
+ *
+ ****************************************************************************/
+
+#ifdef HAVE_SERIALDRIVER
+uart_dev_t *gd32_serial_get_uart(int uart_idx)
+{
+  if (uart_idx < 0 || uart_idx >= GD32_NUSART || !g_uart_devs[uart_idx])
+    {
+      return NULL;
+    }
+
+  struct up_dev_s *priv = (struct up_dev_s *)g_uart_devs[uart_idx]->priv;
+  if (!priv->initialized)
+    {
+      return NULL;
+    }
+
+  return g_uart_devs[uart_idx];
+}
+#endif /* HAVE_SERIALDRIVER */
+#endif /* USE_SERIALDRIVER */
+
 #ifdef USE_EARLYSERIALINIT
 
 /****************************************************************************
