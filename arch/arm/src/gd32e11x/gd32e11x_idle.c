@@ -35,7 +35,7 @@
 #include <nuttx/irq.h>
 
 #include "chip.h"
-
+#include "gd32e11x.h"
 #include "arm_internal.h"
 
 /****************************************************************************
@@ -166,10 +166,9 @@ void up_idle(void)
 
   up_idlepm();
 
-// #if !defined(CONFIG_DEBUG_SYMBOLS)
   BEGIN_IDLE();
   asm("WFI");
   END_IDLE();
-// #endif
+
 #endif
 }

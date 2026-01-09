@@ -28,32 +28,13 @@
  ****************************************************************************/
 
 #include <nuttx/config.h>
+
+#include "chip.h"
 #include "hardware/gd32e11x_rcu.h"
 
-/* Default clock assumptions for minimal bring-up.
- * Boards can override these by defining the macros before including this
- * header.
- */
-
-#ifndef GD32_IRC8M_FREQUENCY
-#  define GD32_IRC8M_FREQUENCY   8000000u
-#endif
-
-#ifndef GD32_SYSCLK_FREQUENCY
-#  define GD32_SYSCLK_FREQUENCY  GD32_IRC8M_FREQUENCY
-#endif
-
-#ifndef GD32_HCLK_FREQUENCY
-#  define GD32_HCLK_FREQUENCY    GD32_SYSCLK_FREQUENCY
-#endif
-
-#ifndef GD32_PCLK1_FREQUENCY
-#  define GD32_PCLK1_FREQUENCY   (GD32_HCLK_FREQUENCY/2)
-#endif
-
-#ifndef GD32_PCLK2_FREQUENCY
-#  define GD32_PCLK2_FREQUENCY   GD32_HCLK_FREQUENCY
-#endif
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
 
 #ifndef __ASSEMBLY__
 

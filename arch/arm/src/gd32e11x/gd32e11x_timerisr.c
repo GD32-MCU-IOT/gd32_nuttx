@@ -28,10 +28,10 @@
 
 #include <stdint.h>
 #include <time.h>
-
 #include <debug.h>
-
 #include <nuttx/arch.h>
+#include <nuttx/timers/arch_timer.h>
+#include <arch/board/board.h>
 
 #include "nvic.h"
 #include "clock/clock.h"
@@ -79,8 +79,10 @@
  ****************************************************************************/
 
 #if !defined(CONFIG_ARMV7M_SYSTICK) && !defined(CONFIG_TIMER_ARCH)
-static int gd32_timerisr(int irq, void *context, void *arg)
+static int gd32_timerisr(int irq, uint32_t *regs, void *arg)
 {
+  /* Process timer interrupt */
+
   nxsched_process_timer();
   return 0;
 }
@@ -110,6 +112,8 @@ void up_timer_initialize(void)
   regval |= (NVIC_SYSH_PRIORITY_DEFAULT << NVIC_SYSH_PRIORITY_PR15_SHIFT);
   putreg32(regval, NVIC_SYSH12_15_PRIORITY);
 
+  /* Make sure that the SYSTICK clock source is set correctly */
+
 #if defined(CONFIG_ARMV7M_SYSTICK) && defined(CONFIG_TIMER_ARCH)
   up_timer_set_lowerhalf(systick_initialize(true, GD32_SYSCLK_FREQUENCY,
                          -1));
@@ -120,7 +124,7 @@ void up_timer_initialize(void)
 
   /* Attach the timer interrupt vector */
 
-  irq_attach(GD32_IRQ_SYSTICK, gd32_timerisr, NULL);
+  irq_attach(GD32_IRQ_SYSTICK, (xcpt_t)gd32_timerisr, NULL);
 
   /* Enable SysTick interrupts */
 

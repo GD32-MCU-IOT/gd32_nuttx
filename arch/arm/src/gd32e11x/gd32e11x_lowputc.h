@@ -46,10 +46,43 @@ extern "C"
 #define EXTERN extern
 #endif
 
+/****************************************************************************
+ * Name: gd32_lowsetup
+ *
+ * Description:
+ *   Called at the very beginning of _start.
+ *   Performs low level initialization of serial console.
+ *
+ ****************************************************************************/
+
 void gd32_lowsetup(void);
 
+/****************************************************************************
+ * Name: gd32_usart_reset
+ *
+ * Description:
+ *   Reset the USART.
+ *
+ ****************************************************************************/
+
 void gd32_usart_reset(uint32_t usartbase);
+
+/****************************************************************************
+ * Name: gd32_usart_clock_enable
+ *
+ * Description:
+ *   Enable USART clock
+ ****************************************************************************/
+
 void gd32_usart_clock_enable(uint32_t usartbase);
+
+/****************************************************************************
+ * Name: gd32_usart_clock_disable
+ *
+ * Description:
+ *   Dinable USART clock
+ ****************************************************************************/
+
 void gd32_usart_clock_disable(uint32_t usartbase);
 
 #undef EXTERN

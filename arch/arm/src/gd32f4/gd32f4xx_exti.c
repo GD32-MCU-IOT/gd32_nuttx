@@ -212,6 +212,14 @@ static int gd32_exti5_9_irqhandler(int irq, void *context, void *arg)
   return ret;
 }
 
+/****************************************************************************
+ * Name: gd32_exti10_15_irqhandler
+ *
+ * Description:
+ *   EXTI lines 10-15 shared interrupt handler.
+ *
+ ****************************************************************************/
+
 static int gd32_exti10_15_irqhandler(int irq, void *context, void *arg)
 {
   int ret = OK;

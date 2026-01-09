@@ -33,6 +33,21 @@
 #include "gd32e11x.h"
 
 /****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+#ifndef __ASSEMBLY__
+
+#undef EXTERN
+#if defined(__cplusplus)
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
+
+/****************************************************************************
  * Private Types
  ****************************************************************************/
 
@@ -320,7 +335,7 @@ int gd32_exti_gpioirq_init(uint32_t cfgset, uint8_t exti_mode,
   /* Verify that this hardware supports the selected GPIO port */
 
   port = (cfgset & GPIO_CFG_PORT_MASK) >> GPIO_CFG_PORT_SHIFT;
-  if (port > 4)
+  if (port >= GD32_NGPIO_PORTS)
     {
       return -EINVAL;
     }
@@ -509,7 +524,7 @@ int gd32_gpio_exti_linex_get(uint32_t cfgset, uint32_t *linex)
   /* Verify that this hardware supports the selected GPIO port */
 
   port = (cfgset & GPIO_CFG_PORT_MASK) >> GPIO_CFG_PORT_SHIFT;
-  if (port > 4)
+  if (port >= GD32_NGPIO_PORTS)
     {
       return -EINVAL;
     }
@@ -554,7 +569,7 @@ int gd32_gpio_exti_irqnum_get(uint32_t cfgset, uint8_t *irqnum)
   /* Verify that this hardware supports the selected GPIO port */
 
   port = (cfgset & GPIO_CFG_PORT_MASK) >> GPIO_CFG_PORT_SHIFT;
-  if (port > 4)
+  if (port >= GD32_NGPIO_PORTS)
     {
       return -EINVAL;
     }
@@ -669,27 +684,32 @@ void gd32_exti_software_interrupt_disable(uint32_t linex)
  * Name: gd32_exti_interrupt_flag_get
  *
  * Description:
- *   Get EXTI interrupt flag status.
+ *   Get EXTI lines flag when the interrupt flag is set.
  *
  * Input Parameters:
- *   linex - EXTI line number (bit mask)
+ *  - linex: EXTI line number
  *
  * Returned Value:
- *   true if interrupt flag is set; false otherwise.
+ *   status of flag (false or true)
  *
  ****************************************************************************/
 
 bool gd32_exti_interrupt_flag_get(uint32_t linex)
 {
-  uint32_t pd;
-  uint32_t inten;
+  uint32_t regval0;
+  uint32_t regval1;
 
-  /* Check pending flag and interrupt enable status */
+  regval0 = (getreg32(GD32_EXTI_PD) & linex);
+  regval1 = (getreg32(GD32_EXTI_INTEN) & linex);
 
-  pd    = (getreg32(GD32_EXTI_PD) & linex);
-  inten = (getreg32(GD32_EXTI_INTEN) & linex);
-
-  return ((pd & inten) != 0);
+  if ((regval0 & regval1))
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
 }
 
 /****************************************************************************
@@ -699,7 +719,7 @@ bool gd32_exti_interrupt_flag_get(uint32_t linex)
  *   Clear EXTI interrupt flag.
  *
  * Input Parameters:
- *   linex - EXTI line number (bit mask)
+ *  - linex: EXTI line number
  *
  ****************************************************************************/
 
@@ -709,3 +729,10 @@ void gd32_exti_interrupt_flag_clear(uint32_t linex)
 
   putreg32(linex, GD32_EXTI_PD);
 }
+
+#undef EXTERN
+#if defined(__cplusplus)
+}
+#endif
+
+#endif /* __ASSEMBLY__ */

@@ -201,7 +201,6 @@ void arm_lowputc(char ch)
   putreg32((uint32_t)(ch & USART_DATA_MASK),
            GD32_CONSOLE_BASE + GD32_USART_DATA_OFFSET);
 
-#ifdef GD32_CONSOLE_RS485_DIR
   /* Wait for transmission complete */
 
   while ((getreg32(GD32_CONSOLE_BASE + GD32_USART_STAT0_OFFSET) &
@@ -209,6 +208,7 @@ void arm_lowputc(char ch)
     {
     }
 
+#ifdef GD32_CONSOLE_RS485_DIR
   gd32_gpio_write(GD32_CONSOLE_RS485_DIR,
                   !GD32_CONSOLE_RS485_DIR_POLARITY);
 #endif
@@ -230,17 +230,19 @@ void arm_lowputc(char ch)
 
 void gd32_lowsetup(void)
 {
-#ifdef HAVE_SERIALDRIVER
-#ifndef CONFIG_SUPPRESS_UART_CONFIG
+#if defined(HAVE_SERIALDRIVER)
+#if defined(HAVE_CONSOLE) && !defined(CONFIG_SUPPRESS_UART_CONFIG)
   uint32_t regval;
   uint32_t udiv;
   uint32_t intdiv;
   uint32_t fradiv;
 #endif
 
+#if defined(HAVE_CONSOLE)
   /* Enable console peripheral clock */
 
   modifyreg32(GD32_CONSOLE_APBEN_REG, 0, GD32_CONSOLE_APBEN);
+#endif
 
   /* Configure TX/RX pins (board-provided encodings) */
 
@@ -257,11 +259,16 @@ void gd32_lowsetup(void)
                   !GD32_CONSOLE_RS485_DIR_POLARITY);
 #endif
 
-#ifndef CONFIG_SUPPRESS_UART_CONFIG
+  /* Enable and configure the selected console device */
 
-  /* Reset USART and enable USART clock */
+#if defined(HAVE_CONSOLE) && !defined(CONFIG_SUPPRESS_UART_CONFIG)
+
+  /* Reset USART */
 
   gd32_usart_reset(GD32_CONSOLE_BASE);
+
+  /* Enable USART clock */
+
   gd32_usart_clock_enable(GD32_CONSOLE_BASE);
 
   /* Disable USART before configuring it */

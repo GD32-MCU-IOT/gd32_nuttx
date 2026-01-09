@@ -36,18 +36,6 @@
 #include "chip.h"
 #include "hardware/gd32e11x_exti.h"
 
-/* External interrupt and event */
-
-#define EXTI_INTERRUPT                   0  /* EXTI interrupt mode */
-#define EXTI_EVENT                       1  /* EXTI event mode */
-
-/* Interrupt trigger mode */
-
-#define EXTI_TRIG_RISING                 0  /* EXTI rising edge trigger */
-#define EXTI_TRIG_FALLING                1  /* EXTI falling edge trigger */
-#define EXTI_TRIG_BOTH                   2  /* EXTI rising and falling edge trigger */
-#define EXTI_TRIG_NONE                   3  /* None EXTI edge trigger */
-
 /****************************************************************************
  * Public Data
  ****************************************************************************/
