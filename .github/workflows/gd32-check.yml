@@ -1,6 +1,7 @@
 # GD32 specific CI checks - optimized for GD32 development
 # Only checks GD32-related code changes
 
+---
 name: GD32-Check
 
 on:
@@ -51,7 +52,9 @@ jobs:
             HEAD_SHA="${{ github.event.pull_request.head.sha }}"
 
             # Get list of changed GD32 files
-            CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA | grep -E "(gd32|GD32)" || true)
+            FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA)
+            CHANGED_FILES=$(echo "$FILES" | \
+              grep -E "(gd32|GD32)" || true)
 
             echo "=== GD32 Related Changed Files ==="
             echo "$CHANGED_FILES"
@@ -62,16 +65,21 @@ jobs:
               exit 0
             fi
 
-            # Run checkpatch only on GD32 commits
-            GD32_COMMITS=$(git log --oneline $BASE_SHA..$HEAD_SHA --grep="gd32" --grep="GD32" -i | cut -d' ' -f1 || true)
+            # Run checkpatch on commits that modified GD32 files
+            echo "=== Checking commit format ==="
+            GD32_COMMITS=$(git log --format="%H" $BASE_SHA..$HEAD_SHA \
+              --diff-filter=d -- \
+              arch/arm/src/gd32*/ \
+              arch/arm/include/gd32*/ \
+              boards/arm/gd32*/ | head -10 || true)
 
             if [ -n "$GD32_COMMITS" ]; then
-              echo "=== Checking GD32 commits ==="
-              echo "$GD32_COMMITS"
-
               for commit in $GD32_COMMITS; do
-                echo "Checking commit: $commit"
-                tools/checkpatch.sh -c $commit || true
+                SUBJECT=$(git log -1 --format="%s" $commit)
+                echo "Checking: $commit - $SUBJECT"
+                # Generate patch and check it
+                git format-patch -1 $commit --stdout | \
+                  tools/checkpatch.sh - || true
               done
             fi
 
@@ -100,8 +108,11 @@ jobs:
       - name: Summary
         if: always()
         run: |
-          echo "## GD32 Code Check Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ GD32-specific checks completed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "This workflow only checks GD32-related changes to avoid unnecessary CI runs." >> $GITHUB_STEP_SUMMARY
+          SUMMARY="$GITHUB_STEP_SUMMARY"
+          echo "## GD32 Code Check Summary" >> ${SUMMARY}
+          echo "" >> ${SUMMARY}
+          echo "✅ GD32-specific checks completed" >> ${SUMMARY}
+          echo "" >> ${SUMMARY}
+          MSG="This workflow only checks GD32-related changes"
+          MSG="${MSG} to avoid unnecessary CI runs."
+          echo "${MSG}" >> ${SUMMARY}

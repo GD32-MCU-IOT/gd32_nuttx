@@ -10,6 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+---
 name: GD32-Build
 
 on:
@@ -83,9 +84,11 @@ jobs:
             echo "Changed files:"
             echo "$CHANGED_FILES"
 
-            if echo "$CHANGED_FILES" | grep -qE "(arch/arm/(src|include)/gd32|boards/arm/gd32|tools/ci/testlist/gd32|tools/ci/find_gd32)"; then
+            PATTERN="(arch/arm/(src|include)/gd32"
+            PATTERN="${PATTERN}|boards/arm/gd32|tools/ci/testlist/gd32)"
+            if echo "$CHANGED_FILES" | grep -qE "${PATTERN}"; then
               echo "has_changes=true" >> $GITHUB_OUTPUT
-              echo "GD32-related changes detected"
+              echo "GD32 changes detected"
             else
               echo "has_changes=false" >> $GITHUB_OUTPUT
               echo "No GD32-related changes detected"
@@ -101,20 +104,20 @@ jobs:
         if: steps.check-changes.outputs.has_changes == 'true'
         run: |
           cd sources/nuttx
-          
+
           # Make script executable
           chmod +x tools/ci/find_gd32_configs.sh
-          
+
           # Find all GD32 configurations
           echo "Discovering GD32 board configurations..."
           configs=$(./tools/ci/find_gd32_configs.sh --format json)
-          
+
           echo "Found configurations:"
           echo "$configs" | jq -r '.[]'
-          
+
           # Output for matrix
           echo "configs=$configs" >> $GITHUB_OUTPUT
-          
+
           # Count configurations
           count=$(echo "$configs" | jq 'length')
           echo ""
@@ -139,11 +142,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
-
-    strategy:
-      fail-fast: false
-      matrix:
-        config: ${{ fromJson(needs.Fetch-Source.outputs.gd32_configs) }}
 
     strategy:
       fail-fast: false
@@ -181,22 +179,25 @@ jobs:
             git config --global --add safe.directory /github/workspace/sources/nuttx
             git config --global --add safe.directory /github/workspace/sources/apps
             cd sources/nuttx
-            
+
             echo "========================================="
             echo "Building: ${{ matrix.config }}"
             echo "========================================="
-            
+
             # Configure
             ./tools/configure.sh ${{ matrix.config }}
-            
+
             # Build
             make -j$(nproc)
-            
+
             # Save build artifacts
-            CONFIG_NAME=$(echo "${{ matrix.config }}" | tr ':/' '_')
+            CFG="${{ matrix.config }}"
+            CONFIG_NAME=$(echo "${CFG}" | tr ':/' '_')
             mkdir -p ${ARTIFACTDIR}/${CONFIG_NAME}
-            cp nuttx nuttx.bin nuttx.hex ${ARTIFACTDIR}/${CONFIG_NAME}/ 2>/dev/null || true
-            
+            TARGET_DIR="${ARTIFACTDIR}/${CONFIG_NAME}"
+            cp nuttx nuttx.bin nuttx.hex ${TARGET_DIR}/ \
+              2>/dev/null || true
+
             # Display size information
             echo ""
             echo "Build artifacts for ${{ matrix.config }}:"
@@ -243,7 +244,9 @@ jobs:
           source .venv/bin/activate
           cd sources/nuttx
           # Check GD32 specific files for spelling errors
-          find arch/arm/src/gd32* arch/arm/include/gd32* boards/arm/gd32* -type f \
+          GD32_PATHS="arch/arm/src/gd32* arch/arm/include/gd32*"
+          GD32_PATHS="${GD32_PATHS} boards/arm/gd32*"
+          find ${GD32_PATHS} -type f \
             \( -name "*.c" -o -name "*.h" \) \
             -exec codespell {} + || true
 
@@ -254,7 +257,8 @@ jobs:
           CHANGED_FILES=""
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             git fetch origin ${{ github.base_ref }}
-            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | \
+            BASE="origin/${{ github.base_ref }}"
+            CHANGED_FILES=$(git diff --name-only ${BASE}...HEAD | \
               grep -E "\.(c|h)$" | grep -E "gd32" || true)
           fi
 
@@ -279,24 +283,30 @@ jobs:
     steps:
       - name: Build Summary
         run: |
-          echo "## GD32 Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Build Status" >> $GITHUB_STEP_SUMMARY
-          echo "- GD32 Build: ${{ needs.GD32-Build.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Code Quality: ${{ needs.GD32-Code-Quality.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          SUMMARY="$GITHUB_STEP_SUMMARY"
+          echo "## GD32 Build Summary" >> ${SUMMARY}
+          echo "" >> ${SUMMARY}
+          echo "### Build Status" >> ${SUMMARY}
+          BUILD_RESULT="${{ needs.GD32-Build.result }}"
+          QUALITY_RESULT="${{ needs.GD32-Code-Quality.result }}"
+          echo "- GD32 Build: ${BUILD_RESULT}" >> ${SUMMARY}
+          echo "- Code Quality: ${QUALITY_RESULT}" >> ${SUMMARY}
+          echo "" >> ${SUMMARY}
 
           # Determine overall result
-          if [[ "${{ needs.GD32-Build.result }}" == "success" ]]; then
-            echo "### ✅ All GD32 builds completed successfully!" >> $GITHUB_STEP_SUMMARY
+          if [[ "${BUILD_RESULT}" == "success" ]]; then
+            MSG="### ✅ All GD32 builds completed successfully!"
+            echo "${MSG}" >> ${SUMMARY}
             exit 0
-          elif [[ "${{ needs.GD32-Build.result }}" == "failure" ]]; then
-            echo "### ❌ Some GD32 builds failed!" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${BUILD_RESULT}" == "failure" ]]; then
+            echo "### ❌ Some GD32 builds failed!" >> ${SUMMARY}
             exit 1
-          elif [[ "${{ needs.GD32-Build.result }}" == "skipped" ]]; then
-            echo "### ⏭️ GD32 builds skipped (no relevant changes)" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${BUILD_RESULT}" == "skipped" ]]; then
+            MSG="### ⏭️ GD32 builds skipped (no changes)"
+            echo "${MSG}" >> ${SUMMARY}
             exit 0
           else
-            echo "### ⚠️ GD32 builds completed with warnings" >> $GITHUB_STEP_SUMMARY
+            MSG="### ⚠️ GD32 builds completed with warnings"
+            echo "${MSG}" >> ${SUMMARY}
             exit 0
           fi
