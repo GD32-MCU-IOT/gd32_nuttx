@@ -5,6 +5,7 @@
 name: GD32-Check
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'arch/arm/src/gd32*/**'

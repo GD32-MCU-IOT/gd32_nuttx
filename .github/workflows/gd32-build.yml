@@ -35,6 +35,7 @@ on:
       - main
       - 'releases/*'
       - 'gd32-dev*'
+      - 'gd32_nuttx_ci_change'
     paths:
       - 'arch/arm/src/gd32*/**'
       - 'arch/arm/include/gd32*/**'
