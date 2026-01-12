@@ -120,7 +120,7 @@
 
 #define GPIO_ADJUST_CFG_MODE(cfg, spd) (((cfg) & ~GPIO_CFG_MODE_MASK) | (spd))
 
-/* GPIO MAX output speed (Addional definitions for GPIO speed):
+/* GPIO MAX output speed (Additional definitions for GPIO speed):
  *
  * 1111 1100 0000 0000
  * 5432 1098 7654 3210
