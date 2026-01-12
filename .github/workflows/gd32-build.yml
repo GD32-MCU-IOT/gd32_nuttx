@@ -35,7 +35,6 @@ on:
       - main
       - 'releases/*'
       - 'gd32-dev*'
-      - 'gd32_nuttx_ci_change'
     paths:
       - 'arch/arm/src/gd32*/**'
       - 'arch/arm/include/gd32*/**'
@@ -80,8 +79,9 @@ jobs:
           cd sources/nuttx
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             # For PRs, check changed files
-            git fetch origin ${{ github.base_ref }}
-            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+            BASE_REF="${{ github.base_ref }}"
+            git fetch origin ${BASE_REF}
+            CHANGED_FILES=$(git diff --name-only origin/${BASE_REF}...HEAD)
             echo "Changed files:"
             echo "$CHANGED_FILES"
 
@@ -177,8 +177,10 @@ jobs:
           run: |
             echo "::add-matcher::sources/nuttx/.github/gcc.json"
             export ARTIFACTDIR=`pwd`/buildartifacts
-            git config --global --add safe.directory /github/workspace/sources/nuttx
-            git config --global --add safe.directory /github/workspace/sources/apps
+            NUTTX_DIR="/github/workspace/sources/nuttx"
+            APPS_DIR="/github/workspace/sources/apps"
+            git config --global --add safe.directory "${NUTTX_DIR}"
+            git config --global --add safe.directory "${APPS_DIR}"
             cd sources/nuttx
 
             echo "========================================="

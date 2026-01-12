@@ -14,11 +14,6 @@ name: Build
 
 on:
   pull_request:
-    paths:
-      # Exclude GD32 paths - they use gd32-build.yml
-      - '!arch/arm/src/gd32*/**'
-      - '!arch/arm/include/gd32*/**'
-      - '!boards/arm/gd32*/**'
     paths-ignore:
       - 'AUTHORS'
       - 'CONTRIBUTING.md'
