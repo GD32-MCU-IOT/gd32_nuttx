@@ -21,6 +21,9 @@ on:
       - 'Documentation/**'
       - 'tools/ci/docker/linux/**'
       - 'tools/codeowners/*'
+      - 'arch/arm/src/gd32*/**'
+      - 'arch/arm/include/gd32*/**'
+      - 'boards/arm/gd32*/**'
   push:
     paths-ignore:
       - 'AUTHORS'
