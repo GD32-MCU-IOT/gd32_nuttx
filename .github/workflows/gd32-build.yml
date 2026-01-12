@@ -22,24 +22,7 @@ on:
       - 'drivers/**'
       - 'include/**'
       - '.github/workflows/gd32-build.yml'
-      - 'tools/ci/testlist/gd32*.dat'
-    paths-ignore:
-      - 'AUTHORS'
-      - 'CONTRIBUTING.md'
-      - 'Documentation/**'
-      - '**/README.md'
-      - '**/README.txt'
-  push:
-    branches:
-      - master
-      - main
-      - 'releases/*'
-      - 'gd32-dev*'
-    paths:
-      - 'arch/arm/src/gd32*/**'
-      - 'arch/arm/include/gd32*/**'
-      - 'boards/arm/gd32*/**'
-      - '.github/workflows/gd32-build.yml'
+      - 'tools/ci/find_gd32_configs.sh'
       - 'tools/ci/testlist/gd32*.dat'
   workflow_dispatch:
 
