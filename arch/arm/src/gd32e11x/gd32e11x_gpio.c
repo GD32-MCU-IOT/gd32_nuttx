@@ -215,7 +215,7 @@ int gd32_gpio_config(uint32_t cfgset)
 
       /* Handle extended speed bit if present */
 
-      if ((cfgset & GPIO_CFG_OSPEED_A) != 0)
+      if ((cfgset & GPIO_CFG_SPEED_A) != 0)
         {
           putreg32(GPIO_SPD_SET(pin), GD32_GPIO_SPD(port_base));
         }

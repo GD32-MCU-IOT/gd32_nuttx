@@ -111,12 +111,12 @@
 
 #define GPIO_CFG_MODE_SHIFT           11                               /* Bits 11-12: GPIO pin speed */
 #define GPIO_CFG_MODE_MASK            (3 << GPIO_CFG_MODE_SHIFT)
-#  define GPIO_CFG_MODE_INPUT         (0 << GPIO_CFG_MODE_SHIFT)     /* Input mode (reset state) */
-#  define GPIO_CFG_MODE_OSPEED_10MHZ  (1 << GPIO_CFG_MODE_SHIFT)     /* Output mode, max speed 10 MHz */
-#  define GPIO_CFG_MODE_OSPEED_2MHZ   (2 << GPIO_CFG_MODE_SHIFT)     /* Output mode, max speed 2 MHz */
-#  define GPIO_CFG_MODE_OSPEED_50MHZ  (3 << GPIO_CFG_MODE_SHIFT)     /* Output mode, max speed 50 MHz */
-#  define GPIO_CFG_MODE_OSPEED_MAX    ((3 << GPIO_CFG_MODE_SHIFT) \
-                                       | GPIO_CFG_OSPEED_A)            /* Output mode, max speed more than 50 MHz */
+#  define GPIO_CFG_MODE_INPUT         (0 << GPIO_CFG_MODE_SHIFT)       /* Input mode (reset state) */
+#  define GPIO_CFG_SPEED_10MHZ        (1 << GPIO_CFG_MODE_SHIFT)       /* Output mode, max speed 10 MHz */
+#  define GPIO_CFG_SPEED_2MHZ         (2 << GPIO_CFG_MODE_SHIFT)       /* Output mode, max speed 2 MHz */
+#  define GPIO_CFG_SPEED_50MHZ        (3 << GPIO_CFG_MODE_SHIFT)       /* Output mode, max speed 50 MHz */
+#  define GPIO_CFG_SPEED_MAX          ((3 << GPIO_CFG_MODE_SHIFT) \
+                                       | GPIO_CFG_SPEED_A)             /* Output mode, max speed more than 50 MHz */
 
 #define GPIO_ADJUST_CFG_MODE(cfg, spd) (((cfg) & ~GPIO_CFG_MODE_MASK) | (spd))
 
@@ -128,7 +128,7 @@
  * .... .A.. .... ....
  */
 
-#define GPIO_CFG_OSPEED_A             (1 << 10)                        /* Bit 10: Additional definitions for MAX OSPEED */
+#define GPIO_CFG_SPEED_A             (1 << 10)                         /* Bit 10: Additional definitions for MAX OSPEED */
 
 /* External interrupt selection (GPIO inputs only):
  *

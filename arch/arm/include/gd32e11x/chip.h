@@ -38,7 +38,7 @@
  * NOTE: CONFIG_ARCH_CHIP_GD32E113VB is added for GD32E113x(VB) package.
  */
 
-#if defined(CONFIG_ARCH_CHIP_GD32E113VB) || defined(CONFIG_ARCH_CHIP_GD32E113) || defined(CONFIG_ARCH_CHIP_GD32E11X)
+#if defined(CONFIG_ARCH_CHIP_GD32E113VB)
 /* Resources based on GD32E113xx device feature table (VB column) */
 
 #  define GD32_NGPIO_PORTS              5   /* GPIOA-E (80 pins / 16 pins per port) */
@@ -47,12 +47,29 @@
 #  define GD32_NDAC                     1   /* DAC */
 
 #  define GD32_NATIMER                  2   /* Advanced timers: TIMER0,7 */
-#  define GD32_NGTIMER                  4   /* General timers: TIMER1-4 */
-#  define GD32_NGTIMNDMA                6   /* General timers: TIMER8-13 */
+#  define GD32_NGTIMER                  10  /* General timers: TIMER1-4, TIMER8-13 */
+#  define GD32_NBTIMER                  2   /* Basic timers: TIMER5-6 */
+
+#  define GD32_NUSART                   5   /* USART0-2, UART3-4 */
+#  define GD32_NI2C                     2   /* I2C0-1 */
+#  define GD32_NSPI                     3   /* SPI0-2 */
+#  define GD32_NI2S                     2   /* I2S1-2 (muxed with SPI1-2) */
+#  define GD32_NUSBFS                   1   /* USBFS */
+#  define GD32_NEXMC                    1   /* EXMC */
+
+#elif defined(CONFIG_ARCH_CHIP_GD32E113CB)
+/* Resources based on GD32E113xx device feature table (CB column) */
+
+#  define GD32_NGPIO_PORTS              5   /* GPIOA-E (80 pins / 16 pins per port) */
+#  define GD32_NDMA                     2   /* DMA0-1 */
+#  define GD32_NADC                     2   /* ADC0-1 */
+#  define GD32_NDAC                     1   /* DAC */
+
+#  define GD32_NATIMER                  1   /* Advanced timers: TIMER0,7 */
+#  define GD32_NGTIMER                  10  /* General timers: TIMER1-4, TIMER8-13 */
 #  define GD32_NBTIMER                  2   /* Basic timers: TIMER5-6 */
 
 #  define GD32_NUSART                   3   /* USART0-2 */
-#  define GD32_NUART                    2   /* UART3-4 */
 #  define GD32_NI2C                     2   /* I2C0-1 */
 #  define GD32_NSPI                     3   /* SPI0-2 */
 #  define GD32_NI2S                     2   /* I2S1-2 (muxed with SPI1-2) */
