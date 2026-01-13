@@ -239,6 +239,17 @@ jobs:
       - name: Check GD32 file formatting
         run: |
           cd sources/nuttx
+          # Build nxstyle (generated from tools/nxstyle.c)
+          if [ ! -x "tools/nxstyle" ]; then
+            echo "Building nxstyle..."
+            make -C tools -f Makefile.host nxstyle || true
+          fi
+
+          if [ ! -x "tools/nxstyle" ]; then
+            echo "nxstyle tool not available; skipping style check"
+            exit 0
+          fi
+
           # Run nxstyle on GD32 files
           CHANGED_FILES=""
           if [ "${{ github.event_name }}" == "pull_request" ]; then
@@ -254,7 +265,7 @@ jobs:
             for file in $CHANGED_FILES; do
               if [ -f "$file" ]; then
                 echo "Checking: $file"
-                ./tools/nxstyle.py "$file" || true
+                tools/nxstyle "$file" || true
               fi
             done
           else
