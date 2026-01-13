@@ -133,6 +133,14 @@ jobs:
         config: ${{ fromJson(needs.Fetch-Source.outputs.gd32_configs) }}
 
     steps:
+      - name: Compute artifact name
+        id: artifact
+        shell: bash
+        run: |
+          CFG="${{ matrix.config }}"
+          SAFE=$(echo "${CFG}" | tr ':/' '__')
+          echo "name=gd32-${SAFE}-build" >> $GITHUB_OUTPUT
+
       - name: Download Source Artifact
         uses: actions/download-artifact@v7
         with:
@@ -164,40 +172,53 @@ jobs:
             APPS_DIR="/github/workspace/sources/apps"
             git config --global --add safe.directory "${NUTTX_DIR}"
             git config --global --add safe.directory "${APPS_DIR}"
+
+            CFG="${{ matrix.config }}"
+            CONFIG_NAME=$(echo "${CFG}" | tr ':/' '_')
+            mkdir -p "${ARTIFACTDIR}/${CONFIG_NAME}"
+            TARGET_DIR="${ARTIFACTDIR}/${CONFIG_NAME}"
+
             cd sources/nuttx
 
             echo "========================================="
             echo "Building: ${{ matrix.config }}"
             echo "========================================="
 
-            # Configure
-            ./tools/configure.sh ${{ matrix.config }}
+            # Configure (capture logs so failures still upload artifacts)
+            set +e
+            ./tools/configure.sh "${CFG}" 2>&1 | tee "${TARGET_DIR}/configure.log"
+            CFG_RC=${PIPESTATUS[0]}
 
             # Build
-            make -j$(nproc)
+            if [ ${CFG_RC} -eq 0 ]; then
+              make -j$(nproc) 2>&1 | tee "${TARGET_DIR}/build.log"
+              BUILD_RC=${PIPESTATUS[0]}
+            else
+              BUILD_RC=${CFG_RC}
+            fi
 
-            # Save build artifacts
-            CFG="${{ matrix.config }}"
-            CONFIG_NAME=$(echo "${CFG}" | tr ':/' '_')
-            mkdir -p ${ARTIFACTDIR}/${CONFIG_NAME}
-            TARGET_DIR="${ARTIFACTDIR}/${CONFIG_NAME}"
-            cp nuttx nuttx.bin nuttx.hex ${TARGET_DIR}/ \
-              2>/dev/null || true
+            # Save build artifacts (best-effort)
+            cp .config "${TARGET_DIR}/.config" 2>/dev/null || true
+            cp System.map "${TARGET_DIR}/System.map" 2>/dev/null || true
+            cp nuttx nuttx.bin nuttx.hex "${TARGET_DIR}/" 2>/dev/null || true
+            echo "${BUILD_RC}" > "${TARGET_DIR}/exitcode.txt" || true
 
             # Display size information
             echo ""
-            echo "Build artifacts for ${{ matrix.config }}:"
-            arm-none-eabi-size nuttx || true
-            ls -lh ${ARTIFACTDIR}/${CONFIG_NAME}/ || true
+            echo "Build artifacts for ${CFG}:"
+            arm-none-eabi-size nuttx 2>/dev/null || true
+            ls -lh "${TARGET_DIR}/" || true
+
+            exit ${BUILD_RC}
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: gd32-${{ matrix.config }}-build
+          name: ${{ steps.artifact.outputs.name }}
           path: buildartifacts/
+          if-no-files-found: ignore
           retention-days: 7
-        continue-on-error: true
 
   # Code quality checks for GD32
   GD32-Code-Quality:
@@ -239,6 +260,17 @@ jobs:
       - name: Check GD32 file formatting
         run: |
           cd sources/nuttx
+          # Build nxstyle (generated from tools/nxstyle.c)
+          if [ ! -x "tools/nxstyle" ]; then
+            echo "Building nxstyle..."
+            make -C tools -f Makefile.host nxstyle || true
+          fi
+
+          if [ ! -x "tools/nxstyle" ]; then
+            echo "nxstyle tool not available; skipping style check"
+            exit 0
+          fi
+
           # Run nxstyle on GD32 files
           CHANGED_FILES=""
           if [ "${{ github.event_name }}" == "pull_request" ]; then
@@ -254,7 +286,7 @@ jobs:
             for file in $CHANGED_FILES; do
               if [ -f "$file" ]; then
                 echo "Checking: $file"
-                ./tools/nxstyle.py "$file" || true
+                tools/nxstyle "$file" || true
               fi
             done
           else

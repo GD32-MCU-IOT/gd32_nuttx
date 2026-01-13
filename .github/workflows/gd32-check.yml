@@ -47,6 +47,12 @@ jobs:
           echo "::add-matcher::.github/nxstyle.json"
           source .venv/bin/activate
 
+          # Build nxstyle (generated from tools/nxstyle.c)
+          if [ ! -x "tools/nxstyle" ]; then
+            echo "Building nxstyle..."
+            make -C tools -f Makefile.host nxstyle || true
+          fi
+
           # Get only GD32-related changed files
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
