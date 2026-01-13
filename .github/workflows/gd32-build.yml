@@ -1,0 +1,330 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+---
+name: GD32-Build
+
+on:
+  pull_request:
+    paths:
+      - 'arch/arm/src/gd32*/**'
+      - 'arch/arm/include/gd32*/**'
+      - 'boards/arm/gd32*/**'
+      - 'drivers/**'
+      - 'include/**'
+      - '.github/workflows/gd32-build.yml'
+      - 'tools/ci/find_gd32_configs.sh'
+      - 'tools/ci/testlist/gd32*.dat'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: gd32-build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fetch the source and discover GD32 configurations
+  Fetch-Source:
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check-changes.outputs.has_changes }}
+      gd32_configs: ${{ steps.find-configs.outputs.configs }}
+    steps:
+      - name: Checkout nuttx repo
+        uses: actions/checkout@v6
+        with:
+          path: sources/nuttx
+          fetch-depth: 0
+
+      - name: Checkout apps repo
+        uses: actions/checkout@v6
+        with:
+          repository: apache/nuttx-apps
+          path: sources/apps
+          fetch-depth: 1
+
+      # Check if there are actual GD32-related changes
+      - name: Check for GD32 changes
+        id: check-changes
+        run: |
+          cd sources/nuttx
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For PRs, check changed files
+            BASE_REF="${{ github.base_ref }}"
+            git fetch origin ${BASE_REF}
+            CHANGED_FILES=$(git diff --name-only origin/${BASE_REF}...HEAD)
+            echo "Changed files:"
+            echo "$CHANGED_FILES"
+
+            PATTERN="(arch/arm/(src|include)/gd32"
+            PATTERN="${PATTERN}|boards/arm/gd32|tools/ci/testlist/gd32)"
+            if echo "$CHANGED_FILES" | grep -qE "${PATTERN}"; then
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+              echo "GD32 changes detected"
+            else
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+              echo "No GD32-related changes detected"
+            fi
+          else
+            # For push events, always build
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      # Auto-discover all GD32 board configurations
+      - name: Discover GD32 configurations
+        id: find-configs
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          cd sources/nuttx
+
+          # Make script executable
+          chmod +x tools/ci/find_gd32_configs.sh
+
+          # Find all GD32 configurations
+          echo "Discovering GD32 board configurations..."
+          configs=$(./tools/ci/find_gd32_configs.sh --format json)
+
+          echo "Found configurations:"
+          echo "$configs" | jq -r '.[]'
+
+          # Output for matrix
+          echo "configs=$configs" >> $GITHUB_OUTPUT
+
+          # Count configurations
+          count=$(echo "$configs" | jq 'length')
+          echo ""
+          echo "Total GD32 configurations found: $count"
+
+      - name: Tar sources
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: tar zcf sources.tar.gz sources
+
+      - name: Archive Source Bundle
+        if: steps.check-changes.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: gd32-source-bundle
+          path: sources.tar.gz
+          retention-days: 1
+
+  # Build all discovered GD32 configurations
+  GD32-Build:
+    needs: Fetch-Source
+    if: needs.Fetch-Source.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config: ${{ fromJson(needs.Fetch-Source.outputs.gd32_configs) }}
+
+    steps:
+      - name: Compute artifact name
+        id: artifact
+        shell: bash
+        run: |
+          CFG="${{ matrix.config }}"
+          SAFE=$(echo "${CFG}" | tr ':/' '__')
+          echo "name=gd32-${SAFE}-build" >> $GITHUB_OUTPUT
+
+      - name: Download Source Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: gd32-source-bundle
+          path: .
+
+      - name: Extract sources
+        run: tar zxf sources.tar.gz
+
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker Pull
+        run: docker pull ghcr.io/apache/nuttx/apache-nuttx-ci-linux
+
+      - name: Build ${{ matrix.config }}
+        uses: ./sources/nuttx/.github/actions/ci-container
+        env:
+          BLOBDIR: /tools/blobs
+        with:
+          run: |
+            echo "::add-matcher::sources/nuttx/.github/gcc.json"
+            export ARTIFACTDIR=`pwd`/buildartifacts
+            NUTTX_DIR="/github/workspace/sources/nuttx"
+            APPS_DIR="/github/workspace/sources/apps"
+            git config --global --add safe.directory "${NUTTX_DIR}"
+            git config --global --add safe.directory "${APPS_DIR}"
+
+            CFG="${{ matrix.config }}"
+            CONFIG_NAME=$(echo "${CFG}" | tr ':/' '_')
+            mkdir -p "${ARTIFACTDIR}/${CONFIG_NAME}"
+            TARGET_DIR="${ARTIFACTDIR}/${CONFIG_NAME}"
+
+            cd sources/nuttx
+
+            echo "========================================="
+            echo "Building: ${{ matrix.config }}"
+            echo "========================================="
+
+            # Configure (capture logs so failures still upload artifacts)
+            set +e
+            ./tools/configure.sh "${CFG}" 2>&1 | tee "${TARGET_DIR}/configure.log"
+            CFG_RC=${PIPESTATUS[0]}
+
+            # Build
+            if [ ${CFG_RC} -eq 0 ]; then
+              make -j$(nproc) 2>&1 | tee "${TARGET_DIR}/build.log"
+              BUILD_RC=${PIPESTATUS[0]}
+            else
+              BUILD_RC=${CFG_RC}
+            fi
+
+            # Save build artifacts (best-effort)
+            cp .config "${TARGET_DIR}/.config" 2>/dev/null || true
+            cp System.map "${TARGET_DIR}/System.map" 2>/dev/null || true
+            cp nuttx nuttx.bin nuttx.hex "${TARGET_DIR}/" 2>/dev/null || true
+            echo "${BUILD_RC}" > "${TARGET_DIR}/exitcode.txt" || true
+
+            # Display size information
+            echo ""
+            echo "Build artifacts for ${CFG}:"
+            arm-none-eabi-size nuttx 2>/dev/null || true
+            ls -lh "${TARGET_DIR}/" || true
+
+            exit ${BUILD_RC}
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: buildartifacts/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # Code quality checks for GD32
+  GD32-Code-Quality:
+    needs: Fetch-Source
+    if: needs.Fetch-Source.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Source Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: gd32-source-bundle
+          path: .
+
+      - name: Extract sources
+        run: tar zxf sources.tar.gz
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install code quality tools
+        run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install codespell
+
+      - name: Run codespell on GD32 files
+        run: |
+          source .venv/bin/activate
+          cd sources/nuttx
+          # Check GD32 specific files for spelling errors
+          GD32_PATHS="arch/arm/src/gd32* arch/arm/include/gd32*"
+          GD32_PATHS="${GD32_PATHS} boards/arm/gd32*"
+          find ${GD32_PATHS} -type f \
+            \( -name "*.c" -o -name "*.h" \) \
+            -exec codespell {} + || true
+
+      - name: Check GD32 file formatting
+        run: |
+          cd sources/nuttx
+          # Build nxstyle (generated from tools/nxstyle.c)
+          if [ ! -x "tools/nxstyle" ]; then
+            echo "Building nxstyle..."
+            make -C tools -f Makefile.host nxstyle || true
+          fi
+
+          if [ ! -x "tools/nxstyle" ]; then
+            echo "nxstyle tool not available; skipping style check"
+            exit 0
+          fi
+
+          # Run nxstyle on GD32 files
+          CHANGED_FILES=""
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            git fetch origin ${{ github.base_ref }}
+            BASE="origin/${{ github.base_ref }}"
+            CHANGED_FILES=$(git diff --name-only ${BASE}...HEAD | \
+              grep -E "\.(c|h)$" | grep -E "gd32" || true)
+          fi
+
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "Checking style for GD32 files:"
+            echo "$CHANGED_FILES"
+            for file in $CHANGED_FILES; do
+              if [ -f "$file" ]; then
+                echo "Checking: $file"
+                tools/nxstyle "$file" || true
+              fi
+            done
+          else
+            echo "No GD32 C/H files to check"
+          fi
+
+  # Test report summary
+  GD32-Build-Summary:
+    needs: [GD32-Build, GD32-Code-Quality]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Summary
+        run: |
+          SUMMARY="$GITHUB_STEP_SUMMARY"
+          echo "## GD32 Build Summary" >> ${SUMMARY}
+          echo "" >> ${SUMMARY}
+          echo "### Build Status" >> ${SUMMARY}
+          BUILD_RESULT="${{ needs.GD32-Build.result }}"
+          QUALITY_RESULT="${{ needs.GD32-Code-Quality.result }}"
+          echo "- GD32 Build: ${BUILD_RESULT}" >> ${SUMMARY}
+          echo "- Code Quality: ${QUALITY_RESULT}" >> ${SUMMARY}
+          echo "" >> ${SUMMARY}
+
+          # Determine overall result
+          if [[ "${BUILD_RESULT}" == "success" ]]; then
+            MSG="### ✅ All GD32 builds completed successfully!"
+            echo "${MSG}" >> ${SUMMARY}
+            exit 0
+          elif [[ "${BUILD_RESULT}" == "failure" ]]; then
+            echo "### ❌ Some GD32 builds failed!" >> ${SUMMARY}
+            exit 1
+          elif [[ "${BUILD_RESULT}" == "skipped" ]]; then
+            MSG="### ⏭️ GD32 builds skipped (no changes)"
+            echo "${MSG}" >> ${SUMMARY}
+            exit 0
+          else
+            MSG="### ⚠️ GD32 builds completed with warnings"
+            echo "${MSG}" >> ${SUMMARY}
+            exit 0
+          fi

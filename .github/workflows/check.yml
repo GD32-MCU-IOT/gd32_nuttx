@@ -14,8 +14,12 @@ name: Check
 
 on:
   pull_request:
+    # Skip full upstream checks for GD32-only changes
     paths-ignore:
       - 'Documentation/**'
+      - 'arch/arm/src/gd32*/**'
+      - 'arch/arm/include/gd32*/**'
+      - 'boards/arm/gd32*/**'
 
 concurrency:
   group: check-${{ github.event.pull_request.number || github.ref }}

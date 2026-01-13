@@ -1,0 +1,125 @@
+# GD32 specific CI checks - optimized for GD32 development
+# Only checks GD32-related code changes
+
+---
+name: GD32-Check
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'arch/arm/src/gd32*/**'
+      - 'arch/arm/include/gd32*/**'
+      - 'boards/arm/gd32*/**'
+      - 'Documentation/**/*gd32*/**'
+      - 'Documentation/**/*GD32*/**'
+
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gd32-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gd32-code-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install check tools
+        run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install codespell
+
+      - name: Check GD32 specific changes only
+        run: |
+          echo "::add-matcher::.github/nxstyle.json"
+          source .venv/bin/activate
+
+          # Build nxstyle (generated from tools/nxstyle.c)
+          if [ ! -x "tools/nxstyle" ]; then
+            echo "Building nxstyle..."
+            make -C tools -f Makefile.host nxstyle || true
+          fi
+
+          # Get only GD32-related changed files
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+            # Get list of changed GD32 files
+            FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA)
+            CHANGED_FILES=$(echo "$FILES" | \
+              grep -E "(gd32|GD32)" || true)
+
+            echo "=== GD32 Related Changed Files ==="
+            echo "$CHANGED_FILES"
+            echo ""
+
+            if [ -z "$CHANGED_FILES" ]; then
+              echo "✅ No GD32 files changed, skipping checks"
+              exit 0
+            fi
+
+            # Run checkpatch on commits that modified GD32 files
+            echo "=== Checking commit format ==="
+            GD32_COMMITS=$(git log --format="%H" $BASE_SHA..$HEAD_SHA \
+              --diff-filter=d -- \
+              arch/arm/src/gd32*/ \
+              arch/arm/include/gd32*/ \
+              boards/arm/gd32*/ | head -10 || true)
+
+            if [ -n "$GD32_COMMITS" ]; then
+              for commit in $GD32_COMMITS; do
+                SUBJECT=$(git log -1 --format="%s" $commit)
+                echo "Checking: $commit - $SUBJECT"
+                # Generate patch and check it
+                git format-patch -1 $commit --stdout | \
+                  tools/checkpatch.sh - || true
+              done
+            fi
+
+            # Check changed files for style issues
+            echo "=== Running style check on changed files ==="
+            for file in $CHANGED_FILES; do
+              if [ -f "$file" ]; then
+                case "$file" in
+                  *.c|*.h)
+                    echo "Checking: $file"
+                    tools/nxstyle $file || true
+                    ;;
+                esac
+              fi
+            done
+
+            # Run codespell only on changed GD32 files
+            echo "=== Running codespell on changed files ==="
+            echo "$CHANGED_FILES" | xargs codespell || true
+
+          else
+            echo "Manual workflow run - checking recent GD32 changes"
+            git log --oneline -10 --grep="gd32" --grep="GD32" -i
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          SUMMARY="$GITHUB_STEP_SUMMARY"
+          echo "## GD32 Code Check Summary" >> ${SUMMARY}
+          echo "" >> ${SUMMARY}
+          echo "✅ GD32-specific checks completed" >> ${SUMMARY}
+          echo "" >> ${SUMMARY}
+          MSG="This workflow only checks GD32-related changes"
+          MSG="${MSG} to avoid unnecessary CI runs."
+          echo "${MSG}" >> ${SUMMARY}

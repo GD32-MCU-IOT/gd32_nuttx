@@ -1,0 +1,12 @@
+# Yamllint configuration for GitHub Super-Linter
+#
+# The repository contains many existing GitHub Actions workflows with
+# long lines and without an explicit document start marker (---).
+# Those are valid for GitHub Actions, so we disable the corresponding
+# yamllint rules to avoid failing PRs due to unrelated formatting.
+
+extends: default
+
+rules:
+  document-start: disable
+  line-length: disable
