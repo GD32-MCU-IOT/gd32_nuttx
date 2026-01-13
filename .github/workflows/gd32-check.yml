@@ -55,11 +55,21 @@ jobs:
 
           # Get only GD32-related changed files
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            BASE_REF="${{ github.base_ref }}"
+
+            # Ensure the base branch exists locally; actions/checkout may not
+            # always include the full base history for diff ranges.
+            git fetch --no-tags --prune origin "${BASE_REF}" || true
+
+            # Compute a robust diff base using merge-base.
+            BASE_COMMIT=$(git merge-base HEAD "origin/${BASE_REF}" 2>/dev/null || true)
+            if [ -z "${BASE_COMMIT}" ]; then
+              echo "Could not determine merge-base with origin/${BASE_REF}; falling back to diff vs origin/${BASE_REF}"
+              BASE_COMMIT="origin/${BASE_REF}"
+            fi
 
             # Get list of changed GD32 files
-            FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA)
+            FILES=$(git diff --name-only "${BASE_COMMIT}"...HEAD || true)
             CHANGED_FILES=$(echo "$FILES" | \
               grep -E "(gd32|GD32)" || true)
 
@@ -74,7 +84,7 @@ jobs:
 
             # Run checkpatch on commits that modified GD32 files
             echo "=== Checking commit format ==="
-            GD32_COMMITS=$(git log --format="%H" $BASE_SHA..$HEAD_SHA \
+            GD32_COMMITS=$(git log --format="%H" "${BASE_COMMIT}"..HEAD \
               --diff-filter=d -- \
               arch/arm/src/gd32*/ \
               arch/arm/include/gd32*/ \
@@ -92,12 +102,17 @@ jobs:
 
             # Check changed files for style issues
             echo "=== Running style check on changed files ==="
+            if [ ! -x "tools/nxstyle" ]; then
+              echo "nxstyle tool not available; skipping style check"
+            fi
             for file in $CHANGED_FILES; do
               if [ -f "$file" ]; then
                 case "$file" in
                   *.c|*.h)
                     echo "Checking: $file"
-                    tools/nxstyle $file || true
+                    if [ -x "tools/nxstyle" ]; then
+                      tools/nxstyle "$file" || true
+                    fi
                     ;;
                 esac
               fi
