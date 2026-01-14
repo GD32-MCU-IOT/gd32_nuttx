@@ -31,7 +31,6 @@ on:
       - 'Documentation/**'
     branches:
       - 'releases/*'
-    tags:
 
 permissions:
   contents: read
@@ -90,7 +89,9 @@ jobs:
                 ;;
 
               *)
-                echo "Trigger by change on $GITHUB_REPOSITORY. This is unexpected."
+                # Mirrors/forks: treat as OS repo
+                echo "Triggered by change in OS (mirror/fork): $GITHUB_REPOSITORY"
+                APPS_REF=$REF_NAME
                 ;;
             esac
           fi
@@ -101,8 +102,6 @@ jobs:
       - name: Checkout nuttx repo
         uses: actions/checkout@v6
         with:
-          repository: apache/nuttx
-          ref: ${{ steps.gittargets.outputs.os_ref }}
           path: sources/nuttx
           fetch-depth: 1
       - name: Checkout nuttx repo tags
@@ -127,7 +126,7 @@ jobs:
 
   # Select the Linux Builds based on PR Arch Label
   Linux-Arch:
-    uses: apache/nuttx/.github/workflows/arch.yml@master
+    uses: ./.github/workflows/arch.yml
     needs: Fetch-Source
     with:
       os: Linux
@@ -265,7 +264,7 @@ jobs:
 
   # Select the macOS Builds based on PR Arch Label
   macOS-Arch:
-    uses: apache/nuttx/.github/workflows/arch.yml@master
+    uses: ./.github/workflows/arch.yml
     needs: Fetch-Source
     with:
       os: macOS
@@ -325,7 +324,7 @@ jobs:
 
   # Select the msys2 Builds based on PR Arch Label
   msys2-Arch:
-    uses: apache/nuttx/.github/workflows/arch.yml@master
+    uses: ./.github/workflows/arch.yml
     needs: Fetch-Source
     with:
       os: msys2
@@ -408,7 +407,7 @@ jobs:
 
   # Select the msvc Builds based on PR Arch Label
   msvc-Arch:
-    uses: apache/nuttx/.github/workflows/arch.yml@master
+    uses: ./.github/workflows/arch.yml
     needs: Fetch-Source
     with:
       os: msvc

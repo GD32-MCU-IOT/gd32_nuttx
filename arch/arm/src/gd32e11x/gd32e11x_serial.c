@@ -2327,7 +2327,7 @@ uart_dev_t *gd32_serial_get_uart(int uart_idx)
  *
  * Description:
  *   Performs the low level USART initialization early in debug so that the
- *   serial console will be available during bootup.  This must be called
+ *   serial console will be available during boot-up.  This must be called
  *   before arm_serialinit.
  *
  ****************************************************************************/
