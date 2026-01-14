@@ -800,6 +800,15 @@ config ARCH_BOARD_GD32F470IK_EVAL
 	---help---
 		GD32 MCU GD32F470IK-EVAL board based on the GD32F4 GD32F470IKT6 MCU.
 
+config ARCH_BOARD_GD32E113VB_EVAL
+	bool "GD32 MCU GD32E113VB"
+	depends on ARCH_CHIP_GD32E113VB
+	select ARCH_HAVE_LEDS
+	select ARCH_HAVE_BUTTONS
+	select ARCH_HAVE_IRQBUTTONS
+	---help---
+		GD32 MCU GD32E113VB-EVAL board based on the GD32E11X GD32E113VBT6 MCU.
+
 config ARCH_BOARD_HIFIVE1_REVB
 	bool "HiFive1 Rev B board"
 	depends on ARCH_CHIP_FE310
@@ -3592,6 +3601,7 @@ config ARCH_BOARD
 	default "gd32f470zk-eval"              if ARCH_BOARD_GD32F470ZK_EVAL
 	default "gd32f470zk-aiotbox"           if ARCH_BOARD_GD32F470ZK_AIOTBOX
 	default "gd32f470ik-eval"              if ARCH_BOARD_GD32F470IK_EVAL
+	default "gd32e113vb-eval"              if ARCH_BOARD_GD32E113VB_EVAL
 	default "hifive1-revb"                 if ARCH_BOARD_HIFIVE1_REVB
 	default "hymini-stm32v"                if ARCH_BOARD_HYMINI_STM32V
 	default "imxrt1020-evk"                if ARCH_BOARD_IMXRT1020_EVK
@@ -4086,6 +4096,9 @@ source "boards/arm/gd32f4/gd32f470zk-aiotbox/Kconfig"
 endif
 if ARCH_BOARD_GD32F470IK_EVAL
 source "boards/arm/gd32f4/gd32f470ik-eval/Kconfig"
+endif
+if ARCH_BOARD_GD32E113VB_EVAL
+source "boards/arm/gd32e11x/gd32e113vb-eval/Kconfig"
 endif
 if ARCH_BOARD_TEENSY_LC
 source "boards/arm/kl/teensy-lc/Kconfig"
