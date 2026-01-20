@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <debug.h>
 #include <errno.h>
+#include <sys/stat.h>
 
 #include <nuttx/board.h>
 #include <nuttx/clock.h>
@@ -68,15 +69,39 @@
 int gd32_bringup(void)
 {
   int ret = OK;
+  static bool initialized = false;
+
+  /* Prevent multiple initialization */
+
+  if (initialized)
+    {
+      return OK;
+    }
+
+  initialized = true;
 
 #ifdef CONFIG_FS_PROCFS
   /* Mount the procfs file system */
+
+  /* Create the mount point directory if it doesn't exist */
+
+  ret = mkdir(GD32_PROCFS_MOUNTPOINT, 0755);
+  if (ret < 0 && errno != EEXIST)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to create %s: %d\n",
+             GD32_PROCFS_MOUNTPOINT, errno);
+    }
 
   ret = nx_mount(NULL, GD32_PROCFS_MOUNTPOINT, "procfs", 0, NULL);
   if (ret < 0)
     {
       syslog(LOG_ERR, "ERROR: Failed to mount procfs at %s: %d\n",
              GD32_PROCFS_MOUNTPOINT, ret);
+    }
+  else
+    {
+      syslog(LOG_INFO, "INFO: procfs mounted at %s\n",
+             GD32_PROCFS_MOUNTPOINT);
     }
 #endif
 
@@ -99,6 +124,41 @@ int gd32_bringup(void)
     {
       syslog(LOG_ERR, "ERROR: btn_lower_initialize() failed: %d\n", ret);
     }
+#endif
+
+#ifdef HAVE_GD25
+  /* Initialize and mount the GD25 SPI flash */
+
+  syslog(LOG_INFO, "INFO: Initializing GD25 SPI Flash...\n");
+  ret = gd32_gd25_automount(0);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: gd32_gd25_automount() failed: %d\n", ret);
+    }
+#else
+  syslog(LOG_WARNING, "WARNING: HAVE_GD25 not defined!\n");
+#endif
+
+#ifdef CONFIG_SPI
+  /* Initialize SPI-based devices */
+
+#ifdef CONFIG_GD32E11X_SPI1
+  struct spi_dev_s *spi1 = gd32_spibus_initialize(1);
+  if (spi1)
+    {
+      spi_register(spi1, 1);
+      syslog(LOG_INFO, "SPI1 registered as /dev/spi1\n");
+    }
+#endif
+
+#ifdef CONFIG_GD32E11X_SPI2
+  struct spi_dev_s *spi2 = gd32_spibus_initialize(2);
+  if (spi2)
+    {
+      spi_register(spi2, 2);
+      syslog(LOG_INFO, "SPI2 registered as /dev/spi2\n");
+    }
+#endif
 #endif
 
   UNUSED(ret);

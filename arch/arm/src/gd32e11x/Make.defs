@@ -35,7 +35,7 @@ CHIP_CSRCS += gd32e11x_idle.c
 endif
 
 ifeq ($(CONFIG_GD32E11X_SPI),y)
-CHIP_CSRCS += gd32fe11x_spi.c
+CHIP_CSRCS += gd32e11x_spi.c
 endif
 
 ifeq ($(CONFIG_GD32E11X_I2C),y)

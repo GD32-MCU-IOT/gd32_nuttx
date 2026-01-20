@@ -86,4 +86,35 @@ config GD32E113_72MHZ
 
 endchoice # CPU Frequency
 
+menu "GD32E113VB-EVAL GD25 Flash Configuration"
+  depends on MTD_GD25
+
+config GD32E113VB_EVAL_GD25_BLOCKMOUNT
+  bool "Enable GD25 block device mount"
+  default n
+  ---help---
+    Enable mounting of GD25 flash as a block device
+
+if GD32E113VB_EVAL_GD25_BLOCKMOUNT
+
+choice
+  prompt "GD25 file system type"
+  default GD32E113VB_EVAL_GD25_LITTLEFS
+
+config GD32E113VB_EVAL_GD25_FTL
+  bool "FTL"
+
+config GD32E113VB_EVAL_GD25_NXFFS
+  bool "NXFFS"
+  depends on FS_NXFFS
+
+config GD32E113VB_EVAL_GD25_LITTLEFS
+  bool "LittleFS"
+  depends on FS_LITTLEFS
+
+endchoice
+endif # GD32E113VB_EVAL_GD25_BLOCKMOUNT
+
+endmenu # GD25 Flash Configuration
+
 endif # ARCH_BOARD_GD32E113VB_EVAL

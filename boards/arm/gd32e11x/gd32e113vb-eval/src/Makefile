@@ -42,4 +42,8 @@ ifeq ($(CONFIG_SPI),y)
 CSRCS += gd32e11x_spi.c
 endif
 
+ifeq ($(CONFIG_MTD_GD25),y)
+CSRCS += gd32e11x_gd25.c
+endif
+
 include $(TOPDIR)/boards/Board.mk

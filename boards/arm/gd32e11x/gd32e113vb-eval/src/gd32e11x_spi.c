@@ -64,15 +64,23 @@ void gd32_spidev_initialize(void)
 #ifdef CONFIG_GD32E11X_SPI0
   /* Configure SPI0 chip select pins if needed */
 
+  gd32_gpio_config(GPIO_SPI0_CSPIN);
+  gd32_gpio_write(GPIO_SPI0_CSPIN, 1);
 #endif
 
 #ifdef CONFIG_GD32E11X_SPI1
   /* Configure SPI1 chip select pins if needed */
 
+  gd32_gpio_config(GPIO_SPI1_CSPIN);
+  gd32_gpio_write(GPIO_SPI1_CSPIN, 1);
+
 #endif
 
 #ifdef CONFIG_GD32E11X_SPI2
   /* Configure SPI2 chip select pins if needed */
+
+  gd32_gpio_config(GPIO_SPI2_CSPIN);
+  gd32_gpio_write(GPIO_SPI2_CSPIN, 1);
 
 #endif
 }
@@ -109,6 +117,8 @@ void gd32_spi0select(struct spi_dev_s *dev, uint32_t devid,
 {
   spiinfo("devid: %d CS: %s\n", (int)devid,
           selected ? "assert" : "de-assert");
+
+  gd32_gpio_write(GPIO_SPI0_CSPIN, !selected);
 }
 
 uint8_t gd32_spi0status(struct spi_dev_s *dev, uint32_t devid)
@@ -123,6 +133,8 @@ void gd32_spi1select(struct spi_dev_s *dev, uint32_t devid,
 {
   spiinfo("devid: %d CS: %s\n", (int)devid,
           selected ? "assert" : "de-assert");
+
+  gd32_gpio_write(GPIO_SPI1_CSPIN, !selected);
 }
 
 uint8_t gd32_spi1status(struct spi_dev_s *dev, uint32_t devid)
@@ -137,6 +149,8 @@ void gd32_spi2select(struct spi_dev_s *dev, uint32_t devid,
 {
   spiinfo("devid: %d CS: %s\n", (int)devid,
           selected ? "assert" : "de-assert");
+
+  gd32_gpio_write(GPIO_SPI2_CSPIN, !selected);
 }
 
 uint8_t gd32_spi2status(struct spi_dev_s *dev, uint32_t devid)
