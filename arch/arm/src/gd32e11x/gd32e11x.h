@@ -42,6 +42,7 @@
 #include "gd32e11x_exti.h"
 #include "gd32e11x_fmc.h"
 #include "gd32e11x_gpio.h"
+#include "gd32e11x_i2c.h"
 #include "gd32e11x_lowputc.h"
 #include "gd32e11x_pmu.h"
 #include "gd32e11x_rcu.h"
