@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/gd32f4/gd32f4xx_i2c.h
+ * arch/arm/src/gd32e11x/gd32e11x_i2c.h
  *
  * SPDX-License-Identifier: Apache-2.0
  *
