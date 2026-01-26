@@ -358,9 +358,12 @@ typedef enum
 #endif
 
 /* I2C pin definitions
- * I2C0: Using remapped pins PB6(SCL)/PB7(SDA) to avoid conflict with USART0 on PA9/PA10
- * Note: GPIO_I2C0_SCL_1/GPIO_I2C0_SDA_1 are defined in hardware/gd32e113v_pinmap.h
- * Note: I2C1 pins (PB10/PB11) are also pre-defined in hardware/gd32e113v_pinmap.h
+ * I2C0: Using remapped pins PB6(SCL)/PB7(SDA) to avoid conflict with
+ *       USART0 on PA9/PA10
+ * Note: GPIO_I2C0_SCL_1/GPIO_I2C0_SDA_1 are defined in
+ *       hardware/gd32e113v_pinmap.h
+ * Note: I2C1 pins (PB10/PB11) are also pre-defined in
+ *       hardware/gd32e113v_pinmap.h
  */
 
 #define GPIO_I2C0_SCL    GPIO_I2C0_SCL_1
