@@ -99,7 +99,7 @@
 #define BOARD_NGPIOINT    1 /* Amount of GPIO Input w/ Interruption pins */
 
 #define GPIO_IN1          (GPIO_CFG_INPUT | GPIO_CFG_CTL_INFLOAT | GPIO_CFG_PORT_B | GPIO_CFG_PIN_0)
-#define GPIO_OUT1         (GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTPP | GPIO_CFG_MODE_OSPEED_50MHZ | \
+#define GPIO_OUT1         (GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTPP | GPIO_CFG_SPEED_50MHZ | \
                            GPIO_CFG_OUTPUT_SET | GPIO_CFG_PORT_B | GPIO_CFG_PIN_1)
 #define GPIO_INT1         (GPIO_CFG_INPUT | GPIO_CFG_CTL_INFLOAT | GPIO_CFG_EXTI | \
                            GPIO_CFG_PORT_B | GPIO_CFG_PIN_2)
@@ -147,6 +147,45 @@ void gd32_spidev_initialize(void);
 
 #ifdef CONFIG_GD32E11X_USBFS
 void gd32_usbinitialize(void);
+#endif
+
+/****************************************************************************
+ * Name: gd32_gpio_test
+ *
+ * Description:
+ *   Run GPIO tests including output, input, and interrupt tests.
+ *   Called automatically during system bringup when enabled.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32E11X_GPIO_TEST
+int gd32_gpio_test(void);
+#endif
+
+/****************************************************************************
+ * Name: gd32_usart_test
+ *
+ * Description:
+ *   Run USART tests including write, echo, stress, and format tests.
+ *   Called automatically during system bringup when enabled.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32E11X_USART_TEST
+int gd32_usart_test(void);
+#endif
+
+/****************************************************************************
+ * Name: gd32_gpio_dev_initialize
+ *
+ * Description:
+ *   Initialize and register GPIO character devices.
+ *   This function should be called during board initialization.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_DEV_GPIO
+int gd32_gpio_dev_initialize(void);
 #endif
 
 #endif /* __BOARDS_ARM_GD32E11X_GD32E113VB_EVAL_SRC_GD32E113V_EVAL_H */
