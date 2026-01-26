@@ -735,7 +735,6 @@ static inline void gd32_i2c_sem_waitstop(struct gd32_i2c_priv_s *priv)
   while (elapsed < timeout);
 
   /* Timeout occurred */
-
 }
 
 #ifndef CONFIG_I2C_TRACE
@@ -869,9 +868,10 @@ static void gd32_i2c_tracedump(struct gd32_i2c_priv_s *priv)
       if (trace->count > 0)
         {
           syslog(LOG_DEBUG,
-                 "%2d. STATUS: %08x COUNT: %3d EVENT: %2d PARM: %08x TIME: %d\n",
-                 i + 1, trace->status, trace->count, trace->event, trace->parm,
-                 (int)(trace->time - priv->start_time));
+                 "%2d. STATUS: %08x COUNT: %3d EVENT: %2d PARM: "
+                 "%08x TIME: %d\n",
+                 i + 1, trace->status, trace->count, trace->event,
+                 trace->parm, (int)(trace->time - priv->start_time));
         }
     }
 }
@@ -1059,13 +1059,11 @@ static int gd32_i2c_isr_process(struct gd32_i2c_priv_s *priv)
 #endif
         }
 
-
       /* Get current message to process data and copy to private structure */
 
       priv->ptr = priv->msgv->buffer;
       priv->dcnt = priv->msgv->length;
       priv->flags = priv->msgv->flags;
-
 
       /* Decrease counter to indicate the number of messages left */
 
@@ -1097,7 +1095,6 @@ static int gd32_i2c_isr_process(struct gd32_i2c_priv_s *priv)
   if ((status & I2C_STAT0_SBSEND) != 0)
     {
       /* Start bit is set */
-
 
       /* Check for empty message */
 
@@ -1135,7 +1132,6 @@ static int gd32_i2c_isr_process(struct gd32_i2c_priv_s *priv)
 #ifndef CONFIG_I2C_POLLED
   else if ((status & I2C_STAT0_ADDSEND) == 0 && priv->check_addr_ack)
     {
-
       /* Terminate message chain */
 
       priv->dcnt = -1;
@@ -1163,7 +1159,6 @@ static int gd32_i2c_isr_process(struct gd32_i2c_priv_s *priv)
       if (priv->dcnt == 1)
         {
           /* Single byte read */
-
 
           /* Set POS bit to zero */
 
@@ -1216,7 +1211,6 @@ static int gd32_i2c_isr_process(struct gd32_i2c_priv_s *priv)
         }
       else
         {
-
           /* Clear ADDR flag */
 
           status |= (gd32_i2c_getreg(priv, GD32_I2C_STAT1_OFFSET) << 16);
@@ -1258,7 +1252,6 @@ static int gd32_i2c_isr_process(struct gd32_i2c_priv_s *priv)
 
           gd32_i2c_sendstart(priv);
           gd32_i2c_getreg(priv, GD32_I2C_DATA_OFFSET);
-
 
           priv->dcnt--;
           gd32_i2c_traceevent(priv, I2CEVENT_WRITE_RESTART, priv->dcnt);
@@ -1476,7 +1469,6 @@ static int gd32_i2c_isr_process(struct gd32_i2c_priv_s *priv)
           priv->status |= I2C_STAT0_BERR;
         }
 
-
       priv->dcnt = -1;
       priv->msgc = 0;
       gd32_i2c_traceevent(priv, I2CEVENT_STATE_ERROR, 0);
@@ -1557,7 +1549,6 @@ static int gd32_i2c_init(struct gd32_i2c_priv_s *priv)
 {
   uint32_t regval;
 
-
   /* Enable AFIO clock (required for pin remapping) */
 
   modifyreg32(GD32_RCU_APB2EN, 0, RCU_APB2EN_AFEN);
@@ -1583,7 +1574,7 @@ static int gd32_i2c_init(struct gd32_i2c_priv_s *priv)
   if (priv->config->i2c_base == GD32_I2C0_BASE)
     {
       /* Clear I2C0_REMAP to use default PB6/PB7 pins */
-      
+
       regval = getreg32(GD32_AFIO_PCF0);
       regval &= ~AFIO_PCF0_I2C0_REMAP;  /* Clear remap bit for PB6/PB7 */
       putreg32(regval, GD32_AFIO_PCF0);
@@ -1632,76 +1623,78 @@ static int gd32_i2c_init(struct gd32_i2c_priv_s *priv)
 
   gd32_i2c_putreg(priv, GD32_I2C_CTL0_OFFSET, I2C_CTL0_I2CEN);
   up_udelay(10);
-  
+
   /* Check if bus is already busy (stuck from previous session) */
-  
+
   regval = gd32_i2c_getreg(priv, GD32_I2C_STAT1_OFFSET);
   if ((regval & I2C_STAT1_I2CBSY) != 0)
     {
-      
-      /* Software reset I2C peripheral (SRESET bit) - this clears all registers */
-      
+      /* Software reset I2C peripheral (SRESET bit) - this clears all
+       * registers
+       */
+
       gd32_i2c_putreg(priv, GD32_I2C_CTL0_OFFSET, I2C_CTL0_SRESET);
       up_udelay(10);
-      
+
       /* Clear SRESET */
-      
+
       gd32_i2c_putreg(priv, GD32_I2C_CTL0_OFFSET, 0);
       up_udelay(10);
-      
+
       /* Re-configure CTL1 (peripheral clock) - cleared by SRESET */
-      
+
       regval = GD32_PCLK1_FREQUENCY / 1000000;
       gd32_i2c_putreg(priv, GD32_I2C_CTL1_OFFSET, regval);
-      
+
       /* Re-configure clock - cleared by SRESET */
-      
+
       gd32_i2c_setclock(priv, 100000);
-      
+
       /* Re-enable I2C */
-      
+
       gd32_i2c_putreg(priv, GD32_I2C_CTL0_OFFSET, I2C_CTL0_I2CEN);
       up_udelay(10);
-      
+
       /* Verify bus is now idle */
-      
+
       regval = gd32_i2c_getreg(priv, GD32_I2C_STAT1_OFFSET);
-              
+
       if ((regval & I2C_STAT1_I2CBSY) != 0)
         {
           /* Software reset failed, need GPIO-level bus recovery */
-          
-          
+
           /* Disable I2C before GPIO manipulation */
-          
+
           gd32_i2c_putreg(priv, GD32_I2C_CTL0_OFFSET, 0);
-          
+
           /* Reconfigure pins as GPIO open-drain outputs */
-          
-          uint32_t scl_gpio = (priv->config->scl_pin & ~(GPIO_CFG_MODE_MASK | GPIO_CFG_CTL_MASK)) |
-                              GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTOD | 
+
+          uint32_t scl_gpio = (priv->config->scl_pin &
+                               ~(GPIO_CFG_MODE_MASK | GPIO_CFG_CTL_MASK)) |
+                              GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTOD |
                               GPIO_CFG_SPEED_50MHZ | GPIO_CFG_OUTPUT_SET;
-          uint32_t sda_gpio = (priv->config->sda_pin & ~(GPIO_CFG_MODE_MASK | GPIO_CFG_CTL_MASK)) |
-                              GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTOD | 
+          uint32_t sda_gpio = (priv->config->sda_pin &
+                               ~(GPIO_CFG_MODE_MASK | GPIO_CFG_CTL_MASK)) |
+                              GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTOD |
                               GPIO_CFG_SPEED_50MHZ | GPIO_CFG_OUTPUT_SET;
-          
+
           gd32_gpio_config(scl_gpio);
           gd32_gpio_config(sda_gpio);
-          
+
           /* Read initial pin states */
-          
+
           bool scl_state = gd32_gpio_read(scl_gpio);
           bool sda_state = gd32_gpio_read(sda_gpio);
-          
+
           /* If either line is stuck low, this indicates hardware problem */
-          
+
           if (!scl_state || !sda_state)
             {
               /* Hardware problem detected */
             }
-          
+
           /* Generate 9 clock pulses to release stuck slave */
-          
+
           for (int i = 0; i < 9; i++)
             {
               gd32_gpio_write(scl_gpio, 0);
@@ -1709,9 +1702,9 @@ static int gd32_i2c_init(struct gd32_i2c_priv_s *priv)
               gd32_gpio_write(scl_gpio, 1);
               up_udelay(10);
             }
-          
+
           /* Generate STOP condition (SDA low->high while SCL high) */
-          
+
           gd32_gpio_write(sda_gpio, 0);
           up_udelay(10);
           gd32_gpio_write(scl_gpio, 0);
@@ -1720,25 +1713,25 @@ static int gd32_i2c_init(struct gd32_i2c_priv_s *priv)
           up_udelay(10);
           gd32_gpio_write(sda_gpio, 1);
           up_udelay(10);
-          
+
           /* Check final pin states */
-          
+
           scl_state = gd32_gpio_read(scl_gpio);
           sda_state = gd32_gpio_read(sda_gpio);
-          
+
           /* Restore GPIO as I2C alternate function */
-          
+
           gd32_gpio_config(priv->config->scl_pin);
           gd32_gpio_config(priv->config->sda_pin);
-          
+
           /* Re-configure and enable I2C */
-          
+
           regval = GD32_PCLK1_FREQUENCY / 1000000;
           gd32_i2c_putreg(priv, GD32_I2C_CTL1_OFFSET, regval);
           gd32_i2c_setclock(priv, 100000);
           gd32_i2c_putreg(priv, GD32_I2C_CTL0_OFFSET, I2C_CTL0_I2CEN);
           up_udelay(10);
-          
+
           regval = gd32_i2c_getreg(priv, GD32_I2C_STAT1_OFFSET);
         }
     }
@@ -1949,11 +1942,13 @@ static int gd32_i2c_reset(struct i2c_master_s *dev)
 
   /* Use GPIO to un-wedge the bus */
 
-  scl_gpio = (priv->config->scl_pin & ~(GPIO_CFG_MODE_MASK | GPIO_CFG_CTL_MASK)) |
-             GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTOD | 
+  scl_gpio = (priv->config->scl_pin &
+              ~(GPIO_CFG_MODE_MASK | GPIO_CFG_CTL_MASK)) |
+             GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTOD |
              GPIO_CFG_SPEED_50MHZ | GPIO_CFG_OUTPUT_SET;
-  sda_gpio = (priv->config->sda_pin & ~(GPIO_CFG_MODE_MASK | GPIO_CFG_CTL_MASK)) |
-             GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTOD | 
+  sda_gpio = (priv->config->sda_pin &
+              ~(GPIO_CFG_MODE_MASK | GPIO_CFG_CTL_MASK)) |
+             GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTOD |
              GPIO_CFG_SPEED_50MHZ | GPIO_CFG_OUTPUT_SET;
 
   gd32_gpio_config(scl_gpio);
