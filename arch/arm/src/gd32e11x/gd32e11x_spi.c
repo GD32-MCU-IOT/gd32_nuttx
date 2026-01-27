@@ -94,8 +94,6 @@
 
 #ifdef CONFIG_GD32E11X_SPI_DMA
 
-#  error "Now SPI DMA has not ready"
-
 /* SPI DMA priority */
 
 #if defined(CONFIG_GD32E11X_SPI_PRIQ)
@@ -213,6 +211,20 @@ static void            spi_recvblock(struct spi_dev_s *dev,
 /* DMA support */
 
 #ifdef CONFIG_GD32E11X_SPI_DMA
+
+/* Forward declaration for DMA channel structure to access registers */
+
+struct gd32_dma_channel_s
+{
+  uint8_t        chan_num;
+  uint8_t        irq;
+  sem_t          chsem;
+  uint32_t       dmabase;
+  uint32_t       transfer_count;
+  dma_callback_t callback;
+  void           *arg;
+};
+
 static int             spi_dmarxwait(struct gd32_spidev_s *priv);
 static int             spi_dmatxwait(struct gd32_spidev_s *priv);
 static void            spi_dmarxcallback(DMA_HANDLE handle, uint16_t isr,
@@ -290,8 +302,8 @@ static struct gd32_spidev_s g_spi0dev =
 #endif
 #ifdef CONFIG_GD32E11X_SPI_DMA
 #  ifdef CONFIG_GD32E11X_SPI0_DMA
-  .rxch     = DMA_CHANNEL_SPI0_RX,
-  .txch     = DMA_CHANNEL_SPI0_TX,
+  .rxch     = DMA_REQ_SPI0_RX,
+  .txch     = DMA_REQ_SPI0_TX,
 #    if defined(SPI0_DMA_BUFSIZE_ADJ)
   .rxbuf    = g_spi0_rxbuf,
   .txbuf    = g_spi0_txbuf,
@@ -358,8 +370,8 @@ static struct gd32_spidev_s g_spi1dev =
 #endif
 #ifdef CONFIG_GD32E11X_SPI_DMA
 #  ifdef CONFIG_GD32E11X_SPI1_DMA
-  .rxch     = DMA_CHANNEL_SPI1_RX,
-  .txch     = DMA_CHANNEL_SPI1_TX,
+  .rxch     = DMA_REQ_SPI1_RX,
+  .txch     = DMA_REQ_SPI1_TX,
 #    if defined(SPI1_DMA_BUFSIZE_ADJ)
   .rxbuf    = g_spi1_rxbuf,
   .txbuf    = g_spi1_txbuf,
@@ -426,8 +438,8 @@ static struct gd32_spidev_s g_spi2dev =
 #endif
 #ifdef CONFIG_GD32E11X_SPI_DMA
 #  ifdef CONFIG_GD32E11X_SPI2_DMA
-  .rxch     = DMA_CHANNEL_SPI2_RX,
-  .txch     = DMA_CHANNEL_SPI2_TX,
+  .rxch     = DMA_REQ_SPI2_RX,
+  .txch     = DMA_REQ_SPI2_TX,
 #    if defined(SPI2_DMA_BUFSIZE_ADJ)
   .rxbuf    = g_spi2_rxbuf,
   .txbuf    = g_spi2_txbuf,
@@ -1279,9 +1291,15 @@ static void spi_exchange(struct spi_dev_s *dev, const void *txbuffer,
   struct gd32_spidev_s *priv = (struct gd32_spidev_s *)dev;
   void *xbuffer = rxbuffer;
   size_t nbytes;
+  size_t remaining_words;
+  size_t chunk_words;
+  size_t chunk_bytes;
+  size_t offset_bytes;
+  const uint8_t *tx_ptr;
+  uint8_t *rx_ptr;
   int ret;
-  static uint16_t rxdummy = 0xffff;
-  static const uint16_t txdummy = 0xffff;
+  static uint16_t rxdummy = 0xffff;  /* Must be in RAM for DMA */
+  static uint16_t txdummy = 0xffff;  /* Must be in RAM for DMA */
 
   DEBUGASSERT(priv && priv->spibase);
 
@@ -1312,67 +1330,203 @@ static void spi_exchange(struct spi_dev_s *dev, const void *txbuffer,
       spiinfo("txbuffer=%p rxbuffer=%p nwords=%d\n",
                txbuffer, rxbuffer, nwords);
 
-      /* Setup DMAs */
+  /* If this bus uses internal driver buffers and data exceeds buffer size,
+   * we need to transfer in multiple chunks using DMA for each chunk.
+   */
 
-      /* If this bus uses a in driver buffers we will incur 2 copies,
-       * The copy cost is << less the non DMA transfer time and having
-       * the buffer in the driver ensures DMA can be used. This is because
-       * the API does not support passing the buffer extent so the only
-       * extent is buffer + the transfer size. These can sizes be less than
-       * the cache line size, and not aligned and typically greater then 4
-       * bytes, which is about the break even point for the DMA IO overhead.
-       */
+  if ((txbuffer || rxbuffer) && priv->txbuf && nbytes > priv->buflen)
+    {
+      /* Process data in chunks using DMA */
 
-      if (txbuffer && priv->txbuf)
+      remaining_words = nwords;
+      offset_bytes = 0;
+      tx_ptr = (const uint8_t *)txbuffer;
+      rx_ptr = (uint8_t *)rxbuffer;
+      ret = 0;
+
+      while (remaining_words > 0 && ret >= 0)
         {
-          if (nbytes > priv->buflen)
+          /* Calculate chunk size (in words) that fits in buffer */
+
+          chunk_bytes = (priv->nbits > 8) ?
+                        (remaining_words << 1) : remaining_words;
+
+          if (chunk_bytes > priv->buflen)
             {
-              nbytes = priv->buflen;
+              chunk_bytes = priv->buflen;
             }
 
-          memcpy(priv->txbuf, txbuffer, nbytes);
-          txbuffer  = priv->txbuf;
-          rxbuffer  = rxbuffer ? priv->rxbuf : rxbuffer;
-        }
+          chunk_words = (priv->nbits > 8) ?
+                        (chunk_bytes >> 1) : chunk_bytes;
 
-      spi_dmarxsetup(priv, rxbuffer, &rxdummy, nwords);
-      spi_dmatxsetup(priv, txbuffer, &txdummy, nwords);
+          /* Copy chunk to internal buffer if TX data exists */
 
-#ifdef CONFIG_SPI_TRIGGER
-      /* Is deferred triggering in effect? */
+          if (tx_ptr)
+            {
+              memcpy(priv->txbuf, tx_ptr + offset_bytes, chunk_bytes);
+            }
 
-      if (!priv->defertrig)
-        {
-          /* No.. Start the DMAs */
+          /* Wait for SPI to be idle */
+
+          while ((spi_getreg(priv, GD32_SPI_STAT_OFFSET)
+                             & SPI_STAT_TRANS) != 0)
+            {
+              /* Wait for transmission to complete */
+            }
+
+          /* Setup DMA for this chunk */
+
+          spi_dmarxsetup(priv, priv->rxbuf, &rxdummy, chunk_words);
+          spi_dmatxsetup(priv, priv->txbuf, &txdummy, chunk_words);
+
+          /* Start DMA transfer */
 
           spi_dmarxstart(priv);
           spi_dmatxstart(priv);
-        }
-      else
-        {
-          /* Yes.. indicated that we are ready to be started */
 
-          priv->trigarmed = true;
+          /* Enable SPI DMA requests */
+
+          spi_modifyreg(priv, GD32_SPI_CTL1_OFFSET,
+                        SPI_CTL1_DMAREN | SPI_CTL1_DMATEN, 0);
+
+          /* Ensure SPI is enabled */
+
+          if ((spi_getreg(priv, GD32_SPI_CTL0_OFFSET) & SPI_CTL0_SPIEN) == 0)
+            {
+              spi_modifyreg(priv, GD32_SPI_CTL0_OFFSET, SPI_CTL0_SPIEN, 0);
+            }
+
+          /* Wait for DMA completion */
+
+          ret = spi_dmarxwait(priv);
+          if (ret >= 0)
+            {
+              ret = spi_dmatxwait(priv);
+            }
+
+          /* Wait for SPI transmission to complete */
+
+          while ((spi_getreg(priv, GD32_SPI_STAT_OFFSET)
+                             & SPI_STAT_TRANS) != 0)
+            {
+              /* Wait for transmission to complete */
+            }
+
+          /* Disable SPI DMA requests */
+
+          spi_modifyreg(priv, GD32_SPI_CTL1_OFFSET, 0,
+                        SPI_CTL1_DMAREN | SPI_CTL1_DMATEN);
+
+          /* Copy received data from internal buffer if RX buffer exists */
+
+          if (rx_ptr && priv->rxbuf && ret >= 0)
+            {
+              memcpy(rx_ptr + offset_bytes, priv->rxbuf, chunk_bytes);
+            }
+
+          /* Update pointers and remaining count */
+
+          offset_bytes += chunk_bytes;
+          remaining_words -= chunk_words;
         }
-#else
-      /* Start the DMAs */
+
+      return;
+    }
+
+  /* Normal path: data fits in buffer or no internal buffer needed */
+
+  if (txbuffer && priv->txbuf)
+    {
+      memcpy(priv->txbuf, txbuffer, nbytes);
+      txbuffer  = priv->txbuf;
+      rxbuffer  = rxbuffer ? priv->rxbuf : rxbuffer;
+    }
+
+  /* Wait for SPI to be idle before configuring DMA */
+
+  while ((spi_getreg(priv, GD32_SPI_STAT_OFFSET) & SPI_STAT_TRANS) != 0)
+    {
+      /* Wait for transmission to complete */
+    }
+
+  /* Configure DMA channels */
+
+  spi_dmarxsetup(priv, rxbuffer, &rxdummy, nwords);
+  spi_dmatxsetup(priv, txbuffer, &txdummy, nwords);
+
+#ifdef CONFIG_SPI_TRIGGER
+  /* Is deferred triggering in effect? */
+
+  if (!priv->defertrig)
+    {
+      /* No.. Start the DMAs */
 
       spi_dmarxstart(priv);
       spi_dmatxstart(priv);
+    }
+  else
+    {
+      /* Yes.. indicated that we are ready to be started */
+
+      priv->trigarmed = true;
+    }
+#else
+  /* Start DMA channels */
+
+  spi_dmarxstart(priv);
+  spi_dmatxstart(priv);
+
+  /* Enable SPI DMA requests */
+
+  spi_modifyreg(priv, GD32_SPI_CTL1_OFFSET,
+                SPI_CTL1_DMAREN | SPI_CTL1_DMATEN, 0);
+
+  /* Ensure SPI peripheral is enabled */
+
+  if ((spi_getreg(priv, GD32_SPI_CTL0_OFFSET) & SPI_CTL0_SPIEN) == 0)
+    {
+      spi_modifyreg(priv, GD32_SPI_CTL0_OFFSET, SPI_CTL0_SPIEN, 0);
+    }
 #endif
 
-      /* Then wait for each to complete */
+  /* Wait for DMA transfer completion */
 
-      ret = spi_dmarxwait(priv);
-      if (ret < 0)
-        {
-          ret = spi_dmatxwait(priv);
-        }
+  ret = spi_dmarxwait(priv);
+  if (ret >= 0)
+    {
+      ret = spi_dmatxwait(priv);
+    }
 
-      if (rxbuffer != NULL && priv->rxbuf != NULL && ret >= 0)
+  /* Wait for SPI to finish transmitting */
+
+  while ((spi_getreg(priv, GD32_SPI_STAT_OFFSET) & SPI_STAT_TRANS) != 0)
+    {
+      /* Wait for transmission to complete */
+    }
+
+  /* Disable SPI DMA requests */
+
+  spi_modifyreg(priv, GD32_SPI_CTL1_OFFSET, 0,
+                SPI_CTL1_DMAREN | SPI_CTL1_DMATEN);
+
+  /* Copy received data from internal buffer if needed */
+
+  if (rxbuffer != NULL && priv->rxbuf != NULL && ret >= 0)
+    {
+      memcpy(xbuffer, priv->rxbuf, nbytes);
+    }
+
+  /* Check for DMA errors */
+
+  if (ret >= 0)
+    {
+      if ((priv->rxresult & DMA_INTF_ERRIF) ||
+          (priv->txresult & DMA_INTF_ERRIF))
         {
-          memcpy(xbuffer, priv->rxbuf, nbytes);
+          spierr("DMA transfer error detected\n");
+          ret = -EIO;
         }
+    }
 
 #ifdef CONFIG_SPI_TRIGGER
       priv->trigarmed = false;
@@ -1554,24 +1708,28 @@ static void spi_dmarxcallback(DMA_HANDLE handle, uint16_t isr, void *arg)
 {
   struct gd32_spidev_s *priv = (struct gd32_spidev_s *)arg;
 
+  gd32_dma_stop(priv->rxdma);
+
   /* Wake-up the SPI driver */
 
   priv->rxresult = isr | 0x0080;  /* OR'ed with 0x0080 to assure non-zero */
 
-  nxsem_post(&priv->txsem);
+  nxsem_post(&priv->rxsem);
 }
 
 /****************************************************************************
  * Name: spi_dmatxcallback
  *
  * Description:
- *   Called when the RX DMA completes
+ *   Called when the TX DMA completes
  *
  ****************************************************************************/
 
 static void spi_dmatxcallback(DMA_HANDLE handle, uint16_t isr, void *arg)
 {
   struct gd32_spidev_s *priv = (struct gd32_spidev_s *)arg;
+
+  gd32_dma_stop(priv->txdma);
 
   /* Wake-up the SPI driver */
 
@@ -1592,14 +1750,11 @@ static void spi_dmarxsetup(struct gd32_spidev_s *priv,
                            void *rxbuffer,
                            void *rxdummy, size_t nwords)
 {
-  uint32_t regval;
-  dma_single_data_parameter_struct dma_init_struct;
+  dma_parameter_struct dma_init_struct;
 
-  /* Enable SPI RX DMA */
-
-  regval = spi_getreg(priv, GD32_SPI_CTL1_OFFSET);
-  regval |= SPI_CTL1_DMAREN;
-  spi_putreg(priv, GD32_SPI_CTL1_OFFSET, regval);
+  /* Configure RX DMA channel parameters
+   * Note: SPI DMAREN bit will be set later in spi_exchange
+   */
 
   /* 8- or 16-bit mode? */
 
@@ -1617,7 +1772,8 @@ static void spi_dmarxsetup(struct gd32_spidev_s *priv,
           dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_DISABLE;
         }
 
-        dma_init_struct.periph_memory_width = DMA_WIDTH_16BITS_SELECT;
+        dma_init_struct.periph_width = DMA_PERIPH_WIDTH_16BIT;
+        dma_init_struct.memory_width = DMA_MEMORY_WIDTH_16BIT;
     }
   else
     {
@@ -1633,19 +1789,20 @@ static void spi_dmarxsetup(struct gd32_spidev_s *priv,
           dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_DISABLE;
         }
 
-        dma_init_struct.periph_memory_width = DMA_WIDTH_8BITS_SELECT;
+        dma_init_struct.periph_width = DMA_PERIPH_WIDTH_8BIT;
+        dma_init_struct.memory_width = DMA_MEMORY_WIDTH_8BIT;
     }
 
   dma_init_struct.direction = DMA_PERIPH_TO_MEMORY;
-  dma_init_struct.memory0_addr = (uint32_t)rxbuffer;
+  dma_init_struct.memory_addr = (uint32_t)rxbuffer;
   dma_init_struct.number = nwords;
-  dma_init_struct.periph_addr = GD32_SPI_DATA(priv->spibase);
+  dma_init_struct.periph_addr = priv->spibase + GD32_SPI_DATA_OFFSET;
   dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
   dma_init_struct.priority = SPI_DMA_PRIO;
 
   /* Configure the RX DMA */
 
-  gd32_dma_setup(priv->rxdma, &dma_init_struct, 1);
+  gd32_dma_setup(priv->rxdma, &dma_init_struct, 0);
 }
 
 /****************************************************************************
@@ -1660,14 +1817,11 @@ static void spi_dmatxsetup(struct gd32_spidev_s *priv,
                            const void *txbuffer,
                            const void *txdummy, size_t nwords)
 {
-  uint32_t regval;
-  dma_single_data_parameter_struct dma_init_struct;
+  dma_parameter_struct dma_init_struct;
 
-  /* Enable SPI TX DMA */
-
-  regval = spi_getreg(priv, GD32_SPI_CTL1_OFFSET);
-  regval |= SPI_CTL1_DMATEN;
-  spi_putreg(priv, GD32_SPI_CTL1_OFFSET, regval);
+  /* Configure TX DMA channel parameters
+   * Note: SPI DMATEN bit will be set later in spi_exchange
+   */
 
   /* 8- or 16-bit mode? */
 
@@ -1685,7 +1839,8 @@ static void spi_dmatxsetup(struct gd32_spidev_s *priv,
           dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_DISABLE;
         }
 
-        dma_init_struct.periph_memory_width = DMA_WIDTH_16BITS_SELECT;
+        dma_init_struct.periph_width = DMA_PERIPH_WIDTH_16BIT;
+        dma_init_struct.memory_width = DMA_MEMORY_WIDTH_16BIT;
     }
   else
     {
@@ -1701,19 +1856,20 @@ static void spi_dmatxsetup(struct gd32_spidev_s *priv,
           dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_DISABLE;
         }
 
-        dma_init_struct.periph_memory_width = DMA_WIDTH_8BITS_SELECT;
+        dma_init_struct.periph_width = DMA_PERIPH_WIDTH_8BIT;
+        dma_init_struct.memory_width = DMA_MEMORY_WIDTH_8BIT;
     }
 
   dma_init_struct.direction = DMA_MEMORY_TO_PERIPH;
-  dma_init_struct.memory0_addr = (uint32_t)txbuffer;
+  dma_init_struct.memory_addr = (uint32_t)txbuffer;
   dma_init_struct.number = nwords;
-  dma_init_struct.periph_addr = GD32_SPI_DATA(priv->spibase);
+  dma_init_struct.periph_addr = priv->spibase + GD32_SPI_DATA_OFFSET;
   dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
   dma_init_struct.priority = SPI_DMA_PRIO;
 
   /* Setup the TX DMA */
 
-  gd32_dma_setup(priv->txdma, &dma_init_struct, 1);
+  gd32_dma_setup(priv->txdma, &dma_init_struct, 0);
 }
 
 /****************************************************************************
@@ -1727,7 +1883,8 @@ static void spi_dmatxsetup(struct gd32_spidev_s *priv,
 static inline void spi_dmarxstart(struct gd32_spidev_s *priv)
 {
   priv->rxresult = 0;
-  gd32_dma_start(priv->rxdma, spi_dmarxcallback, priv, SPI_DMA_INTEN);
+  spiinfo("Starting RX DMA\n");
+  gd32_dma_start(priv->rxdma, spi_dmarxcallback, priv, DMA_INT_MASK);
 }
 
 /****************************************************************************
@@ -1741,7 +1898,8 @@ static inline void spi_dmarxstart(struct gd32_spidev_s *priv)
 static inline void spi_dmatxstart(struct gd32_spidev_s *priv)
 {
   priv->txresult = 0;
-  gd32_dma_start(priv->txdma, spi_dmatxcallback, priv, SPI_DMA_INTEN);
+  spiinfo("Starting TX DMA\n");
+  gd32_dma_start(priv->txdma, spi_dmatxcallback, priv, DMA_INT_MASK);
 }
 #endif
 

@@ -202,10 +202,10 @@
 #define DMA_WIDTH_32BITS_SELECT          (0x00000002)          /* Select 16 bits width */
 
 /* DMA priority level selection */
-#define DMA_PRIO_LOW_SELECT              (0x00000000)          /* Select low priority level */
-#define DMA_PRIO_MEDIUM_SELECT           (0x00000001)          /* Select medium priority level */
-#define DMA_PRIO_HIGH_SELECT             (0x00000002)          /* Select high priority level */
-#define DMA_PRIO_ULTRA_HIGHSELECT        (0x00000003)          /* Select ultra high priority level */
+#define DMA_PRIO_LOW_SELECT              DMA_PRIORITY_LOW           /* Select low priority level */
+#define DMA_PRIO_MEDIUM_SELECT           DMA_PRIORITY_MEDIUM        /* Select medium priority level */
+#define DMA_PRIO_HIGH_SELECT             DMA_PRIORITY_HIGH          /* Select high priority level */
+#define DMA_PRIO_ULTRA_HIGHSELECT        DMA_PRIORITY_ULTRA_HIGH    /* Select ultra high priority level */
 
 /* DMA channel select - GD32E11X has 12 channels total */
 
@@ -325,5 +325,128 @@
 #define DMA_REQ_TIMER4_CH0              DMAMAP_MAP(1, GD32_DMA_CH4)            /* TIMER4_CH0 */
 #define DMA_REQ_TIMER7_CH1              DMAMAP_MAP(1, GD32_DMA_CH4)            /* TIMER7_CH1 */
 #define DMA_REQ_UART3_TX                DMAMAP_MAP(1, GD32_DMA_CH4)            /* UART3_TX */
+
+/****************************************************************************
+ * DMA Channel Configuration Helpers
+ ****************************************************************************/
+
+/* The GD32E11X has fixed DMA channel to peripheral mappings.
+ * This section provides convenient macros to configure DMA for common
+ * peripherals.
+ *
+ * Example usage:
+ *   DMA_HANDLE dma = gd32_dma_channel_alloc(DMACHAN_I2C0_TX);
+ */
+
+/****************************************************************************
+ * I2C DMA Channel Assignments
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32E11X_I2C0
+#  define DMACHAN_I2C0_TX          DMA_REQ_I2C0_TX    /* DMA0 CH5 */
+#  define DMACHAN_I2C0_RX          DMA_REQ_I2C0_RX    /* DMA0 CH6 */
+#endif
+
+#ifdef CONFIG_GD32E11X_I2C1
+#  define DMACHAN_I2C1_TX          DMA_REQ_I2C1_TX    /* DMA0 CH3 */
+#  define DMACHAN_I2C1_RX          DMA_REQ_I2C1_RX    /* DMA0 CH4 */
+#endif
+
+/****************************************************************************
+ * SPI DMA Channel Assignments
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32E11X_SPI0
+#  define DMACHAN_SPI0_TX          DMA_REQ_SPI0_TX    /* DMA0 CH2 */
+#  define DMACHAN_SPI0_RX          DMA_REQ_SPI0_RX    /* DMA0 CH1 */
+#endif
+
+#ifdef CONFIG_GD32E11X_SPI1
+#  define DMACHAN_SPI1_TX          DMA_REQ_SPI1_TX    /* DMA0 CH4 */
+#  define DMACHAN_SPI1_RX          DMA_REQ_SPI1_RX    /* DMA0 CH3 */
+#endif
+
+#ifdef CONFIG_GD32E11X_SPI2
+#  define DMACHAN_SPI2_TX          DMA_REQ_SPI2_TX    /* DMA1 CH1 */
+#  define DMACHAN_SPI2_RX          DMA_REQ_SPI2_RX    /* DMA1 CH0 */
+#endif
+
+/****************************************************************************
+ * USART DMA Channel Assignments
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32E11X_USART0
+#  define DMACHAN_USART0_TX        DMA_REQ_USART0_TX  /* DMA0 CH3 */
+#  define DMACHAN_USART0_RX        DMA_REQ_USART0_RX  /* DMA0 CH4 */
+#endif
+
+#ifdef CONFIG_GD32E11X_USART1
+#  define DMACHAN_USART1_TX        DMA_REQ_USART1_TX  /* DMA0 CH6 */
+#  define DMACHAN_USART1_RX        DMA_REQ_USART1_RX  /* DMA0 CH5 */
+#endif
+
+#ifdef CONFIG_GD32E11X_USART2
+#  define DMACHAN_USART2_TX        DMA_REQ_USART2_TX  /* DMA0 CH1 */
+#  define DMACHAN_USART2_RX        DMA_REQ_USART2_RX  /* DMA0 CH2 */
+#endif
+
+#ifdef CONFIG_GD32E11X_UART3
+#  define DMACHAN_UART3_TX         DMA_REQ_UART3_TX   /* DMA1 CH4 */
+#  define DMACHAN_UART3_RX         DMA_REQ_UART3_RX   /* DMA1 CH2 */
+#endif
+
+/****************************************************************************
+ * ADC DMA Channel Assignments
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32E11X_ADC0
+#  define DMACHAN_ADC0             DMA_REQ_ADC0       /* DMA0 CH0 or CH6 */
+#endif
+
+/****************************************************************************
+ * DAC DMA Channel Assignments
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32E11X_DAC
+#  define DMACHAN_DAC_CH0          DMA_REQ_DAC_CH0    /* DMA1 CH2 */
+#  define DMACHAN_DAC_CH1          DMA_REQ_DAC_CH1    /* DMA1 CH3 */
+#endif
+
+/****************************************************************************
+ * DMA Configuration Macros
+ ****************************************************************************/
+
+/* Common DMA configuration for I2C peripherals */
+
+#define DMA_I2C_CONFIG(width) \
+  { \
+    .periph_width = (width), \
+    .memory_width = (width), \
+    .periph_inc   = DMA_PERIPH_INCREASE_DISABLE, \
+    .memory_inc   = DMA_MEMORY_INCREASE_ENABLE, \
+    .priority     = DMA_PRIORITY_HIGH, \
+  }
+
+/* Common DMA configuration for SPI peripherals */
+
+#define DMA_SPI_CONFIG(width) \
+  { \
+    .periph_width = (width), \
+    .memory_width = (width), \
+    .periph_inc   = DMA_PERIPH_INCREASE_DISABLE, \
+    .memory_inc   = DMA_MEMORY_INCREASE_ENABLE, \
+    .priority     = DMA_PRIORITY_MEDIUM, \
+  }
+
+/* Common DMA configuration for USART peripherals */
+
+#define DMA_USART_CONFIG(width) \
+  { \
+    .periph_width = (width), \
+    .memory_width = (width), \
+    .periph_inc   = DMA_PERIPH_INCREASE_DISABLE, \
+    .memory_inc   = DMA_MEMORY_INCREASE_ENABLE, \
+    .priority     = DMA_PRIORITY_LOW, \
+  }
 
 #endif /* __ARCH_ARM_SRC_GD32E11X_HARDWARE_GD32E11X_DMA_H */
