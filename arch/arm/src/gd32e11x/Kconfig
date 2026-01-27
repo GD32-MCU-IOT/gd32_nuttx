@@ -1330,7 +1330,7 @@ config GD32E11X_SPI0_DMA
 
 config GD32E11X_SPI0_DMA_BUFFER
 	int "SPI0 DMA buffer size"
-	default 0
+	default 128
 	depends on GD32E11X_SPI0_DMA
 	---help---
 		DMA buffer for SPI0 RX and TX DMA, recommended buffer size is a multiple of 4.
@@ -1346,7 +1346,7 @@ config GD32E11X_SPI1_DMA
 
 config GD32E11X_SPI1_DMA_BUFFER
 	int "SPI1 DMA buffer size"
-	default 0
+	default 128
 	depends on GD32E11X_SPI1_DMA
 	---help---
 		DMA buffer for SPI1 RX and TX DMA, recommended buffer size is a multiple of 4.
@@ -1362,7 +1362,7 @@ config GD32E11X_SPI2_DMA
 
 config GD32E11X_SPI2_DMA_BUFFER
 	int "SPI2 DMA buffer size"
-	default 0
+	default 128
 	depends on GD32E11X_SPI2_DMA
 	---help---
 		DMA buffer for SPI2 RX and TX DMA, recommended buffer size is a multiple of 4.

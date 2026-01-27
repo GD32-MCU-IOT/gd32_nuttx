@@ -45,7 +45,7 @@
 
 #define DMA_INTF_MASK              (0xf)
 
-/* DMA interrupt mask - only enable full transfer complete and error interrupts
+/* DMA interrupt mask
  * Note: Do NOT enable HTFIE (half transfer) for SPI DMA, as the callback
  * would stop DMA prematurely, causing incomplete transfers.
  */
@@ -60,7 +60,8 @@
 /* DMA transfer direction */
 
 #define DMA_PERIPH_TO_MEMORY       (0)                 /* Peripheral to memory */
-#define DMA_MEMORY_TO_PERIPH       DMA_CHXCTL_DIR     /* Memory to peripheral */
+#define DMA_MEMORY_TO_PERIPH       DMA_CHXCTL_DIR      /* Memory to peripheral */
+#define DMA_MEMORY_TO_MEMORY       DMA_CHXCTL_M2M      /* Memory to memory */
 
 /****************************************************************************
  * Public Types

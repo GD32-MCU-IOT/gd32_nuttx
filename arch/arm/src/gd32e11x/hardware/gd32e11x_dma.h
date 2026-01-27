@@ -226,7 +226,10 @@
 #define DMAMAP_DMA1_MASK               0x0000FF00
 #define DMAMAP_DMA1_SHIFT              (8)
 
-#define DMAMAP_MAP(d,c)                ( (((d) & 1) << 8*((d) & 1)) | (((c) & 0x0F) << 8*((d) & 1)) )
+/* Map DMA controller and channel to a unique value */
+
+#define DMAMAP_MAP(d, c) \
+  ((uint8_t)(((d) & 0x0f) << 4 | ((c) & 0x0f)))
 
 /* Peripheral with DMA to channel mapping based on GD32E11X User Manual */
 
