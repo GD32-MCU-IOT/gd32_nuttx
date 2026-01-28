@@ -28,14 +28,14 @@
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include "chip.h"
 
-/* GD32 E11X Family *********************************************************/
+/* Select the pinmap based on the configured chip */
 
-#if defined(CONFIG_ARCH_CHIP_GD32E113)
-#  include "hardware/gd32e113v_pinmap.h"
-
+#if defined(CONFIG_ARCH_CHIP_GD32E113VB) || defined(CONFIG_ARCH_CHIP_GD32E113)
+#include "gd32e113v_pinmap.h"
 #else
-#  error "No pinmap file for this GD32 chip"
+#  error "No pinmap file for this GD32E11x chip"
 #endif
 
 #endif /* __ARCH_ARM_SRC_GD32E11X_HARDWARE_GD32E11X_PINMAP_H */

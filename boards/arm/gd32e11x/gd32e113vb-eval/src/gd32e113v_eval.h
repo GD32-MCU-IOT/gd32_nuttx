@@ -146,15 +146,22 @@
 
 /* AT24 Serial EEPROM
  *
- * A AT24C02C Serial EEPROM was used for testing I2C0.
+ * A AT24C02C Serial EEPROM was used for testing I2C.
+ * AT24_BUS auto-selects based on which I2C is enabled.
  */
 
 #define HAVE_AT24         1
 
-#define AT24_BUS          0
+#if defined(CONFIG_GD32E11X_I2C0)
+#  define AT24_BUS        0
+#elif defined(CONFIG_GD32E11X_I2C1)
+#  define AT24_BUS        1
+#endif
+
 #define AT24_MINOR        0
 
-#if !defined(CONFIG_MTD_AT24XX) || !defined(CONFIG_GD32E11X_I2C0)
+#if !defined(CONFIG_MTD_AT24XX) || \
+    (!defined(CONFIG_GD32E11X_I2C0) && !defined(CONFIG_GD32E11X_I2C1))
 #  undef HAVE_AT24
 #endif
 
