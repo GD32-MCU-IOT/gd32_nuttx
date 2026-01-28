@@ -107,7 +107,7 @@ int gd32_bringup(void)
   ret = gd32_gpio_initialize();
   if (ret < 0)
     {
-      syslog(LOG_ERR, "ERROR: gd32_gpio_dev_initialize() failed: %d\n", ret);
+      syslog(LOG_ERR, "ERROR: gd32_gpio_initialize() failed: %d\n", ret);
     }
 #endif
 

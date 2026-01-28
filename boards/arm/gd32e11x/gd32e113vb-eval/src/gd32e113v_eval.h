@@ -176,7 +176,7 @@ int gd32_usart_test(void);
 #endif
 
 /****************************************************************************
- * Name: gd32_gpio_dev_initialize
+ * Name: gd32_gpio_initialize
  *
  * Description:
  *   Initialize and register GPIO character devices.
@@ -185,7 +185,7 @@ int gd32_usart_test(void);
  ****************************************************************************/
 
 #ifdef CONFIG_DEV_GPIO
-int gd32_gpio_dev_initialize(void);
+int gd32_gpio_initialize(void);
 #endif
 
 #endif /* __BOARDS_ARM_GD32E11X_GD32E113VB_EVAL_SRC_GD32E113V_EVAL_H */
