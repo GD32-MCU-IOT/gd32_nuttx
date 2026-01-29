@@ -46,6 +46,10 @@ ifeq ($(CONFIG_MTD_AT24XX), y)
 CSRCS += gd32e11x_at24.c
 endif
 
+ifeq ($(CONFIG_DEV_GPIO),y)
+CSRCS += gd32e11x_gpio.c
+endif
+
 ifeq ($(CONFIG_MTD_GD25),y)
 CSRCS += gd32e11x_gd25.c
 endif

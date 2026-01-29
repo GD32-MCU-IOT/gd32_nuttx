@@ -41,7 +41,16 @@
 #include <nuttx/spi/spi_transfer.h>
 #include <nuttx/rc/dummy.h>
 
+#ifdef CONFIG_SPI
+#  include <nuttx/spi/spi.h>
+#  include <nuttx/spi/spi_transfer.h>
+#endif
+
 #include "gd32e11x.h"
+
+#ifdef CONFIG_GD32E11X_SPI
+#  include "gd32e11x_spi.h"
+#endif
 
 #ifdef CONFIG_USERLED
 #  include <nuttx/leds/userled.h>
@@ -388,8 +397,21 @@ int gd32_bringup(void)
   struct spi_dev_s *spi1 = gd32_spibus_initialize(1);
   if (spi1)
     {
-      spi_register(spi1, 1);
-      syslog(LOG_INFO, "SPI1 registered as /dev/spi1\n");
+#ifdef CONFIG_SPI_DRIVER
+      ret = spi_register(spi1, 1);
+      if (ret < 0)
+        {
+          syslog(LOG_ERR, "ERROR: Failed to register SPI1: %d\n", ret);
+        }
+      else
+        {
+          syslog(LOG_INFO, "SPI1 registered as /dev/spi1\n");
+        }
+#endif
+    }
+  else
+    {
+      syslog(LOG_ERR, "ERROR: Failed to initialize SPI1\n");
     }
 #endif
 
@@ -397,8 +419,21 @@ int gd32_bringup(void)
   struct spi_dev_s *spi2 = gd32_spibus_initialize(2);
   if (spi2)
     {
-      spi_register(spi2, 2);
-      syslog(LOG_INFO, "SPI2 registered as /dev/spi2\n");
+#ifdef CONFIG_SPI_DRIVER
+      ret = spi_register(spi2, 2);
+      if (ret < 0)
+        {
+          syslog(LOG_ERR, "ERROR: Failed to register SPI2: %d\n", ret);
+        }
+      else
+        {
+          syslog(LOG_INFO, "SPI2 registered as /dev/spi2\n");
+        }
+#endif
+    }
+  else
+    {
+      syslog(LOG_ERR, "ERROR: Failed to initialize SPI2\n");
     }
 #endif
 #endif

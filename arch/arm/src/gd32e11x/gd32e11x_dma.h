@@ -45,12 +45,23 @@
 
 #define DMA_INTF_MASK              (0xf)
 
-#define DMA_INT_MASK               (DMA_CHXCTL_ERRIE | DMA_CHXCTL_HTFIE | DMA_CHXCTL_FTFIE)
+/* DMA interrupt mask
+ * Note: Do NOT enable HTFIE (half transfer) for SPI DMA, as the callback
+ * would stop DMA prematurely, causing incomplete transfers.
+ */
+
+#define DMA_INT_MASK               (DMA_CHXCTL_ERRIE | DMA_CHXCTL_FTFIE)
 
 /* The DMA controllers */
 
 #define GD32_DMA0                  (GD32_DMA0_BASE)
 #define GD32_DMA1                  (GD32_DMA1_BASE)
+
+/* DMA transfer direction */
+
+#define DMA_PERIPH_TO_MEMORY       (0)                 /* Peripheral to memory */
+#define DMA_MEMORY_TO_PERIPH       DMA_CHXCTL_DIR      /* Memory to peripheral */
+#define DMA_MEMORY_TO_MEMORY       DMA_CHXCTL_M2M      /* Memory to memory */
 
 /****************************************************************************
  * Public Types

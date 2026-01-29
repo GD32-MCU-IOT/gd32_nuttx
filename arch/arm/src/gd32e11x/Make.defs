@@ -34,6 +34,10 @@ ifneq ($(CONFIG_ARCH_IDLE_CUSTOM),y)
 CHIP_CSRCS += gd32e11x_idle.c
 endif
 
+ifeq ($(CONFIG_GD32E11X_DMA),y)
+CHIP_CSRCS += gd32e11x_dma.c
+endif
+
 ifeq ($(CONFIG_GD32E11X_SPI),y)
 CHIP_CSRCS += gd32e11x_spi.c
 endif
