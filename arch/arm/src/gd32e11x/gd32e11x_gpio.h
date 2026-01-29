@@ -61,6 +61,7 @@
 
 #define GPIO_CFG_INPUT                (1 << 15)               /* Bit15: 1=input mode */
 #define GPIO_CFG_OUTPUT               (0)                     /*        0=output mode */
+#undef GPIO_CFG_AF
 #define GPIO_CFG_AF                   (0)                     /*        0=alternate function mode */
 
 /* Output set/clear */

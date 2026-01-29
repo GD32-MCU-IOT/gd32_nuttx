@@ -105,6 +105,39 @@
                            GPIO_CFG_PORT_B | GPIO_CFG_PIN_2)
 
 /****************************************************************************
+ * AT24 Serial EEPROM
+ ****************************************************************************/
+
+/* AT24 Serial EEPROM
+ *
+ * A AT24C02C Serial EEPROM was used for testing I2C.
+ * AT24_BUS auto-selects based on which I2C is enabled.
+ */
+
+#define HAVE_AT24         1
+
+#if defined(CONFIG_GD32E11X_I2C0)
+#  define AT24_BUS        0
+#elif defined(CONFIG_GD32E11X_I2C1)
+#  define AT24_BUS        1
+#endif
+
+#define AT24_MINOR        0
+
+#if !defined(CONFIG_MTD_AT24XX) || \
+    (!defined(CONFIG_GD32E11X_I2C0) && !defined(CONFIG_GD32E11X_I2C1))
+#  undef HAVE_AT24
+#endif
+
+/* Can't support AT24 features if mountpoints are disabled or if we were not
+ * asked to mount the AT24 part
+ */
+
+#ifndef CONFIG_GD32E113VB_EVAL_AT24_TEST
+#  undef HAVE_AT24
+#endif
+
+/****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
@@ -188,21 +221,16 @@ int gd32_usart_test(void);
 int gd32_gpio_initialize(void);
 #endif
 
+/****************************************************************************
+ * Name: gd32_at24_wr_test
+ *
+ * Description:
+ *   Write and read the AT24 serial EEPROM test.
+ *
+ ****************************************************************************/
+
+#ifdef HAVE_AT24
+int gd32_at24_wr_test(int minor);
+#endif
+
 #endif /* __BOARDS_ARM_GD32E11X_GD32E113VB_EVAL_SRC_GD32E113V_EVAL_H */
-
-/* GD25 SPI FLASH */
-#if defined(CONFIG_MTD_GD25) && defined(CONFIG_GD32E11X_SPI0)
-#  define HAVE_GD25  1
-#  define SPI_FLASH_CSNUM 0
-#endif
-
-#if defined(HAVE_GD25) && defined(CONFIG_GD32E113VB_EVAL_GD25_BLOCKMOUNT)
-#  if defined(CONFIG_GD32E113VB_EVAL_GD25_LITTLEFS)
-#    define GD25_MOUNT_FSTYPE "littlefs"
-#  endif
-#endif
-
-/* Function prototypes */
-#ifdef HAVE_GD25
-int gd32_gd25_automount(int minor);
-#endif

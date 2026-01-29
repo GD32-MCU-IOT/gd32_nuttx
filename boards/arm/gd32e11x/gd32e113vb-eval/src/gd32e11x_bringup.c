@@ -145,17 +145,15 @@ int gd32_bringup(void)
     }
 #endif
 
-#ifdef HAVE_GD25
-  /* Initialize and mount the GD25 SPI flash */
+#ifdef HAVE_AT24
+  /* I2C EEPROM write and read test */
 
-  syslog(LOG_INFO, "INFO: Initializing GD25 SPI Flash...\n");
-  ret = gd32_gd25_automount(0);
+  ret = gd32_at24_wr_test(AT24_MINOR);
   if (ret < 0)
     {
-      syslog(LOG_ERR, "ERROR: gd32_gd25_automount() failed: %d\n", ret);
+      syslog(LOG_ERR, "ERROR: I2C EEPROM write and read test fail: %d\n",
+             ret);
     }
-#else
-  syslog(LOG_WARNING, "WARNING: HAVE_GD25 not defined!\n");
 #endif
 
 #ifdef CONFIG_SPI
