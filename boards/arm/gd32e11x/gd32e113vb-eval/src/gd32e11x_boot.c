@@ -31,6 +31,7 @@
 #include <nuttx/board.h>
 #include <arch/board/board.h>
 
+#include "arm_internal.h"
 #include "gd32e113v_eval.h"
 
 /****************************************************************************
@@ -54,6 +55,12 @@ void gd32_boardinitialize(void)
   /* Configure on-board LEDs if LED support has been selected. */
 
   board_autoled_initialize();
+#endif
+
+#ifdef CONFIG_GD32E11X_DMA
+  /* Initialize DMA channels and interrupts */
+
+  arm_dma_initialize();
 #endif
 
 #if defined(CONFIG_SPI)
