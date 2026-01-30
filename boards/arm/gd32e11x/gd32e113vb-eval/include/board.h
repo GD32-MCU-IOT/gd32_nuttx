@@ -357,6 +357,17 @@ typedef enum
 #  define GPIO_USART1_TX (GPIO_USART1_TX_1 | GPIO_CFG_SPEED_50MHZ)
 #endif
 
+/* I2C pin definitions
+ * I2C0: Using default pins PB6(SCL)/PB7(SDA)
+ * I2C1: Using default pins PB10(SCL)/PB11(SDA)
+ * Note: GPIO speed is configured here at board level
+ */
+
+#define GPIO_I2C0_SCL    (GPIO_I2C0_SCL_1 | GPIO_CFG_SPEED_50MHZ)
+#define GPIO_I2C0_SDA    (GPIO_I2C0_SDA_1 | GPIO_CFG_SPEED_50MHZ)
+#define GPIO_I2C1_SCL    (GPIO_I2C1_SCL_1 | GPIO_CFG_SPEED_50MHZ)
+#define GPIO_I2C1_SDA    (GPIO_I2C1_SDA_1 | GPIO_CFG_SPEED_50MHZ)
+
 /* SPI Configuration ********************************************************/
 
 /* SPI0 - GD25 Flash CS on PE3 */
@@ -389,3 +400,4 @@ typedef enum
 #endif
 
 #endif /* __BOARDS_ARM_GD32E113VB_EVAL_INCLUDE_BOARD_H */
+

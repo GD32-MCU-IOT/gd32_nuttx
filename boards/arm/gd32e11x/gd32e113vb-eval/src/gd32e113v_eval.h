@@ -104,6 +104,20 @@
 #define GPIO_INT1         (GPIO_CFG_INPUT | GPIO_CFG_CTL_INFLOAT | GPIO_CFG_EXTI | \
                            GPIO_CFG_PORT_B | GPIO_CFG_PIN_2)
 
+/* AT24 Serial EEPROM */
+
+#if defined(CONFIG_MTD_AT24XX) && \
+    (defined(CONFIG_GD32E11X_I2C0) || defined(CONFIG_GD32E11X_I2C1)) && \
+    defined(CONFIG_GD32E113VB_EVAL_AT24_TEST)
+#  define HAVE_AT24       1
+#  if defined(CONFIG_GD32E11X_I2C0)
+#    define AT24_BUS      0
+#  else
+#    define AT24_BUS      1
+#  endif
+#  define AT24_MINOR      0
+#endif
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -188,7 +202,9 @@ int gd32_usart_test(void);
 int gd32_gpio_initialize(void);
 #endif
 
-#endif /* __BOARDS_ARM_GD32E11X_GD32E113VB_EVAL_SRC_GD32E113V_EVAL_H */
+#ifdef HAVE_AT24
+int gd32_at24_wr_test(int minor);
+#endif
 
 /* GD25 SPI FLASH */
 #if defined(CONFIG_MTD_GD25) && defined(CONFIG_GD32E11X_SPI0)
@@ -206,3 +222,4 @@ int gd32_gpio_initialize(void);
 #ifdef HAVE_GD25
 int gd32_gd25_automount(int minor);
 #endif
+#endif /* __BOARDS_ARM_GD32E11X_GD32E113VB_EVAL_SRC_GD32E113V_EVAL_H */

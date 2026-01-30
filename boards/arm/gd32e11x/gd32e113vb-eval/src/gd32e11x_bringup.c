@@ -158,6 +158,17 @@ int gd32_bringup(void)
   syslog(LOG_WARNING, "WARNING: HAVE_GD25 not defined!\n");
 #endif
 
+#ifdef HAVE_AT24
+  /* I2C EEPROM write and read test */
+
+  ret = gd32_at24_wr_test(AT24_MINOR);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: I2C EEPROM write and read test fail: %d\n",
+             ret);
+    }
+#endif
+
 #ifdef CONFIG_SPI
   /* Initialize SPI-based devices */
 
