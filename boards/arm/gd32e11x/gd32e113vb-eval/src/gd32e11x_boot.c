@@ -48,7 +48,7 @@
  *   before any devices have been initialized.
  *
  ****************************************************************************/
-
+// test
 void gd32_boardinitialize(void)
 {
 #ifdef CONFIG_ARCH_LEDS
