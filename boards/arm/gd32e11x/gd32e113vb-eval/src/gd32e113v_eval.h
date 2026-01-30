@@ -206,8 +206,6 @@ int gd32_gpio_initialize(void);
 int gd32_at24_wr_test(int minor);
 #endif
 
-#endif /* __BOARDS_ARM_GD32E11X_GD32E113VB_EVAL_SRC_GD32E113V_EVAL_H */
-
 /* GD25 SPI FLASH */
 #if defined(CONFIG_MTD_GD25) && defined(CONFIG_GD32E11X_SPI0)
 #  define HAVE_GD25  1
@@ -224,3 +222,4 @@ int gd32_at24_wr_test(int minor);
 #ifdef HAVE_GD25
 int gd32_gd25_automount(int minor);
 #endif
+#endif /* __BOARDS_ARM_GD32E11X_GD32E113VB_EVAL_SRC_GD32E113V_EVAL_H */
