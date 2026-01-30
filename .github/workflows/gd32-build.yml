@@ -184,17 +184,53 @@ jobs:
             echo "Building: ${{ matrix.config }}"
             echo "========================================="
 
-            # Configure (capture logs so failures still upload artifacts)
+            # Ensure the board defconfig is in canonical form.
+            # refresh.sh exits non-zero when it had to update defconfig.
             set +e
-            ./tools/configure.sh "${CFG}" 2>&1 | tee "${TARGET_DIR}/configure.log"
-            CFG_RC=${PIPESTATUS[0]}
+            ./tools/refresh.sh --silent "${CFG}" 2>&1 | tee "${TARGET_DIR}/refresh.log"
+            REFRESH_RC=${PIPESTATUS[0]}
 
-            # Build
-            if [ ${CFG_RC} -eq 0 ]; then
-              make -j$(nproc) 2>&1 | tee "${TARGET_DIR}/build.log"
-              BUILD_RC=${PIPESTATUS[0]}
+            if [ ${REFRESH_RC} -ne 0 ]; then
+              echo ""
+              echo "Defconfig is not in canonical form for: ${CFG}"
+              echo "Please run: ./tools/refresh.sh --silent ${CFG} and commit the updated defconfig."
+              echo ""
+              git --no-pager diff --name-only || true
+              git --no-pager diff || true
+
+              # Revert refresh changes so the workspace doesn't stay dirty.
+              BOARD_NAME="${CFG%%:*}"
+              CONFIG_NAME="${CFG#*:}"
+              DEFCONFIG_GLOB=(boards/*/*/"${BOARD_NAME}"/configs/"${CONFIG_NAME}"/defconfig)
+              if [ -e "${DEFCONFIG_GLOB[0]}" ]; then
+                git checkout -- "${DEFCONFIG_GLOB[@]}" || true
+              else
+                # Fallback (unexpected CFG format or path layout)
+                git checkout -- boards || true
+              fi
+              rm -f defconfig .config Make.defs SAVEconfig SAVEMake.defs || true
+
+              # Show status after cleanup to aid debugging.
+              git --no-pager status -sb || true
+
+              BUILD_RC=${REFRESH_RC}
             else
-              BUILD_RC=${CFG_RC}
+
+              # refresh.sh leaves temporary top-level files when run from a clean tree.
+              # Clean them up so subsequent steps operate from a predictable state.
+              rm -f defconfig .config Make.defs SAVEconfig SAVEMake.defs || true
+
+              # Configure (capture logs so failures still upload artifacts)
+              ./tools/configure.sh "${CFG}" 2>&1 | tee "${TARGET_DIR}/configure.log"
+              CFG_RC=${PIPESTATUS[0]}
+
+              # Build
+              if [ ${CFG_RC} -eq 0 ]; then
+                make -j$(nproc) 2>&1 | tee "${TARGET_DIR}/build.log"
+                BUILD_RC=${PIPESTATUS[0]}
+              else
+                BUILD_RC=${CFG_RC}
+              fi
             fi
 
             # Save build artifacts (best-effort)
