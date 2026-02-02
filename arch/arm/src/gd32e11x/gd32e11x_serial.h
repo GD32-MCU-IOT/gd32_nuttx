@@ -336,8 +336,14 @@
 #  define HAVE_RS485 1
 #endif
 
+/* Define USART CTL0 interrupt mask.
+ * When RX DMA is enabled, we need IDLEIE for detecting data reception.
+ */
+
 #ifdef HAVE_RS485
 #  define USART_CTL0_USED_INTS    USART_CTL0_INT_MASK
+#elif defined(SERIAL_HAVE_RXDMA)
+#  define USART_CTL0_USED_INTS    (USART_CTL0_IDLEIE | USART_CTL0_RBNEIE | USART_CTL0_TBEIE | USART_CTL0_PERRIE)
 #else
 #  define USART_CTL0_USED_INTS    (USART_CTL0_RBNEIE | USART_CTL0_TBEIE | USART_CTL0_PERRIE)
 #endif

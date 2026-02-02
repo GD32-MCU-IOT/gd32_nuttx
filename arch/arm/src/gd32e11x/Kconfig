@@ -921,7 +921,7 @@ config USART0_RS485_DIR_POLARITY
 config GD32E11X_USART0_RXDMA
 	bool "USART0 Rx DMA"
 	default n
-	depends on GD32E11X_DMA1
+	depends on GD32E11X_DMA0
 	select GD32E11X_USART_RXDMA
 	select USART0_RXDMA
 	---help---
@@ -931,7 +931,7 @@ config GD32E11X_USART0_RXDMA
 config GD32E11X_USART0_TXDMA
 	bool "USART0 Tx DMA"
 	default n
-	depends on GD32E11X_DMA1
+	depends on GD32E11X_DMA0
 	select GD32E11X_USART_TXDMA
 	select USART0_TXDMA
 	---help---
