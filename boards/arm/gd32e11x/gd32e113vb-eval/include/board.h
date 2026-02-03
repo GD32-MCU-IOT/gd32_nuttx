@@ -349,12 +349,30 @@ typedef enum
 #endif
 
 /* USART1:
- * Use USART1 as alternative console
+ * Use USART1 as alternative console or general UART
+ * USART1 uses PA2 (TX) and PA3 (RX) by default (no remap)
  */
 
-#if defined(CONFIG_GD32E113VB_EVAL_CONSOLE_VIRTUAL)
-#  define GPIO_USART1_RX (GPIO_USART1_RX_1 | GPIO_CFG_SPEED_50MHZ)
-#  define GPIO_USART1_TX (GPIO_USART1_TX_1 | GPIO_CFG_SPEED_50MHZ)
+#if defined(CONFIG_GD32E11X_USART1)
+#  ifndef GPIO_USART1_RX
+#    define GPIO_USART1_RX (GPIO_USART1_RX_1 | GPIO_CFG_SPEED_50MHZ)
+#  endif
+#  ifndef GPIO_USART1_TX
+#    define GPIO_USART1_TX (GPIO_USART1_TX_1 | GPIO_CFG_SPEED_50MHZ)
+#  endif
+#  if defined(CONFIG_SERIAL_IFLOWCONTROL) && defined(CONFIG_USART1_IFLOWCONTROL)
+#    define GPIO_USART1_RTS (GPIO_USART1_RTS_1 | GPIO_CFG_SPEED_50MHZ)
+#  endif
+#  if defined(CONFIG_SERIAL_OFLOWCONTROL) && defined(CONFIG_USART1_OFLOWCONTROL)
+#    define GPIO_USART1_CTS (GPIO_USART1_CTS_1 | GPIO_CFG_SPEED_50MHZ)
+#  endif
+#endif
+
+#if CONFIG_GD32E11X_USART1_TXDMA
+#  define DMA_CHANNEL_USART1_TX    DMA_REQ_USART1_TX_1
+#endif
+#if CONFIG_GD32E11X_USART1_RXDMA
+#  define DMA_CHANNEL_USART1_RX    DMA_REQ_USART1_RX_1
 #endif
 
 /* I2C pin definitions
