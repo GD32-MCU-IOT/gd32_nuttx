@@ -1290,7 +1290,32 @@ config GD32E11X_I2C_DMA
 	default n
 	depends on GD32E11X_I2C && GD32E11X_DMA0 && !I2C_POLLED
 	---help---
-		Enable DMA support for I2C transfers.
+		Use DMA to improve I2C transfer performance.
+		I2C0 and I2C1 both use DMA0 channels.
+
+config GD32E11X_I2C_DMATHRESHOLD
+	int "I2C DMA threshold"
+	default 4
+	depends on GD32E11X_I2C_DMA
+	---help---
+		When I2C DMA is enabled, if transfer size is less than GD32E11X_I2C_DMATHRESHOLD,
+		the data transfer will still be performed by polling logic.
+
+config GD32E11X_I2C0_DMA
+	bool "I2C0 DMA"
+	default n
+	depends on GD32E11X_I2C0 && GD32E11X_I2C_DMA
+	---help---
+		Use DMA to improve I2C0 transfer performance.
+		I2C0 uses DMA0_CH5 (TX) and DMA0_CH6 (RX).
+
+config GD32E11X_I2C1_DMA
+	bool "I2C1 DMA"
+	default n
+	depends on GD32E11X_I2C1 && GD32E11X_I2C_DMA
+	---help---
+		Use DMA to improve I2C1 transfer performance.
+		I2C1 uses DMA0_CH3 (TX) and DMA0_CH4 (RX).
 
 endmenu # GD32E11x I2C Configuration
 menu "GD32E11X SPI Configuration"

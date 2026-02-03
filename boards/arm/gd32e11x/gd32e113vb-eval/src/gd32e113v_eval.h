@@ -204,6 +204,9 @@ int gd32_gpio_initialize(void);
 
 #ifdef HAVE_AT24
 int gd32_at24_wr_test(int minor);
+#  ifdef CONFIG_GD32E11X_I2C_DMA
+int gd32_at24_multimsg_dma_test(int minor);
+#  endif
 #endif
 
 /* GD25 SPI FLASH */
