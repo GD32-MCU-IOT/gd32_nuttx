@@ -212,7 +212,7 @@ int gd32_at24_multimsg_dma_test(int minor)
       tx_buf[0] = page * AT24_PAGE_SIZE;  /* EEPROM internal address */
       for (i = 1; i <= bytes_this_page; i++)
         {
-          tx_buf[i] = (page * AT24_PAGE_SIZE + i) & 0xFF;
+          tx_buf[i] = (page * AT24_PAGE_SIZE + i) & 0xff;
         }
 
       msgs[0].frequency = AT24_I2C_FREQ;
@@ -280,20 +280,20 @@ int gd32_at24_multimsg_dma_test(int minor)
       for (int j = 0; j < 16 && (i + j) < AT24_TEST_SIZE; j++)
         {
           pos += snprintf(&line[pos], sizeof(line) - pos,
-                          "%02X ", read_buf[i + j]);
+                          "%02x ", read_buf[i + j]);
         }
 
-      syslog(LOG_INFO, "  %02X: %s\n", i, line);
+      syslog(LOG_INFO, "  %02x: %s\n", i, line);
     }
 
   /* Verify data */
 
   for (i = 0; i < AT24_TEST_SIZE; i++)
     {
-      if (read_buf[i] != ((i + 1) & 0xFF))
+      if (read_buf[i] != ((i + 1) & 0xff))
         {
-          syslog(LOG_ERR, "ERROR: Mismatch at %d: exp 0x%02X got 0x%02X\n",
-                 i, (i + 1) & 0xFF, read_buf[i]);
+          syslog(LOG_ERR, "ERROR: Mismatch at %d: exp 0x%02x got 0x%02x\n",
+                 i, (i + 1) & 0xff, read_buf[i]);
           ret = -EIO;
           goto errout;
         }
@@ -301,7 +301,9 @@ int gd32_at24_multimsg_dma_test(int minor)
 
   syslog(LOG_INFO, "Single-message read PASSED!\n");
 
-  /* Step 3: Multi-message read (write addr + read data with Repeated START) */
+  /* Step 3: Multi-message read (write addr + read data with
+   * Repeated START)
+   */
 
   addr_buf[0] = 0x00;
 
@@ -335,20 +337,20 @@ int gd32_at24_multimsg_dma_test(int minor)
       for (int j = 0; j < 16 && (i + j) < AT24_TEST_SIZE; j++)
         {
           pos += snprintf(&line[pos], sizeof(line) - pos,
-                          "%02X ", read_buf[i + j]);
+                          "%02x ", read_buf[i + j]);
         }
 
-      syslog(LOG_INFO, "  %02X: %s\n", i, line);
+      syslog(LOG_INFO, "  %02x: %s\n", i, line);
     }
 
   /* Verify data */
 
   for (i = 0; i < AT24_TEST_SIZE; i++)
     {
-      if (read_buf[i] != ((i + 1) & 0xFF))
+      if (read_buf[i] != ((i + 1) & 0xff))
         {
-          syslog(LOG_ERR, "ERROR: Mismatch at %d: exp 0x%02X got 0x%02X\n",
-                 i, (i + 1) & 0xFF, read_buf[i]);
+          syslog(LOG_ERR, "ERROR: Mismatch at %d: exp 0x%02x got 0x%02x\n",
+                 i, (i + 1) & 0xff, read_buf[i]);
           ret = -EIO;
           goto errout;
         }
