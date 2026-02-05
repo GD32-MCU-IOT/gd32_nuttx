@@ -388,27 +388,27 @@ static char g_uart4txbuffer[CONFIG_UART4_TXBUFSIZE];
 
 #ifdef CONFIG_GD32E11X_USART0_RXDMA
 static char g_usart0rxfifo[RXDMA_BUFFER_SIZE]
-  __attribute__((aligned(ARMV7M_DCACHE_LINESIZE)));
+  __attribute__((aligned(4)));
 #endif
 
 #ifdef CONFIG_GD32E11X_USART1_RXDMA
 static char g_usart1rxfifo[RXDMA_BUFFER_SIZE]
-  __attribute__((aligned(ARMV7M_DCACHE_LINESIZE)));
+  __attribute__((aligned(4)));
 #endif
 
 #ifdef CONFIG_GD32E11X_USART2_RXDMA
 static char g_usart2rxfifo[RXDMA_BUFFER_SIZE]
-  __attribute__((aligned(ARMV7M_DCACHE_LINESIZE)));
+  __attribute__((aligned(4)));
 #endif
 
 #ifdef CONFIG_GD32E11X_UART3_RXDMA
 static char g_uart3rxfifo[RXDMA_BUFFER_SIZE]
-  __attribute__((aligned(ARMV7M_DCACHE_LINESIZE)));
+  __attribute__((aligned(4)));
 #endif
 
 #ifdef CONFIG_GD32E11X_UART4_RXDMA
 static char g_uart4rxfifo[RXDMA_BUFFER_SIZE]
-  __attribute__((aligned(ARMV7M_DCACHE_LINESIZE)));
+  __attribute__((aligned(4)));
 #endif
 
 /* This describes the state of the GD32 USART0 port. */
@@ -447,11 +447,11 @@ static struct up_dev_s g_usart0priv =
 #endif
 
 #ifdef CONFIG_GD32E11X_USART0_RXDMA
-  .rxdma_channel = DMAMAP_USART0_RX,
+  .rxdma_channel = DMACHAN_USART0_RX,
   .rxfifo        = g_usart0rxfifo,
 #endif
 #ifdef CONFIG_GD32E11X_USART0_TXDMA
-  .txdma_channel = DMAMAP_USART0_TX,
+  .txdma_channel = DMACHAN_USART0_TX,
 #endif
 };
 
@@ -520,11 +520,11 @@ static struct up_dev_s g_usart1priv =
 #endif
 
 #ifdef CONFIG_GD32E11X_USART1_RXDMA
-  .rxdma_channel = DMAMAP_USART1_RX,
+  .rxdma_channel = DMACHAN_USART1_RX,
   .rxfifo        = g_usart1rxfifo,
 #endif
 #ifdef CONFIG_GD32E11X_USART1_TXDMA
-  .txdma_channel = DMAMAP_USART1_TX,
+  .txdma_channel = DMACHAN_USART1_TX,
 #endif
 };
 
@@ -543,11 +543,11 @@ static struct uart_dev_s g_usart1port =
     .size    = CONFIG_USART1_TXBUFSIZE,
     .buffer  = g_usart1txbuffer,
   },
-#if defined(CONFIG_GD32E11X_USART0_RXDMA) && defined(CONFIG_GD32E11X_USART0_TXDMA)
+#if defined(CONFIG_GD32E11X_USART1_RXDMA) && defined(CONFIG_GD32E11X_USART1_TXDMA)
   .ops       = &g_uart_ops_rxtx_dma,
-#elif defined(CONFIG_GD32E11X_USART0_RXDMA) && !defined(CONFIG_GD32E11X_USART0_TXDMA)
+#elif defined(CONFIG_GD32E11X_USART1_RXDMA) && !defined(CONFIG_GD32E11X_USART1_TXDMA)
   .ops       = &g_uart_ops_rx_dma,
-#elif !defined(CONFIG_GD32E11X_USART0_RXDMA) && defined(CONFIG_GD32E11X_USART0_TXDMA)
+#elif !defined(CONFIG_GD32E11X_USART1_RXDMA) && defined(CONFIG_GD32E11X_USART1_TXDMA)
   .ops       = &g_uart_ops_tx_dma,
 #else
   .ops       = &g_uart_ops_no_dma,
@@ -593,11 +593,11 @@ static struct up_dev_s g_usart2priv =
 #endif
 
 #ifdef CONFIG_GD32E11X_USART2_RXDMA
-  .rxdma_channel = DMAMAP_USART2_RX,
+  .rxdma_channel = DMACHAN_USART2_RX,
   .rxfifo        = g_usart2rxfifo,
 #endif
 #ifdef CONFIG_GD32E11X_USART2_TXDMA
-  .txdma_channel = DMAMAP_USART2_TX,
+  .txdma_channel = DMACHAN_USART2_TX,
 #endif
 };
 
@@ -616,11 +616,11 @@ static struct uart_dev_s g_usart2port =
     .size    = CONFIG_USART2_TXBUFSIZE,
     .buffer  = g_usart2txbuffer,
   },
-#if defined(CONFIG_GD32E11X_USART0_RXDMA) && defined(CONFIG_GD32E11X_USART0_TXDMA)
+#if defined(CONFIG_GD32E11X_USART2_RXDMA) && defined(CONFIG_GD32E11X_USART2_TXDMA)
   .ops       = &g_uart_ops_rxtx_dma,
-#elif defined(CONFIG_GD32E11X_USART0_RXDMA) && !defined(CONFIG_GD32E11X_USART0_TXDMA)
+#elif defined(CONFIG_GD32E11X_USART2_RXDMA) && !defined(CONFIG_GD32E11X_USART2_TXDMA)
   .ops       = &g_uart_ops_rx_dma,
-#elif !defined(CONFIG_GD32E11X_USART0_RXDMA) && defined(CONFIG_GD32E11X_USART0_TXDMA)
+#elif !defined(CONFIG_GD32E11X_USART2_RXDMA) && defined(CONFIG_GD32E11X_USART2_TXDMA)
   .ops       = &g_uart_ops_tx_dma,
 #else
   .ops       = &g_uart_ops_no_dma,
@@ -666,11 +666,11 @@ static struct up_dev_s g_uart3priv =
 #endif
 
 #ifdef CONFIG_GD32E11X_UART3_RXDMA
-  .rxdma_channel = DMAMAP_UART3_RX,
+  .rxdma_channel = DMACHAN_UART3_RX,
   .rxfifo        = g_uart3rxfifo,
 #endif
 #ifdef CONFIG_GD32E11X_UART3_TXDMA
-  .txdma_channel = DMAMAP_UART3_TX,
+  .txdma_channel = DMACHAN_UART3_TX,
 #endif
 };
 
@@ -689,11 +689,11 @@ static struct uart_dev_s g_uart3port =
     .size    = CONFIG_UART3_TXBUFSIZE,
     .buffer  = g_uart3txbuffer,
   },
-#if defined(CONFIG_GD32E11X_USART0_RXDMA) && defined(CONFIG_GD32E11X_USART0_TXDMA)
+#if defined(CONFIG_GD32E11X_UART3_RXDMA) && defined(CONFIG_GD32E11X_UART3_TXDMA)
   .ops       = &g_uart_ops_rxtx_dma,
-#elif defined(CONFIG_GD32E11X_USART0_RXDMA) && !defined(CONFIG_GD32E11X_USART0_TXDMA)
+#elif defined(CONFIG_GD32E11X_UART3_RXDMA) && !defined(CONFIG_GD32E11X_UART3_TXDMA)
   .ops       = &g_uart_ops_rx_dma,
-#elif !defined(CONFIG_GD32E11X_USART0_RXDMA) && defined(CONFIG_GD32E11X_USART0_TXDMA)
+#elif !defined(CONFIG_GD32E11X_UART3_RXDMA) && defined(CONFIG_GD32E11X_UART3_TXDMA)
   .ops       = &g_uart_ops_tx_dma,
 #else
   .ops       = &g_uart_ops_no_dma,
@@ -739,11 +739,11 @@ static struct up_dev_s g_uart4priv =
 #endif
 
 #ifdef CONFIG_GD32E11X_UART4_RXDMA
-  .rxdma_channel = DMAMAP_UART4_RX,
+  .rxdma_channel = DMACHAN_UART4_RX,
   .rxfifo        = g_uart4rxfifo,
 #endif
 #ifdef CONFIG_GD32E11X_UART4_TXDMA
-  .txdma_channel = DMAMAP_UART4_TX,
+  .txdma_channel = DMACHAN_UART4_TX,
 #endif
 };
 
@@ -762,7 +762,7 @@ static struct uart_dev_s g_uart4port =
     .size    = CONFIG_UART4_TXBUFSIZE,
     .buffer  = g_uart4txbuffer,
   },
-  .ops       = &g_uart_ops,
+  .ops       = &g_uart_ops_no_dma,
   .priv      = &g_uart4priv,
 };
 
@@ -1143,17 +1143,17 @@ static int up_dma_setup(struct uart_dev_s *dev)
 
       /* Configure for circular DMA reception into the RX FIFO */
 
-      dma_single_data_parameter_struct dma_init_struct;
+      dma_parameter_struct dma_init_struct;
 
       dma_init_struct.direction = DMA_PERIPH_TO_MEMORY;
-      dma_init_struct.memory0_addr = (uint32_t)priv->rxfifo;
+      dma_init_struct.memory_addr = (uint32_t)priv->rxfifo;
       dma_init_struct.number = RXDMA_BUFFER_SIZE;
       dma_init_struct.periph_addr = priv->usartbase + GD32_USART_DATA_OFFSET;
-      dma_init_struct.periph_memory_width = DMA_WIDTH_8BITS_SELECT;
+      dma_init_struct.periph_width = DMA_PERIPH_WIDTH_8BIT;
+      dma_init_struct.memory_width = DMA_MEMORY_WIDTH_8BIT;
       dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
       dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_ENABLE;
       dma_init_struct.priority = USART_DMA_PRIO;
-      dma_init_struct.circular_mode = DMA_CIRCULAR_MODE_ENABLE;
 
       gd32_dma_setup(priv->rxdma, &dma_init_struct, 1);
 
@@ -1161,15 +1161,17 @@ static int up_dma_setup(struct uart_dev_s *dev)
 
       priv->rxdmanext = 0;
 
+      /* Start the DMA channel FIRST, then enable USART DMA
+       * (per GD32 official demo sequence)
+       */
+
+      gd32_dma_start(priv->rxdma, up_dma_rx_callback, dev, 0);
+
       /* Enable receive DMA for the UART */
 
       uint32_t regval = up_serialin(priv, GD32_USART_CTL2_OFFSET);
       regval |= USART_CTL2_DENR;
       up_serialout(priv, GD32_USART_CTL2_OFFSET, regval);
-
-      /* Start the DMA channel */
-
-      gd32_dma_start(priv->rxdma, up_dma_rx_callback, dev, 0);
     }
 #endif
 
@@ -1345,6 +1347,8 @@ static int up_interrupt(int irq, void *context, void *arg)
   handled = true;
   for (passes = 0; passes < 256 && handled; passes++)
     {
+      handled = false;
+
       /* Get the masked USART status */
 
       priv->sr = up_serialin(priv, GD32_USART_STAT0_OFFSET);
@@ -1376,10 +1380,14 @@ static int up_interrupt(int irq, void *context, void *arg)
       /* Handle IDLE interrupt for DMA reception */
 
       if (((priv->sr & USART_STAT0_IDLEF) != 0) &&
-          ((priv->ie & USART_CTL0_IDLIE) != 0))
+          ((priv->ie & USART_CTL0_IDLEIE) != 0))
         {
           uart_recvchars(dev);
+
+          /* Clear IDLE flag by reading DATA register */
+
           up_serialin(priv, GD32_USART_DATA_OFFSET);
+          handled = true;
         }
 #endif
 
@@ -1723,14 +1731,15 @@ static void up_dma_rxint(struct uart_dev_s *dev, bool enable)
   ie = priv->ie;
   if (enable)
     {
-      /* Receive an interrupt when the DMA receive data */
+      /* Receive an interrupt when the DMA receive data (IDLE line) */
 
       ie |= USART_CTL0_IDLEIE;
     }
   else
     {
-      ie &= ~(USART_CTL0_RBNEIE | USART_CTL0_PERRIE |
-              USART_CTL2_ERRIE);
+      /* Disable the IDLE line interrupt for DMA mode */
+
+      ie &= ~USART_CTL0_IDLEIE;
     }
 
   /* Then set the new interrupt state */
@@ -2003,7 +2012,7 @@ static void up_send(struct uart_dev_s *dev, int ch)
 static void up_dma_send(struct uart_dev_s *dev)
 {
   struct up_dev_s *priv = (struct up_dev_s *)dev->priv;
-  dma_single_data_parameter_struct dma_init_struct;
+  dma_parameter_struct dma_init_struct;
 
   /* Stop any ongoing DMA */
 
@@ -2016,21 +2025,21 @@ static void up_dma_send(struct uart_dev_s *dev)
   /* Configure DMA for transmit */
 
   dma_init_struct.direction = DMA_MEMORY_TO_PERIPH;
-  dma_init_struct.memory0_addr = (uint32_t)dev->dmatx.buffer;
+  dma_init_struct.memory_addr = (uint32_t)dev->dmatx.buffer;
   dma_init_struct.number = dev->dmatx.length;
   dma_init_struct.periph_addr = priv->usartbase + GD32_USART_DATA_OFFSET;
-  dma_init_struct.periph_memory_width = DMA_WIDTH_8BITS_SELECT;
+  dma_init_struct.periph_width = DMA_PERIPH_WIDTH_8BIT;
+  dma_init_struct.memory_width = DMA_MEMORY_WIDTH_8BIT;
   dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
   dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_ENABLE;
   dma_init_struct.priority = USART_DMA_PRIO;
-  dma_init_struct.circular_mode = DMA_CIRCULAR_MODE_DISABLE;
 
-  gd32_dma_setup(priv->txdma, &dma_init_struct, 1);
+  gd32_dma_setup(priv->txdma, &dma_init_struct, 0);
 
   /* Start transmission with callback */
 
   gd32_dma_start(priv->txdma, up_dma_tx_callback, (void *)dev,
-                 USART_DMA_INTEN);
+                 DMA_INT_MASK);
 
   /* Wait for TX to complete */
 
@@ -2098,26 +2107,26 @@ static void up_dma_tx_callback(DMA_HANDLE handle, uint16_t status, void *arg)
         {
           /* Set up DMA on next buffer */
 
-          dma_single_data_parameter_struct dma_init_struct;
+          dma_parameter_struct dma_init_struct;
 
           dma_init_struct.direction = DMA_MEMORY_TO_PERIPH;
-          dma_init_struct.memory0_addr = (uint32_t)dev->dmatx.nbuffer;
+          dma_init_struct.memory_addr = (uint32_t)dev->dmatx.nbuffer;
           dma_init_struct.number = dev->dmatx.nlength;
           dma_init_struct.periph_addr = priv->usartbase +
                                         GD32_USART_DATA_OFFSET;
-          dma_init_struct.periph_memory_width = DMA_WIDTH_8BITS_SELECT;
+          dma_init_struct.periph_width = DMA_PERIPH_WIDTH_8BIT;
+          dma_init_struct.memory_width = DMA_MEMORY_WIDTH_8BIT;
           dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
           dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_ENABLE;
           dma_init_struct.priority = USART_DMA_PRIO;
-          dma_init_struct.circular_mode = DMA_CIRCULAR_MODE_DISABLE;
 
-          gd32_dma_setup(priv->txdma, &dma_init_struct, 1);
+          gd32_dma_setup(priv->txdma, &dma_init_struct, 0);
 
           dev->dmatx.length  = dev->dmatx.nlength;
           dev->dmatx.nlength = 0;
 
           gd32_dma_start(priv->txdma, up_dma_tx_callback,
-                         (void *)dev, USART_DMA_INTEN);
+                         (void *)dev, DMA_INT_MASK);
 
           return;
         }
@@ -2346,10 +2355,19 @@ void arm_earlyserialinit(void)
         }
     }
 
-  /* Configure console early (so we can use it for boot messages) */
+  /* Configure console early (so we can use it for boot messages)
+   * For DMA-enabled consoles, we still use non-DMA setup here because
+   * DMA infrastructure may not be ready. DMA will be initialized later
+   * when the device is formally opened.
+   */
 
 #ifdef CONSOLE_UART
   g_uart_devs[CONSOLE_UART]->isconsole = true;
+
+  /* Always use basic setup for early console - DMA requires full
+   * system initialization which is not available at this point.
+   */
+
   up_setup(g_uart_devs[CONSOLE_UART]);
 #endif
 }
@@ -2371,6 +2389,20 @@ void arm_serialinit(void)
   char devname[16];
 
 #ifdef CONSOLE_UART
+  /* For DMA-enabled console, we need to initialize DMA here because
+   * the console was already set up without DMA in arm_earlyserialinit().
+   * The NuttX serial layer may skip setup() for console devices.
+   */
+
+#if defined(SERIAL_HAVE_RXDMA) || defined(SERIAL_HAVE_TXDMA)
+  struct uart_dev_s *dev = g_uart_devs[CONSOLE_UART];
+
+  if (dev->ops->setup)
+    {
+      dev->ops->setup(dev);
+    }
+#endif
+
   /* Register the console */
 
   uart_register("/dev/console", g_uart_devs[CONSOLE_UART]);

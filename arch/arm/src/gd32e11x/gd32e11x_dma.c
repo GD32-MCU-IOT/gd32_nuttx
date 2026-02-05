@@ -638,6 +638,16 @@ void gd32_dma_setup(DMA_HANDLE handle, void *arg, uint8_t data_mode)
       regval |= DMA_CHXCTL_MNAGA;
     }
 
+  /* Set circular mode based on data_mode parameter
+   * data_mode = 1: Enable circular mode (for continuous RX DMA)
+   * data_mode = 0: Single transfer mode (for TX DMA)
+   */
+
+  if (data_mode != 0)
+    {
+      regval |= DMA_CHXCTL_CMEN;
+    }
+
   putreg32(regval, regaddr);
 
   dmainfo("DMA CH%d configured\n", dmachan->chan_num);
