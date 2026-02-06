@@ -129,7 +129,10 @@
 
 #ifdef CONFIG_GD32E11X_I2C_DMA
 
-#  error "Now I2C DMA has not ready"
+/* I2C DMA threshold - use DMA for transfers larger than this */
+#  ifndef CONFIG_GD32E11X_I2C_DMATHRESHOLD
+#    define CONFIG_GD32E11X_I2C_DMATHRESHOLD 4
+#  endif
 
 #  if defined(CONFIG_I2C_DMAPRIO)
 #    if (CONFIG_I2C_DMAPRIO & ~DMA_CHXCTL_PRIO_MASK) != 0
@@ -275,6 +278,10 @@ struct gd32_i2c_priv_s
   DMA_HANDLE      rxdma;       /* RX DMA handle */
   uint8_t         txch;        /* TX DMA channel number */
   uint8_t         rxch;        /* RX DMA channel number */
+  sem_t           txsem;       /* Wait for TX DMA to complete */
+  sem_t           rxsem;       /* Wait for RX DMA to complete */
+  volatile uint16_t txresult;  /* Result of the TX DMA */
+  volatile uint16_t rxresult;  /* Result of the RX DMA */
 #endif
 };
 
@@ -338,9 +345,9 @@ static int         gd32_i2c_reset(struct i2c_master_s *dev);
 
 #ifdef CONFIG_GD32E11X_I2C_DMA
 static void        gd32_i2c_dmarxcallback(DMA_HANDLE handle,
-                                          uint8_t status, void *arg);
+                                          uint16_t status, void *arg);
 static void        gd32_i2c_dmatxcallback(DMA_HANDLE handle,
-                                          uint8_t status, void *arg);
+                                          uint16_t status, void *arg);
 #endif
 
 /****************************************************************************
@@ -387,9 +394,11 @@ static struct gd32_i2c_priv_s gd32_i2c0_priv =
   .dcnt       = 0,
   .flags      = 0,
   .status     = 0,
-#ifdef CONFIG_GD32E11X_I2C_DMA
+#ifdef CONFIG_GD32E11X_I2C0_DMA
   .rxch       = DMA_REQ_I2C0_RX,
   .txch       = DMA_REQ_I2C0_TX,
+  .txsem      = SEM_INITIALIZER(0),
+  .rxsem      = SEM_INITIALIZER(0),
 #endif
 };
 #endif
@@ -422,9 +431,11 @@ static struct gd32_i2c_priv_s gd32_i2c1_priv =
   .dcnt       = 0,
   .flags      = 0,
   .status     = 0,
-#ifdef CONFIG_GD32E11X_I2C_DMA
+#ifdef CONFIG_GD32E11X_I2C1_DMA
   .rxch       = DMA_REQ_I2C1_RX,
   .txch       = DMA_REQ_I2C1_TX,
+  .txsem      = SEM_INITIALIZER(0),
+  .rxsem      = SEM_INITIALIZER(0),
 #endif
 };
 #endif
@@ -1538,6 +1549,772 @@ static int gd32_i2c_isr(int irq, void *context, void *arg)
 #endif
 
 /****************************************************************************
+ * I2C DMA Support Functions
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32E11X_I2C_DMA
+
+/****************************************************************************
+ * Name: gd32_i2c_dmatxwait
+ *
+ * Description:
+ *   Wait for DMA TX to complete.
+ *
+ ****************************************************************************/
+
+static int gd32_i2c_dmatxwait(struct gd32_i2c_priv_s *priv)
+{
+  int ret;
+
+  /* Take the semaphore (perhaps waiting). */
+
+  do
+    {
+      ret = nxsem_wait_uninterruptible(&priv->txsem);
+      DEBUGASSERT(ret == OK || ret == -ECANCELED);
+    }
+  while (priv->txresult == 0 && ret == OK);
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: gd32_i2c_dmarxwait
+ *
+ * Description:
+ *   Wait for DMA RX to complete.
+ *
+ ****************************************************************************/
+
+static int gd32_i2c_dmarxwait(struct gd32_i2c_priv_s *priv)
+{
+  int ret;
+
+  /* Take the semaphore (perhaps waiting). */
+
+  do
+    {
+      ret = nxsem_wait_uninterruptible(&priv->rxsem);
+      DEBUGASSERT(ret == OK || ret == -ECANCELED);
+    }
+  while (priv->rxresult == 0 && ret == OK);
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: gd32_i2c_dmatxcallback
+ *
+ * Description:
+ *   Called when the TX DMA completes
+ *
+ ****************************************************************************/
+
+static void gd32_i2c_dmatxcallback(DMA_HANDLE handle,
+                                   uint16_t isr,
+                                   void *arg)
+{
+  struct gd32_i2c_priv_s *priv = (struct gd32_i2c_priv_s *)arg;
+
+  i2cinfo("DMA TX callback, isr = 0x%04x\n", isr);
+
+  /* Stop the DMA */
+
+  gd32_dma_stop(priv->txdma);
+
+  /* Save the result - OR with 0x0080 to ensure non-zero */
+
+  priv->txresult = isr | 0x0080;
+
+  /* Wake-up the waiting thread */
+
+  nxsem_post(&priv->txsem);
+}
+
+/****************************************************************************
+ * Name: gd32_i2c_dmarxcallback
+ *
+ * Description:
+ *   Called when the RX DMA completes
+ *
+ ****************************************************************************/
+
+static void gd32_i2c_dmarxcallback(DMA_HANDLE handle,
+                                   uint16_t isr,
+                                   void *arg)
+{
+  struct gd32_i2c_priv_s *priv = (struct gd32_i2c_priv_s *)arg;
+
+  i2cinfo("DMA RX callback, isr = 0x%04x\n", isr);
+
+  /* Stop the DMA */
+
+  gd32_dma_stop(priv->rxdma);
+
+  /* Save the result - OR with 0x0080 to ensure non-zero */
+
+  priv->rxresult = isr | 0x0080;
+
+  /* Wake-up the waiting thread */
+
+  nxsem_post(&priv->rxsem);
+}
+
+/****************************************************************************
+ * Name: gd32_i2c_dmatxsetup
+ *
+ * Description:
+ *   Setup DMA for TX (write) operation
+ *
+ ****************************************************************************/
+
+static void gd32_i2c_dmatxsetup(struct gd32_i2c_priv_s *priv,
+                                 const uint8_t *txbuffer, size_t nbytes)
+{
+  dma_parameter_struct dma_init_struct;
+
+  i2cinfo("txbuffer=%p, nbytes=%zu\n", txbuffer, nbytes);
+
+  /* Configure TX DMA parameters */
+
+  dma_init_struct.direction   = DMA_MEMORY_TO_PERIPH;
+  dma_init_struct.memory_addr = (uint32_t)txbuffer;
+  dma_init_struct.memory_inc  = DMA_MEMORY_INCREASE_ENABLE;
+  dma_init_struct.memory_width = DMA_MEMORY_WIDTH_8BIT;
+  dma_init_struct.number      = nbytes;
+  dma_init_struct.periph_addr = priv->config->i2c_base
+                              + GD32_I2C_DATA_OFFSET;
+  dma_init_struct.periph_inc  = DMA_PERIPH_INCREASE_DISABLE;
+  dma_init_struct.periph_width = DMA_PERIPH_WIDTH_8BIT;
+  dma_init_struct.priority    = I2C_DMA_PRIO;
+
+  /* Setup the TX DMA channel */
+
+  gd32_dma_setup(priv->txdma, &dma_init_struct, 0);
+}
+
+/****************************************************************************
+ * Name: gd32_i2c_dmatxstart
+ *
+ * Description:
+ *   Start TX DMA transfer
+ *
+ ****************************************************************************/
+
+static inline void gd32_i2c_dmatxstart(struct gd32_i2c_priv_s *priv)
+{
+  priv->txresult = 0;
+  i2cinfo("Starting TX DMA\n");
+  gd32_dma_start(priv->txdma, gd32_i2c_dmatxcallback, priv, DMA_INT_MASK);
+}
+
+/****************************************************************************
+ * Name: gd32_i2c_dmarxsetup
+ *
+ * Description:
+ *   Setup DMA for RX (read) operation
+ *
+ ****************************************************************************/
+
+static void gd32_i2c_dmarxsetup(struct gd32_i2c_priv_s *priv,
+                                 uint8_t *rxbuffer, size_t nbytes)
+{
+  dma_parameter_struct dma_init_struct;
+
+  i2cinfo("rxbuffer=%p, nbytes=%zu\n", rxbuffer, nbytes);
+
+  /* Configure RX DMA parameters */
+
+  dma_init_struct.direction   = DMA_PERIPH_TO_MEMORY;
+  dma_init_struct.memory_addr = (uint32_t)rxbuffer;
+  dma_init_struct.memory_inc  = DMA_MEMORY_INCREASE_ENABLE;
+  dma_init_struct.memory_width = DMA_MEMORY_WIDTH_8BIT;
+  dma_init_struct.number      = nbytes;
+  dma_init_struct.periph_addr = priv->config->i2c_base
+                              + GD32_I2C_DATA_OFFSET;
+  dma_init_struct.periph_inc  = DMA_PERIPH_INCREASE_DISABLE;
+  dma_init_struct.periph_width = DMA_PERIPH_WIDTH_8BIT;
+  dma_init_struct.priority    = I2C_DMA_PRIO;
+
+  /* Setup the RX DMA channel */
+
+  gd32_dma_setup(priv->rxdma, &dma_init_struct, 0);
+}
+
+/****************************************************************************
+ * Name: gd32_i2c_dmarxstart
+ *
+ * Description:
+ *   Start RX DMA transfer
+ *
+ ****************************************************************************/
+
+static inline void gd32_i2c_dmarxstart(struct gd32_i2c_priv_s *priv)
+{
+  priv->rxresult = 0;
+  i2cinfo("Starting RX DMA\n");
+  gd32_dma_start(priv->rxdma, gd32_i2c_dmarxcallback, priv, DMA_INT_MASK);
+}
+
+/****************************************************************************
+ * Name: gd32_i2c_dma_read
+ *
+ * Description:
+ *   Perform I2C read using DMA for single message
+ *
+ * Input Parameters:
+ *   priv    - I2C private data
+ *   msg     - I2C message to receive
+ *
+ * Returned Value:
+ *   OK on success, negative errno on failure
+ *
+ ****************************************************************************/
+
+static int gd32_i2c_dma_read(struct gd32_i2c_priv_s *priv,
+                              struct i2c_msg_s *msg)
+{
+  uint32_t status;
+  int ret = OK;
+  clock_t start;
+  clock_t elapsed;
+  clock_t timeout;
+
+  i2cinfo("addr=0x%02x, len=%d\n", msg->addr, msg->length);
+
+  /* Set timeout */
+
+  timeout = MSEC2TICK(500);
+
+  /* Clear any pending error flags */
+
+  gd32_i2c_putreg(priv, GD32_I2C_STAT0_OFFSET, 0);
+
+  /* Enable ACK */
+
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL0_OFFSET, 0, I2C_CTL0_ACKEN);
+
+  /* Send START condition */
+
+  gd32_i2c_sendstart(priv);
+
+  /* Wait for START bit to be set (SBSEND) */
+
+  start = clock_systime_ticks();
+  do
+    {
+      status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+      elapsed = clock_systime_ticks() - start;
+      if (elapsed > timeout)
+        {
+          i2cerr("Timeout waiting for SBSEND\n");
+          ret = -ETIMEDOUT;
+          goto errout;
+        }
+    }
+  while ((status & I2C_STAT0_SBSEND) == 0);
+
+  /* Send slave address with read bit (bit 0 = 1) */
+
+  gd32_i2c_putreg(priv, GD32_I2C_DATA_OFFSET, (msg->addr << 1) | 1);
+
+  /* Wait for address to be acknowledged (ADDSEND) */
+
+  start = clock_systime_ticks();
+  do
+    {
+      status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+      elapsed = clock_systime_ticks() - start;
+
+      /* Check for NACK */
+
+      if ((status & I2C_STAT0_AERR) != 0)
+        {
+          i2cerr("Address NACK\n");
+          gd32_i2c_putreg(priv, GD32_I2C_STAT0_OFFSET, 0);
+          gd32_i2c_sendstop(priv);
+          ret = -ENXIO;
+          goto errout;
+        }
+
+      if (elapsed > timeout)
+        {
+          i2cerr("Timeout waiting for ADDSEND\n");
+          ret = -ETIMEDOUT;
+          goto errout;
+        }
+    }
+  while ((status & I2C_STAT0_ADDSEND) == 0);
+
+  /* Setup RX DMA before clearing ADDSEND */
+
+  gd32_i2c_dmarxsetup(priv, msg->buffer, msg->length);
+
+  /* Start RX DMA */
+
+  gd32_i2c_dmarxstart(priv);
+
+  /* Enable I2C DMA request and set DMALST for automatic NACK on last byte */
+
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET, 0,
+                     I2C_CTL1_DMAON | I2C_CTL1_DMALST);
+
+  /* Clear ADDSEND flag by reading STAT0 then STAT1 - this starts reception */
+
+  status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+  status = gd32_i2c_getreg(priv, GD32_I2C_STAT1_OFFSET);
+
+  /* Wait for DMA to complete */
+
+  ret = gd32_i2c_dmarxwait(priv);
+  if (ret < 0)
+    {
+      i2cerr("DMA wait failed: %d\n", ret);
+      goto errout_with_dma;
+    }
+
+  /* Check for DMA errors */
+
+  if ((priv->rxresult & DMA_INTF_ERRIF) != 0)
+    {
+      i2cerr("DMA error\n");
+      ret = -EIO;
+      goto errout_with_dma;
+    }
+
+  /* Send STOP condition */
+
+  gd32_i2c_sendstop(priv);
+
+  /* Disable DMA and DMALST */
+
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET,
+                     I2C_CTL1_DMAON | I2C_CTL1_DMALST, 0);
+
+  i2cinfo("DMA read completed successfully\n");
+  return OK;
+
+errout_with_dma:
+  gd32_dma_stop(priv->rxdma);
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET,
+                     I2C_CTL1_DMAON | I2C_CTL1_DMALST, 0);
+
+errout:
+  gd32_i2c_sendstop(priv);
+  return ret;
+}
+
+/****************************************************************************
+ * Name: gd32_i2c_dma_write
+ *
+ * Description:
+ *   Perform I2C write using DMA for single message
+ *
+ * Input Parameters:
+ *   priv    - I2C private data
+ *   msg     - I2C message to send
+ *
+ * Returned Value:
+ *   OK on success, negative errno on failure
+ *
+ ****************************************************************************/
+
+static int gd32_i2c_dma_write(struct gd32_i2c_priv_s *priv,
+                               struct i2c_msg_s *msg)
+{
+  uint32_t status;
+  int ret = OK;
+  clock_t start;
+  clock_t elapsed;
+  clock_t timeout;
+
+  i2cinfo("addr=0x%02x, len=%d\n", msg->addr, msg->length);
+
+  /* Set timeout */
+
+  timeout = MSEC2TICK(500);
+
+  /* Clear any pending error flags */
+
+  gd32_i2c_putreg(priv, GD32_I2C_STAT0_OFFSET, 0);
+
+  /* Send START condition */
+
+  gd32_i2c_sendstart(priv);
+
+  /* Wait for START bit to be set (SBSEND) */
+
+  start = clock_systime_ticks();
+  do
+    {
+      status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+      elapsed = clock_systime_ticks() - start;
+      if (elapsed > timeout)
+        {
+          i2cerr("Timeout waiting for SBSEND\n");
+          ret = -ETIMEDOUT;
+          goto errout;
+        }
+    }
+  while ((status & I2C_STAT0_SBSEND) == 0);
+
+  /* Send slave address with write bit (bit 0 = 0) */
+
+  gd32_i2c_putreg(priv, GD32_I2C_DATA_OFFSET, (msg->addr << 1) | 0);
+
+  /* Wait for address to be acknowledged (ADDSEND) */
+
+  start = clock_systime_ticks();
+  do
+    {
+      status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+      elapsed = clock_systime_ticks() - start;
+
+      /* Check for NACK */
+
+      if ((status & I2C_STAT0_AERR) != 0)
+        {
+          i2cerr("Address NACK\n");
+          gd32_i2c_putreg(priv, GD32_I2C_STAT0_OFFSET, 0);
+          gd32_i2c_sendstop(priv);
+          ret = -ENXIO;
+          goto errout;
+        }
+
+      if (elapsed > timeout)
+        {
+          i2cerr("Timeout waiting for ADDSEND\n");
+          ret = -ETIMEDOUT;
+          goto errout;
+        }
+    }
+  while ((status & I2C_STAT0_ADDSEND) == 0);
+
+  /* Clear ADDSEND flag by reading STAT0 then STAT1 */
+
+  status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+  status = gd32_i2c_getreg(priv, GD32_I2C_STAT1_OFFSET);
+
+  /* Setup TX DMA */
+
+  gd32_i2c_dmatxsetup(priv, msg->buffer, msg->length);
+
+  /* Start TX DMA */
+
+  gd32_i2c_dmatxstart(priv);
+
+  /* Enable I2C DMA request */
+
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET, 0, I2C_CTL1_DMAON);
+
+  /* Wait for DMA to complete */
+
+  ret = gd32_i2c_dmatxwait(priv);
+  if (ret < 0)
+    {
+      i2cerr("DMA wait failed: %d\n", ret);
+      goto errout_with_dma;
+    }
+
+  /* Check for DMA errors */
+
+  if ((priv->txresult & DMA_INTF_ERRIF) != 0)
+    {
+      i2cerr("DMA error\n");
+      ret = -EIO;
+      goto errout_with_dma;
+    }
+
+  /* Wait for BTF (Byte Transfer Finished) - last byte transferred */
+
+  start = clock_systime_ticks();
+  do
+    {
+      status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+      elapsed = clock_systime_ticks() - start;
+      if (elapsed > timeout)
+        {
+          i2cerr("Timeout waiting for BTF\n");
+          ret = -ETIMEDOUT;
+          goto errout_with_dma;
+        }
+    }
+  while ((status & I2C_STAT0_BTC) == 0);
+
+  /* Send STOP condition */
+
+  gd32_i2c_sendstop(priv);
+
+  /* Disable DMA */
+
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET, I2C_CTL1_DMAON, 0);
+
+  i2cinfo("DMA write completed successfully\n");
+  return OK;
+
+errout_with_dma:
+  gd32_dma_stop(priv->txdma);
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET, I2C_CTL1_DMAON, 0);
+
+errout:
+  gd32_i2c_sendstop(priv);
+  return ret;
+}
+
+/****************************************************************************
+ * Name: gd32_i2c_dma_writeread
+ *
+ * Description:
+ *   Perform I2C write-then-read using DMA with Repeated START
+ *   This is the common pattern for reading from devices like EEPROM:
+ *   - Write: send register/memory address
+ *   - Read: receive data (using DMA)
+ *
+ * Input Parameters:
+ *   priv    - I2C private data
+ *   wmsg    - Write message (address/command, sent by polling)
+ *   rmsg    - Read message (data, received by DMA)
+ *
+ * Returned Value:
+ *   OK on success, negative errno on failure
+ *
+ ****************************************************************************/
+
+static int gd32_i2c_dma_writeread(struct gd32_i2c_priv_s *priv,
+                                   struct i2c_msg_s *wmsg,
+                                   struct i2c_msg_s *rmsg)
+{
+  uint32_t status;
+  int ret = OK;
+  clock_t start;
+  clock_t elapsed;
+  clock_t timeout;
+  int i;
+
+  i2cinfo("write addr=0x%02x len=%d, read addr=0x%02x len=%d\n",
+          wmsg->addr, wmsg->length, rmsg->addr, rmsg->length);
+
+  /* Set timeout */
+
+  timeout = MSEC2TICK(500);
+
+  /* Clear any pending error flags */
+
+  gd32_i2c_putreg(priv, GD32_I2C_STAT0_OFFSET, 0);
+
+  /* Enable ACK */
+
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL0_OFFSET, 0, I2C_CTL0_ACKEN);
+
+  /* ===== Phase 1: Write (polling mode for short address/command) ===== */
+
+  /* Send START condition */
+
+  gd32_i2c_sendstart(priv);
+
+  /* Wait for START bit to be set (SBSEND) */
+
+  start = clock_systime_ticks();
+  do
+    {
+      status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+      elapsed = clock_systime_ticks() - start;
+      if (elapsed > timeout)
+        {
+          i2cerr("Timeout waiting for SBSEND\n");
+          ret = -ETIMEDOUT;
+          goto errout;
+        }
+    }
+  while ((status & I2C_STAT0_SBSEND) == 0);
+
+  /* Send slave address with write bit (bit 0 = 0) */
+
+  gd32_i2c_putreg(priv, GD32_I2C_DATA_OFFSET, (wmsg->addr << 1) | 0);
+
+  /* Wait for address to be acknowledged (ADDSEND) */
+
+  start = clock_systime_ticks();
+  do
+    {
+      status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+      elapsed = clock_systime_ticks() - start;
+
+      if ((status & I2C_STAT0_AERR) != 0)
+        {
+          i2cerr("Write address NACK\n");
+          gd32_i2c_putreg(priv, GD32_I2C_STAT0_OFFSET, 0);
+          ret = -ENXIO;
+          goto errout;
+        }
+
+      if (elapsed > timeout)
+        {
+          i2cerr("Timeout waiting for write ADDSEND\n");
+          ret = -ETIMEDOUT;
+          goto errout;
+        }
+    }
+  while ((status & I2C_STAT0_ADDSEND) == 0);
+
+  /* Clear ADDSEND flag */
+
+  status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+  status = gd32_i2c_getreg(priv, GD32_I2C_STAT1_OFFSET);
+
+  /* Send write data bytes (polling - usually just 1-2 bytes for address) */
+
+  for (i = 0; i < wmsg->length; i++)
+    {
+      /* Wait for TX buffer empty */
+
+      start = clock_systime_ticks();
+      do
+        {
+          status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+          elapsed = clock_systime_ticks() - start;
+          if (elapsed > timeout)
+            {
+              i2cerr("Timeout waiting for TX buffer empty\n");
+              ret = -ETIMEDOUT;
+              goto errout;
+            }
+        }
+      while ((status & I2C_STAT0_TBE) == 0);
+
+      /* Write data byte */
+
+      gd32_i2c_putreg(priv, GD32_I2C_DATA_OFFSET, wmsg->buffer[i]);
+    }
+
+  /* Wait for BTF (last byte transferred) */
+
+  start = clock_systime_ticks();
+  do
+    {
+      status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+      elapsed = clock_systime_ticks() - start;
+      if (elapsed > timeout)
+        {
+          i2cerr("Timeout waiting for write BTF\n");
+          ret = -ETIMEDOUT;
+          goto errout;
+        }
+    }
+  while ((status & I2C_STAT0_BTC) == 0);
+
+  /* ===== Phase 2: Repeated START and Read (DMA mode) ===== */
+
+  /* Send Repeated START condition */
+
+  gd32_i2c_sendstart(priv);
+
+  /* Wait for START bit to be set (SBSEND) */
+
+  start = clock_systime_ticks();
+  do
+    {
+      status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+      elapsed = clock_systime_ticks() - start;
+      if (elapsed > timeout)
+        {
+          i2cerr("Timeout waiting for repeated SBSEND\n");
+          ret = -ETIMEDOUT;
+          goto errout;
+        }
+    }
+  while ((status & I2C_STAT0_SBSEND) == 0);
+
+  /* Send slave address with read bit (bit 0 = 1) */
+
+  gd32_i2c_putreg(priv, GD32_I2C_DATA_OFFSET, (rmsg->addr << 1) | 1);
+
+  /* Wait for address to be acknowledged (ADDSEND) */
+
+  start = clock_systime_ticks();
+  do
+    {
+      status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+      elapsed = clock_systime_ticks() - start;
+
+      if ((status & I2C_STAT0_AERR) != 0)
+        {
+          i2cerr("Read address NACK\n");
+          gd32_i2c_putreg(priv, GD32_I2C_STAT0_OFFSET, 0);
+          ret = -ENXIO;
+          goto errout;
+        }
+
+      if (elapsed > timeout)
+        {
+          i2cerr("Timeout waiting for read ADDSEND\n");
+          ret = -ETIMEDOUT;
+          goto errout;
+        }
+    }
+  while ((status & I2C_STAT0_ADDSEND) == 0);
+
+  /* Setup RX DMA before clearing ADDSEND */
+
+  gd32_i2c_dmarxsetup(priv, rmsg->buffer, rmsg->length);
+
+  /* Start RX DMA */
+
+  gd32_i2c_dmarxstart(priv);
+
+  /* Enable I2C DMA request and set DMALST for automatic NACK on last byte */
+
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET, 0,
+                     I2C_CTL1_DMAON | I2C_CTL1_DMALST);
+
+  /* Clear ADDSEND flag - this starts reception */
+
+  status = gd32_i2c_getreg(priv, GD32_I2C_STAT0_OFFSET);
+  status = gd32_i2c_getreg(priv, GD32_I2C_STAT1_OFFSET);
+
+  /* Wait for DMA to complete */
+
+  ret = gd32_i2c_dmarxwait(priv);
+  if (ret < 0)
+    {
+      i2cerr("DMA wait failed: %d\n", ret);
+      goto errout_with_dma;
+    }
+
+  /* Check for DMA errors */
+
+  if ((priv->rxresult & DMA_INTF_ERRIF) != 0)
+    {
+      i2cerr("DMA error\n");
+      ret = -EIO;
+      goto errout_with_dma;
+    }
+
+  /* Send STOP condition */
+
+  gd32_i2c_sendstop(priv);
+
+  /* Disable DMA and DMALST */
+
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET,
+                     I2C_CTL1_DMAON | I2C_CTL1_DMALST, 0);
+
+  i2cinfo("DMA write-read completed successfully\n");
+  return OK;
+
+errout_with_dma:
+  gd32_dma_stop(priv->rxdma);
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET,
+                     I2C_CTL1_DMAON | I2C_CTL1_DMALST, 0);
+
+errout:
+  gd32_i2c_sendstop(priv);
+  return ret;
+}
+
+#endif /* CONFIG_GD32E11X_I2C_DMA */
+
+/****************************************************************************
  * Name: gd32_i2c_init
  *
  * Description:
@@ -1736,6 +2513,19 @@ static int gd32_i2c_init(struct gd32_i2c_priv_s *priv)
         }
     }
 
+#ifdef CONFIG_GD32E11X_I2C_DMA
+  /* Allocate DMA channels */
+
+  if (priv->txch != 0 && priv->rxch != 0)
+    {
+      priv->txdma = gd32_dma_channel_alloc(priv->txch);
+      priv->rxdma = gd32_dma_channel_alloc(priv->rxch);
+      DEBUGASSERT(priv->txdma && priv->rxdma);
+      i2cinfo("DMA channels allocated: TX=%p, RX=%p\n",
+              priv->txdma, priv->rxdma);
+    }
+#endif
+
   return OK;
 }
 
@@ -1760,6 +2550,24 @@ static int gd32_i2c_deinit(struct gd32_i2c_priv_s *priv)
   up_disable_irq(priv->config->error_irq);
   irq_detach(priv->config->event_irq);
   irq_detach(priv->config->error_irq);
+#endif
+
+#ifdef CONFIG_GD32E11X_I2C_DMA
+  /* Stop and free DMA channels */
+
+  if (priv->txdma != NULL)
+    {
+      gd32_dma_stop(priv->txdma);
+      gd32_dma_channel_free(priv->txdma);
+      priv->txdma = NULL;
+    }
+
+  if (priv->rxdma != NULL)
+    {
+      gd32_dma_stop(priv->rxdma);
+      gd32_dma_channel_free(priv->rxdma);
+      priv->rxdma = NULL;
+    }
 #endif
 
   gd32_i2c_clock_disable(priv->config->i2c_base);
@@ -1802,6 +2610,91 @@ static int gd32_i2c_transfer(struct i2c_master_s *dev,
   /* Clear any pending start condition */
 
   gd32_i2c_clrstart(priv);
+
+#ifdef CONFIG_GD32E11X_I2C_DMA
+  /* Check if we can use DMA for this transfer:
+   * - Single message only (count == 1)
+   * - Length exceeds threshold
+   * - DMA channel available
+   */
+
+  if (count == 1 &&
+      msgs[0].length >= CONFIG_GD32E11X_I2C_DMATHRESHOLD)
+    {
+      if ((msgs[0].flags & I2C_M_READ) == 0 && priv->txdma != NULL)
+        {
+          /* Single write message - use TX DMA */
+
+          i2cinfo("Using DMA for write: addr=0x%02x, len=%d\n",
+                  msgs[0].addr, msgs[0].length);
+
+          /* Set I2C clock frequency */
+
+          gd32_i2c_setclock(priv, msgs[0].frequency);
+
+          /* Perform DMA write */
+
+          ret = gd32_i2c_dma_write(priv, &msgs[0]);
+
+          /* Release lock and return */
+
+          nxmutex_unlock(&priv->lock);
+          return ret;
+        }
+      else if ((msgs[0].flags & I2C_M_READ) != 0 && priv->rxdma != NULL)
+        {
+          /* Single read message - use RX DMA */
+
+          i2cinfo("Using DMA for read: addr=0x%02x, len=%d\n",
+                  msgs[0].addr, msgs[0].length);
+
+          /* Set I2C clock frequency */
+
+          gd32_i2c_setclock(priv, msgs[0].frequency);
+
+          /* Perform DMA read */
+
+          ret = gd32_i2c_dma_read(priv, &msgs[0]);
+
+          /* Release lock and return */
+
+          nxmutex_unlock(&priv->lock);
+          return ret;
+        }
+    }
+
+  /* Check for write-then-read pattern (2 messages):
+   * - First message is write (address/command)
+   * - Second message is read with length >= threshold
+   * - Both messages to same address
+   */
+
+  if (count == 2 &&
+      (msgs[0].flags & I2C_M_READ) == 0 &&
+      (msgs[1].flags & I2C_M_READ) != 0 &&
+      msgs[0].addr == msgs[1].addr &&
+      msgs[1].length >= CONFIG_GD32E11X_I2C_DMATHRESHOLD &&
+      priv->rxdma != NULL)
+    {
+      /* Write-then-read pattern - use DMA for read phase */
+
+      i2cinfo("Using DMA for write-read: addr=0x%02x, wlen=%d, rlen=%d\n",
+              msgs[0].addr, msgs[0].length, msgs[1].length);
+
+      /* Set I2C clock frequency */
+
+      gd32_i2c_setclock(priv, msgs[0].frequency);
+
+      /* Perform DMA write-read */
+
+      ret = gd32_i2c_dma_writeread(priv, &msgs[0], &msgs[1]);
+
+      /* Release lock and return */
+
+      nxmutex_unlock(&priv->lock);
+      return ret;
+    }
+#endif /* CONFIG_GD32E11X_I2C_DMA */
 
   /* Initialize message pointers */
 
@@ -2046,9 +2939,11 @@ struct i2c_master_s *gd32_i2cbus_initialize(int port)
 
   switch (port)
     {
+#ifdef CONFIG_GD32E11X_I2C0
     case 0:
       priv = (struct gd32_i2c_priv_s *)&gd32_i2c0_priv;
       break;
+#endif
 #ifdef CONFIG_GD32E11X_I2C1
     case 1:
       priv = (struct gd32_i2c_priv_s *)&gd32_i2c1_priv;

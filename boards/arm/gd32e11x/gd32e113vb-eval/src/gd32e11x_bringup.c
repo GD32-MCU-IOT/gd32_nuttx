@@ -167,6 +167,16 @@ int gd32_bringup(void)
       syslog(LOG_ERR, "ERROR: I2C EEPROM write and read test fail: %d\n",
              ret);
     }
+
+#  ifdef CONFIG_GD32E11X_I2C_DMA
+  /* Multi-message DMA test */
+
+  ret = gd32_at24_multimsg_dma_test(AT24_MINOR);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: Multi-message DMA test fail: %d\n", ret);
+    }
+#  endif
 #endif
 
 #ifdef CONFIG_SPI
