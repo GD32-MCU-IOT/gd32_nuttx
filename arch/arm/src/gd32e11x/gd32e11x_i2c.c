@@ -80,10 +80,6 @@
 #include "gd32e11x.h"
 #include "gd32e11x_i2c.h"
 
-#ifdef CONFIG_GD32E11X_I2C_DMA
-#include "gd32e11x_dma.h"
-#endif
-
 /* At least one I2C peripheral must be enabled */
 
 #if defined(CONFIG_GD32E11X_I2C0) || defined(CONFIG_GD32E11X_I2C1)
