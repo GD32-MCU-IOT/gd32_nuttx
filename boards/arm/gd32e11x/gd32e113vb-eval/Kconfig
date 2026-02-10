@@ -133,4 +133,49 @@ endif # GD32E113VB_EVAL_GD25_BLOCKMOUNT
 
 endmenu # GD25 Flash Configuration
 
+menu "GD32E113VB-EVAL Watchdog Configuration"
+  depends on WATCHDOG
+
+config GD32E113VB_EVAL_WDG_THREAD
+  bool "Enable watchdog daemon thread"
+  default n
+  ---help---
+    Enable a kernel thread that automatically feeds the watchdog
+    to prevent system reset. This is useful for testing or when
+    you want the watchdog to monitor system responsiveness rather
+    than just timeout.
+
+if GD32E113VB_EVAL_WDG_THREAD
+
+config GD32E113VB_EVAL_WDG_THREAD_DEVPATH
+  string "Watchdog device path"
+  default "/dev/watchdog0"
+  ---help---
+    Path to the watchdog device to monitor. Default is /dev/watchdog0
+    which corresponds to FWDGT. Use /dev/watchdog1 for WWDGT.
+
+config GD32E113VB_EVAL_WDG_THREAD_INTERVAL
+  int "Watchdog feed interval (milliseconds)"
+  default 5000
+  ---help---
+    How often the watchdog daemon thread will feed the watchdog.
+    This value should be less than the watchdog timeout value.
+    Default is 5000ms (5 seconds).
+
+config GD32E113VB_EVAL_WDG_THREAD_PRIORITY
+  int "Watchdog daemon thread priority"
+  default 100
+  ---help---
+    Priority of the watchdog daemon thread.
+
+config GD32E113VB_EVAL_WDG_THREAD_STACKSIZE
+  int "Watchdog daemon thread stack size"
+  default 1024
+  ---help---
+    Stack size for the watchdog daemon thread.
+
+endif # GD32E113VB_EVAL_WDG_THREAD
+
+endmenu # GD32E113VB-EVAL Watchdog Configuration
+
 endif # ARCH_BOARD_GD32E113VB_EVAL

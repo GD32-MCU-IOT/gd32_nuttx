@@ -47,7 +47,9 @@
 #include "gd32e11x_pmu.h"
 #include "gd32e11x_rcu.h"
 #include "gd32e11x_serial.h"
+#include "gd32e11x_spi.h"
 #include "gd32e11x_start.h"
 #include "gd32e11x_syscfg.h"
+#include "gd32e11x_wdg.h"
 
 #endif /* __ARCH_ARM_SRC_GD32E11X_GD32E11X_H */

@@ -206,6 +206,131 @@ int gd32_gpio_initialize(void);
 int gd32_at24_wr_test(int minor);
 #endif
 
+/****************************************************************************
+ * Name: gd32_watchdog_initialize
+ *
+ * Description:
+ *   Perform architecture-specific initialization of the Watchdog hardware.
+ *   This function initializes the watchdog timer and starts a kernel thread
+ *   to automatically feed the watchdog.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32E113VB_EVAL_WDG_THREAD
+int gd32_watchdog_initialize(void);
+#endif
+
+/****************************************************************************
+ * Name: gd32_wdt_start
+ *
+ * Description:
+ *   Start the watchdog timer on the specified device.
+ *
+ * Input Parameters:
+ *   devpath - Path to watchdog device (e.g., "/dev/watchdog0")
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_WATCHDOG)
+int gd32_wdt_start(const char *devpath);
+#endif
+
+/****************************************************************************
+ * Name: gd32_wdt_stop
+ *
+ * Description:
+ *   Stop the watchdog timer on the specified device.
+ *
+ * Input Parameters:
+ *   devpath - Path to watchdog device (e.g., "/dev/watchdog0")
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_WATCHDOG)
+int gd32_wdt_stop(const char *devpath);
+#endif
+
+/****************************************************************************
+ * Name: gd32_wdt_keepalive
+ *
+ * Description:
+ *   Feed (keepalive) the watchdog timer on the specified device.
+ *
+ * Input Parameters:
+ *   devpath - Path to watchdog device (e.g., "/dev/watchdog0")
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_WATCHDOG)
+int gd32_wdt_keepalive(const char *devpath);
+#endif
+
+/****************************************************************************
+ * Name: gd32_wdt_settimeout
+ *
+ * Description:
+ *   Set the watchdog timeout value on the specified device.
+ *
+ * Input Parameters:
+ *   devpath - Path to watchdog device (e.g., "/dev/watchdog0")
+ *   timeout - Timeout value in milliseconds
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_WATCHDOG)
+int gd32_wdt_settimeout(const char *devpath, uint32_t timeout);
+#endif
+
+/****************************************************************************
+ * Name: gd32_wdt_setwindow
+ *
+ * Description:
+ *   Set the watchdog window value (WWDGT only).
+ *   This sets the upper limit for feeding the watchdog. Feeding outside
+ *   the window will cause a reset.
+ *
+ * Input Parameters:
+ *   devpath - Path to watchdog device (should be "/dev/watchdog1" for WWDGT)
+ *   window  - Window value (64-127 for WWDGT)
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_WATCHDOG)
+int gd32_wdt_setwindow(const char *devpath, uint32_t window);
+#endif
+
+/****************************************************************************
+ * Name: gd32_wwdgt_test
+ *
+ * Description:
+ *   Test the window watchdog (WWDGT) with configurable timeout and window.
+ *   Demonstrates the WWDGT window mechanism by feeding the watchdog
+ *   multiple times within the safe window.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_WATCHDOG) && defined(CONFIG_GD32E11X_WWDG)
+int gd32_wwdgt_test(void);
+#endif
+
 /* GD25 SPI FLASH */
 #if defined(CONFIG_MTD_GD25) && defined(CONFIG_GD32E11X_SPI0)
 #  define HAVE_GD25  1

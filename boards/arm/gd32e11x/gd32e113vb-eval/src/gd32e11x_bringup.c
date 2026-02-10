@@ -43,8 +43,8 @@
 
 #include "gd32e11x.h"
 
-#ifdef CONFIG_GD32E11X_SPI
-#  include "gd32e11x_spi.h"
+#if defined(CONFIG_GD32E11X_FWDGT) || defined(CONFIG_GD32E11X_WWDG)
+#  include "gd32e11x_wdg.h"
 #endif
 
 #ifdef CONFIG_USERLED
@@ -135,6 +135,47 @@ int gd32_bringup(void)
     }
 #endif
 
+#ifdef CONFIG_GD32E11X_FWDGT
+  /* Initialize the FWDGT watchdog timer.
+   * IRC40K frequency: nominally 40kHz, can vary from 28kHz to 60kHz.
+   * For safety, use nominal 40kHz value.
+   */
+
+  gd32_fwdgt_initialize("/dev/watchdog0", 40000);
+#endif
+
+#ifdef CONFIG_GD32E11X_WWDG
+  /* Initialize the WWDGT watchdog timer */
+
+  gd32_wwdg_initialize("/dev/watchdog1");
+#endif
+
+#ifdef CONFIG_GD32E113VB_EVAL_WDG_THREAD
+  /* Start watchdog kicker thread */
+
+  ret = gd32_watchdog_initialize();
+  if (ret != OK)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to start watchdog thread: %d\n", ret);
+      return ret;
+    }
+#endif
+
+#if defined(CONFIG_WATCHDOG) && defined(CONFIG_GD32E11X_WWDG)
+  /* Test WWDGT window watchdog */
+
+  syslog(LOG_INFO, "INFO: Testing WWDGT...\n");
+  ret = gd32_wwdgt_test();
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: WWDGT test failed: %d\n", ret);
+    }
+  else
+    {
+      syslog(LOG_INFO, "INFO: WWDGT test passed\n");
+    }
+#endif
+
 #ifdef CONFIG_DEV_GPIO
   /* Initialize GPIO character devices */
 
@@ -154,8 +195,6 @@ int gd32_bringup(void)
     {
       syslog(LOG_ERR, "ERROR: gd32_gd25_automount() failed: %d\n", ret);
     }
-#else
-  syslog(LOG_WARNING, "WARNING: HAVE_GD25 not defined!\n");
 #endif
 
 #ifdef HAVE_AT24
