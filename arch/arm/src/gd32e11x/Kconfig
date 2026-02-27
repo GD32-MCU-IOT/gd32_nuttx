@@ -1393,3 +1393,67 @@ config GD32E11X_SPI2_DMA_BUFFER
 		DMA buffer for SPI2 RX and TX DMA, recommended buffer size is a multiple of 4.
 
 endmenu # GD32E11X SPI Configuration
+
+menu "GD32E11X Watchdog Configuration"
+
+config GD32E11X_FWDGT
+	bool "Free Watchdog Timer (FWDGT)"
+	default n
+	depends on WATCHDOG
+	---help---
+		Enable support for the GD32E11X Free Watchdog Timer (FWDGT).
+		The FWDGT is an independent watchdog clocked by the IRC40K
+		oscillator (nominally 40 kHz). It provides a timeout range
+		from 0.025ms to 26208ms.
+
+config GD32E11X_FWDGT_DEFTIMOUT
+	int "FWDGT default timeout (milliseconds)"
+	default 26208
+	depends on GD32E11X_FWDGT
+	---help---
+		Default FWDGT timeout value in milliseconds.
+		Range: 1 to 26208 ms.
+
+config GD32E11X_FWDGT_REGDEBUG
+	bool "FWDGT register-level debug"
+	default n
+	depends on GD32E11X_FWDGT && DEBUG_WATCHDOG_INFO
+	---help---
+		Enable FWDGT register-level debug output.
+
+config GD32E11X_WWDG
+	bool "Window Watchdog Timer (WWDGT)"
+	default n
+	depends on WATCHDOG
+	---help---
+		Enable support for the GD32E11X Window Watchdog Timer (WWDGT).
+		The WWDGT is a system watchdog clocked by PCLK1. It provides
+		a timeout range from 68.2us to 34.4ms and supports window
+		watchdog functionality.
+
+config GD32E11X_WWDG_DEFTIMOUT
+	int "WWDGT default timeout (milliseconds)"
+	default 34
+	depends on GD32E11X_WWDG
+	---help---
+		Default WWDGT timeout value in milliseconds.
+		Range: 1 to 34 ms.
+
+config GD32E11X_WWDG_WINDOW
+	hex "WWDGT window value"
+	default 0x7f
+	range 0x40 0x7f
+	depends on GD32E11X_WWDG
+	---help---
+		WWDGT window value. The watchdog can only be refreshed when
+		the counter is below this value. Valid range: 0x40 to 0x7f.
+		Default 0x7f disables the window feature.
+
+config GD32E11X_WWDG_REGDEBUG
+	bool "WWDGT register-level debug"
+	default n
+	depends on GD32E11X_WWDG && DEBUG_WATCHDOG_INFO
+	---help---
+		Enable WWDGT register-level debug output.
+
+endmenu # GD32E11X Watchdog Configuration

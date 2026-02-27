@@ -54,4 +54,8 @@ ifeq ($(CONFIG_MTD_GD25),y)
 CSRCS += gd32e11x_gd25.c
 endif
 
+ifneq ($(CONFIG_WATCHDOG),)
+CSRCS += gd32e11x_wdt.c
+endif
+
 include $(TOPDIR)/boards/Board.mk
