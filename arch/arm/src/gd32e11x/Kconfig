@@ -255,6 +255,14 @@ config GD32E11X_DAC1
 	depends on GD32E11X_HAVE_DAC
 	select GD32E11X_DAC
 
+config GD32E11X_CRC
+	bool "CRC"
+	default n
+	---help---
+		Enable CRC (Cyclic Redundancy Check) calculation unit support.
+		The CRC unit uses a fixed polynomial (0x4C11DB7) which is the same
+		as Ethernet CRC-32.
+
 config GD32E11X_DMA0
 	bool "DMA0"
 	default n
@@ -1457,3 +1465,14 @@ config GD32E11X_WWDG_REGDEBUG
 		Enable WWDGT register-level debug output.
 
 endmenu # GD32E11X Watchdog Configuration
+
+menu "GD32E11X CRC Configuration"
+
+config GD32E11X_CRC_REGDEBUG
+	bool "CRC register-level debug"
+	default n
+	depends on GD32E11X_CRC && DEBUG_INFO
+	---help---
+		Enable CRC register-level debug output.
+
+endmenu # GD32E11X CRC Configuration

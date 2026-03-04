@@ -47,6 +47,10 @@
 #  include "gd32e11x_wdg.h"
 #endif
 
+#ifdef CONFIG_GD32E11X_CRC
+#  include "gd32e11x_crc.h"
+#endif
+
 #ifdef CONFIG_USERLED
 #  include <nuttx/leds/userled.h>
 #endif
@@ -264,6 +268,21 @@ int gd32_bringup(void)
       syslog(LOG_ERR, "ERROR: Failed to initialize SPI2\n");
     }
 #endif
+#endif
+
+#ifdef CONFIG_GD32E11X_CRC
+  /* Initialize CRC hardware and run tests */
+
+  gd32_crc_init();
+  syslog(LOG_INFO, "INFO: CRC hardware initialized\n");
+
+  /* Run CRC test if enabled */
+
+  ret = gd32_crc_test();
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: CRC test failed: %d\n", ret);
+    }
 #endif
 
   UNUSED(ret);

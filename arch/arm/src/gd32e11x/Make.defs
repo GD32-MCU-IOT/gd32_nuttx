@@ -53,3 +53,7 @@ endif
 ifeq ($(CONFIG_GD32E11X_WWDG),y)
 CHIP_CSRCS += gd32e11x_wwdgt.c
 endif
+
+ifeq ($(CONFIG_GD32E11X_CRC),y)
+CHIP_CSRCS += gd32e11x_crc.c
+endif
