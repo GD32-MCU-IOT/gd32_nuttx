@@ -142,7 +142,7 @@ jobs:
           echo "name=gd32-${SAFE}-build" >> $GITHUB_OUTPUT
 
       - name: Download Source Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: gd32-source-bundle
           path: .
@@ -263,7 +263,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Source Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: gd32-source-bundle
           path: .
