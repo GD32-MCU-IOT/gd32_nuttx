@@ -220,14 +220,37 @@ config GD32E11X_ADC0
 	default n
 	depends on GD32E11X_HAVE_ADC0
 	select GD32E11X_ADC
-	select GD32E11X_HAVE_ADC0_DMA if GD32E11X_DMA1
+	select GD32E11X_HAVE_ADC0_DMA if GD32E11X_DMA0
 
 config GD32E11X_ADC1
 	bool "ADC1"
 	default n
 	depends on GD32E11X_HAVE_ADC1
 	select GD32E11X_ADC
-	select GD32E11X_HAVE_ADC1_DMA if GD32E11X_DMA1
+
+config GD32E11X_ADC0_DMA
+	bool "ADC0 DMA"
+	default n
+	depends on GD32E11X_ADC0 && GD32E11X_HAVE_ADC0_DMA
+	---help---
+		Use DMA to transfer ADC0 conversion results.
+		ADC0 uses DMA0 Channel 0.
+
+config GD32E11X_ADC0_SCAN
+	bool "ADC0 scan mode"
+	default n
+	depends on GD32E11X_ADC0
+	---help---
+		Enable scan mode for ADC0. In scan mode, all channels in the
+		regular group conversion sequence are converted automatically.
+
+config GD32E11X_ADC1_SCAN
+	bool "ADC1 scan mode"
+	default n
+	depends on GD32E11X_ADC1
+	---help---
+		Enable scan mode for ADC1. In scan mode, all channels in the
+		regular group conversion sequence are converted automatically.
 
 config GD32E11X_CAN0
 	bool "CAN0"
