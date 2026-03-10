@@ -34,8 +34,7 @@
 
 #include "arm_internal.h"
 #include "chip.h"
-#include "hardware/gd32e11x_rcu.h"
-#include "hardware/gd32e11x_crc.h"
+#include "gd32e11x.h"
 #include "gd32e11x_crc.h"
 
 /****************************************************************************

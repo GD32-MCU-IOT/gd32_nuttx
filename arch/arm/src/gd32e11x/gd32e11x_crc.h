@@ -29,6 +29,7 @@
 
 #include <nuttx/config.h>
 #include <stdint.h>
+#include "hardware/gd32e11x_crc.h"
 
 /****************************************************************************
  * Pre-processor Definitions
