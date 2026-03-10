@@ -112,6 +112,7 @@
 #  elif CONFIG_MM_REGIONS < 2
 /* Only one memory region.  Force Case 0 */
 
+#    warning "EXMC SRAM excluded from the heap"
 #    undef CONFIG_GD32E11X_EXTERNAL_RAM
 
 #  elif CONFIG_MM_REGIONS == 2
