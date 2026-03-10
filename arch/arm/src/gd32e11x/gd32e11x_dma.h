@@ -103,12 +103,12 @@ struct gd32_dmaregs_s
  * Public Data
  ****************************************************************************/
 
-/* DMA singledata mode initialize struct */
+/* DMA single data mode initialize struct */
 
 typedef struct
 {
   uint32_t periph_addr;            /* Peripheral base address */
-  uint32_t periph_width;           /* Peripheral base address */
+  uint32_t periph_width;           /* Transfer data size of peripheral */
   uint32_t memory_addr;            /* Memory base address */
   uint32_t memory_width;           /* Transfer data size of memory */
   uint32_t number;                 /* Channel transfer number */

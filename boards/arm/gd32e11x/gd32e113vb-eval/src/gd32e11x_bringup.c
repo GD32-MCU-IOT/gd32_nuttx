@@ -47,6 +47,10 @@
 #  include "gd32e11x_wdg.h"
 #endif
 
+#ifdef CONFIG_ADC
+#  include <nuttx/analog/adc.h>
+#endif
+
 #ifdef CONFIG_USERLED
 #  include <nuttx/leds/userled.h>
 #endif
@@ -266,6 +270,18 @@ int gd32_bringup(void)
 #endif
 #endif
 
+#if defined(CONFIG_ADC) && \
+    (defined(CONFIG_GD32E11X_ADC0) || defined(CONFIG_GD32E11X_ADC1))
+  /* Initialize ADC and register the ADC driver */
+
+  ret = gd32_adc_setup();
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: gd32_adc_setup() failed: %d\n", ret);
+    }
+#endif
+
   UNUSED(ret);
   return OK;
 }
+

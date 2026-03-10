@@ -145,6 +145,7 @@
 #define RCU_CFG0_ADCPSC_SHIFT          (14)            /* ADC prescaler */
 #define RCU_CFG0_ADCPSC_MASK           (0x3 << RCU_CFG0_ADCPSC_SHIFT)
 #  define RCU_CFG0_ADCPSC(n)           ((n) << RCU_CFG0_ADCPSC_SHIFT)
+#define RCU_CFG0_ADCPSC_2              (1 << 28)       /* Bit 2 of ADCPSC */
 
 #define RCU_CFG0_PLLSEL                (1 << 16)       /* PLL clock source selection */
 #  define RCU_PLL_PLLSEL_IRC16M        (0)
