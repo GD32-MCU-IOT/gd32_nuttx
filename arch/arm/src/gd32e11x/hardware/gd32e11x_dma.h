@@ -196,10 +196,19 @@
 #define DMA_CIRCULAR_MODE_ENABLE         (0x00000000)          /* Circular mode enable */
 #define DMA_CIRCULAR_MODE_DISABLE        (0x00000001)          /* Circular mode disable */
 
-/* DMA width selection */
-#define DMA_WIDTH_8BITS_SELECT           (0x00000000)          /* Select 8 bits width */
-#define DMA_WIDTH_16BITS_SELECT          (0x00000001)          /* Select 16 bits width */
-#define DMA_WIDTH_32BITS_SELECT          (0x00000002)          /* Select 16 bits width */
+/* DMA transfer mode */
+#define DMA_MODE_SINGLE                  (0)                   /* Single mode */
+#define DMA_MODE_CIRCULAR                (1)                   /* Circular mode */
+
+/* DMA peripheral width selection */
+#define DMA_PWIDTH_8BITS_SELECT          DMA_PERIPH_WIDTH_8BIT      /* 8-bit width */
+#define DMA_PWIDTH_16BITS_SELECT         DMA_PERIPH_WIDTH_16BIT     /* 16-bit width */
+#define DMA_PWIDTH_32BITS_SELECT         DMA_PERIPH_WIDTH_32BIT     /* 32-bit width */
+
+/* DMA memory width selection */
+#define DMA_MWIDTH_8BITS_SELECT          DMA_MEMORY_WIDTH_8BIT      /* 8-bit width */
+#define DMA_MWIDTH_16BITS_SELECT         DMA_MEMORY_WIDTH_16BIT     /* 16-bit width */
+#define DMA_MWIDTH_32BITS_SELECT         DMA_MEMORY_WIDTH_32BIT     /* 32-bit width */
 
 /* DMA priority level selection */
 #define DMA_PRIO_LOW_SELECT              DMA_PRIORITY_LOW           /* Select low priority level */

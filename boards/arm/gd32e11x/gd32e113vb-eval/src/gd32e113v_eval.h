@@ -104,6 +104,36 @@
 #define GPIO_INT1         (GPIO_CFG_INPUT | GPIO_CFG_CTL_INFLOAT | GPIO_CFG_EXTI | \
                            GPIO_CFG_PORT_B | GPIO_CFG_PIN_2)
 
+/* ADC
+ *
+ * GD32E11x ADC channel-to-pin mapping:
+ *   ADC0/1 CH0  - PA0
+ *   ADC0/1 CH1  - PA1
+ *   ADC0/1 CH4  - PA4
+ *   ADC0/1 CH8  - PB0
+ *   ADC0/1 CH10 - PC0
+ *   ADC0/1 CH11 - PC1
+ *
+ * Note: PC0 is shared with LED1. If ADC is enabled on CH10,
+ *       LED1 cannot be used simultaneously.
+ */
+
+#define GPIO_ADC0_IN0     (GPIO_CFG_INPUT | GPIO_CFG_CTL_AIN | \
+                           GPIO_CFG_PORT_A | GPIO_CFG_PIN_0)
+#define GPIO_ADC0_IN1     (GPIO_CFG_INPUT | GPIO_CFG_CTL_AIN | \
+                           GPIO_CFG_PORT_A | GPIO_CFG_PIN_1)
+#define GPIO_ADC0_IN4     (GPIO_CFG_INPUT | GPIO_CFG_CTL_AIN | \
+                           GPIO_CFG_PORT_A | GPIO_CFG_PIN_4)
+#define GPIO_ADC0_IN13    (GPIO_CFG_INPUT | GPIO_CFG_CTL_AIN | \
+                           GPIO_CFG_PORT_C | GPIO_CFG_PIN_3)
+
+#define GPIO_ADC1_IN8     (GPIO_CFG_INPUT | GPIO_CFG_CTL_AIN | \
+                           GPIO_CFG_PORT_B | GPIO_CFG_PIN_0)
+#define GPIO_ADC1_IN10    (GPIO_CFG_INPUT | GPIO_CFG_CTL_AIN | \
+                           GPIO_CFG_PORT_C | GPIO_CFG_PIN_0)
+#define GPIO_ADC1_IN11    (GPIO_CFG_INPUT | GPIO_CFG_CTL_AIN | \
+                           GPIO_CFG_PORT_C | GPIO_CFG_PIN_1)
+
 /* AT24 Serial EEPROM */
 
 #if defined(CONFIG_MTD_AT24XX) && \
@@ -366,4 +396,18 @@ int gd32_crc_test(void);
 #ifdef HAVE_GD25
 int gd32_gd25_automount(int minor);
 #endif
+
+/****************************************************************************
+ * Name: gd32_adc_setup
+ *
+ * Description:
+ *   Initialize ADC and register the ADC driver.
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_ADC) && \
+    (defined(CONFIG_GD32E11X_ADC0) || defined(CONFIG_GD32E11X_ADC1))
+int gd32_adc_setup(void);
+#endif
+
 #endif /* __BOARDS_ARM_GD32E11X_GD32E113VB_EVAL_SRC_GD32E113V_EVAL_H */

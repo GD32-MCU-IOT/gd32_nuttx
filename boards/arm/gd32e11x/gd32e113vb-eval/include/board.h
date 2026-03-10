@@ -417,5 +417,9 @@ typedef enum
                               GPIO_CFG_PORT_E | GPIO_CFG_PIN_5)
 #endif
 
+#if  (defined(CONFIG_GD32E11X_ADC0) || defined(CONFIG_GD32E11X_ADC1))
+#  define GD32_BOARD_ADCPSC_CONFIG RCU_CFG0_ADCPSC(2)
+#endif
+
 #endif /* __BOARDS_ARM_GD32E113VB_EVAL_INCLUDE_BOARD_H */
 
