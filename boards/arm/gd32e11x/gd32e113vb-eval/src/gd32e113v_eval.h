@@ -364,6 +364,22 @@ int gd32_wdt_setwindow(const char *devpath, uint32_t window);
 int gd32_wwdgt_test(void);
 #endif
 
+/****************************************************************************
+ * Name: gd32_crc_test
+ *
+ * Description:
+ *   Test the CRC hardware by computing CRC-32 for known test vectors.
+ *   The GD32E11x CRC unit uses the Ethernet CRC-32 polynomial (0x4C11DB7).
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_GD32E11X_CRC)
+int gd32_crc_test(void);
+#endif
+
 /* GD25 SPI FLASH */
 #if defined(CONFIG_MTD_GD25) && defined(CONFIG_GD32E11X_SPI0)
 #  define HAVE_GD25  1

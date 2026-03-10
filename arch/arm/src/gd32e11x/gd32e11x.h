@@ -52,5 +52,6 @@
 #include "gd32e11x_syscfg.h"
 #include "gd32e11x_wdg.h"
 #include "gd32e11x_adc.h"
+#include "gd32e11x_crc.h"
 
 #endif /* __ARCH_ARM_SRC_GD32E11X_GD32E11X_H */
