@@ -148,6 +148,12 @@
 #  define AT24_MINOR      0
 #endif
 
+#ifdef CONFIG_GD32E11X_TIMER0_PWM
+#  define GD32E113VBEVAL_PWMTIMER   0
+#else
+#  define GD32E113VBEVAL_PWMTIMER   2
+#endif
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -408,6 +414,56 @@ int gd32_gd25_automount(int minor);
 #if defined(CONFIG_ADC) && \
     (defined(CONFIG_GD32E11X_ADC0) || defined(CONFIG_GD32E11X_ADC1))
 int gd32_adc_setup(void);
+#endif
+
+/****************************************************************************
+ * Name: gd32_pwm_setup
+ *
+ * Description:
+ *   Initialize PWM and register the PWM device.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_PWM
+int gd32_pwm_setup(void);
+#endif
+
+/****************************************************************************
+ * Name: gd32_timer_driver_setup
+ *
+ * Description:
+ *   Configure the timer driver and register /dev/timerX.
+ *
+ * Input Parameters:
+ *   devpath - The full path to the timer device (e.g., /dev/timer0)
+ *   timer   - The timer number (0-13 for GD32E11X)
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_TIMER
+int gd32_timer_driver_setup(const char *devpath, int timer);
+#endif
+
+/* Timer selection for timer test.
+ *
+ * Default: TIMER5 (basic timer, no GPIO pins needed, no conflicts).
+ * TIMER5 is ideal for interval timing tests.  For tests requiring
+ * channel I/O (input capture / output compare), use a general timer.
+ *
+ *   Available timers (avoid TIMER2 if PWM is also enabled):
+ *     TIMER5 - Basic timer, no channels (default for timer test)
+ *     TIMER6 - Basic timer, no channels
+ *     TIMER1 - General 4-ch (PA0 conflicts with WAKEUP button)
+ *     TIMER3 - General 4-ch (PB6/PB7/PB8/PB9)
+ *     TIMER4 - General 4-ch (PA0 conflicts)
+ */
+
+#ifndef GD32E113VBEVAL_TIMER
+#  define GD32E113VBEVAL_TIMER      5
+#endif
+
+#ifndef GD32E113VBEVAL_TIMER_DEVPATH
+#  define GD32E113VBEVAL_TIMER_DEVPATH "/dev/timer0"
 #endif
 
 #endif /* __BOARDS_ARM_GD32E11X_GD32E113VB_EVAL_SRC_GD32E113V_EVAL_H */

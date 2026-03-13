@@ -50,6 +50,8 @@
 #include "gd32e11x_spi.h"
 #include "gd32e11x_start.h"
 #include "gd32e11x_syscfg.h"
+#include "gd32e11x_timer.h"
+#include "gd32e11x_pwm.h"
 #include "gd32e11x_wdg.h"
 #include "gd32e11x_adc.h"
 #include "gd32e11x_crc.h"

@@ -300,6 +300,28 @@ int gd32_bringup(void)
     }
 #endif
 
+#ifdef CONFIG_PWM
+  /* Initialize PWM and register the PWM device */
+
+  ret = gd32_pwm_setup();
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: gd32_pwm_setup() failed: %d\n", ret);
+    }
+#endif
+
+#ifdef CONFIG_TIMER
+  /* Initialize Timer and register the timer device */
+
+  ret = gd32_timer_driver_setup(GD32E113VBEVAL_TIMER_DEVPATH,
+                                GD32E113VBEVAL_TIMER);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: gd32_timer_driver_setup() failed: %d\n",
+             ret);
+    }
+#endif
+
   UNUSED(ret);
   return OK;
 }
