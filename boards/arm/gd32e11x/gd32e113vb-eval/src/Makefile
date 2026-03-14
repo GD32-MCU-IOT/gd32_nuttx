@@ -66,4 +66,12 @@ ifeq ($(CONFIG_ADC),y)
 CSRCS += gd32e11x_adc.c
 endif
 
+ifeq ($(CONFIG_PWM),y)
+CSRCS += gd32e11x_pwm.c
+endif
+
+ifeq ($(CONFIG_TIMER),y)
+CSRCS += gd32e11x_timer.c
+endif
+
 include $(TOPDIR)/boards/Board.mk

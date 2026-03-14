@@ -85,6 +85,12 @@ config GD32E11X_GD32E11X
 	select GD32E11X_HAVE_TIMER5
 	select GD32E11X_HAVE_TIMER6
 	select GD32E11X_HAVE_TIMER7
+	select GD32E11X_HAVE_TIMER8
+	select GD32E11X_HAVE_TIMER9
+	select GD32E11X_HAVE_TIMER10
+	select GD32E11X_HAVE_TIMER11
+	select GD32E11X_HAVE_TIMER12
+	select GD32E11X_HAVE_TIMER13
 	select GD32E11X_HAVE_USBFS
 	select GD32E11X_HAVE_CAN0
 	select GD32E11X_HAVE_CAN1
@@ -194,6 +200,30 @@ config GD32E11X_HAVE_TIMER6
 	default n
 
 config GD32E11X_HAVE_TIMER7
+	bool
+	default n
+
+config GD32E11X_HAVE_TIMER8
+	bool
+	default n
+
+config GD32E11X_HAVE_TIMER9
+	bool
+	default n
+
+config GD32E11X_HAVE_TIMER10
+	bool
+	default n
+
+config GD32E11X_HAVE_TIMER11
+	bool
+	default n
+
+config GD32E11X_HAVE_TIMER12
+	bool
+	default n
+
+config GD32E11X_HAVE_TIMER13
 	bool
 	default n
 
@@ -391,6 +421,42 @@ config GD32E11X_TIMER7
 	bool "TIMER7"
 	default n
 	depends on GD32E11X_HAVE_TIMER7
+	select GD32E11X_TIMER
+
+config GD32E11X_TIMER8
+	bool "TIMER8"
+	default n
+	depends on GD32E11X_HAVE_TIMER8
+	select GD32E11X_TIMER
+
+config GD32E11X_TIMER9
+	bool "TIMER9"
+	default n
+	depends on GD32E11X_HAVE_TIMER9
+	select GD32E11X_TIMER
+
+config GD32E11X_TIMER10
+	bool "TIMER10"
+	default n
+	depends on GD32E11X_HAVE_TIMER10
+	select GD32E11X_TIMER
+
+config GD32E11X_TIMER11
+	bool "TIMER11"
+	default n
+	depends on GD32E11X_HAVE_TIMER11
+	select GD32E11X_TIMER
+
+config GD32E11X_TIMER12
+	bool "TIMER12"
+	default n
+	depends on GD32E11X_HAVE_TIMER12
+	select GD32E11X_TIMER
+
+config GD32E11X_TIMER13
+	bool "TIMER13"
+	default n
+	depends on GD32E11X_HAVE_TIMER13
 	select GD32E11X_TIMER
 
 config GD32E11X_USART0
@@ -595,10 +661,19 @@ config GD32E11X_ONESHOT_MAXTIMERS
 		of the timers and places an upper limit on the number of oneshot
 		timers that you can use.
 
+config GD32E11X_PWM
+	bool
+	default n
+	select PWM
+	select ARCH_HAVE_PWM_MULTICHAN
+	---help---
+		Enable PWM support
+
 config GD32E11X_TIMER0_PWM
 	bool "TIMER0 PWM"
 	default n
 	depends on GD32E11X_TIMER0
+	select GD32E11X_PWM
 	select ARCH_HAVE_PWM_PULSECOUNT
 	---help---
 		Reserve timer 0 for use by PWM
@@ -635,6 +710,40 @@ config GD32E11X_TIMER0_DEADTIME
 	---help---
 		This controls the value of the dead-time, which is inserted before the
 		output transitions.
+
+config GD32E11X_TIMER0_BREAK
+	bool "TIMER0 Break input enable"
+	default n
+	depends on GD32E11X_TIMER0_PWM
+	---help---
+		Enable break (emergency stop) input for TIMER0.
+
+config GD32E11X_TIMER0_BRKP
+	int "TIMER0 Break polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER0_BREAK
+	---help---
+		Break input polarity. 0=active low, 1=active high.
+
+config GD32E11X_TIMER0_LOCK
+	int "TIMER0 Lock level"
+	default 0
+	range 0 3
+	depends on GD32E11X_TIMER0_PWM
+	---help---
+		Register lock level for TIMER0 CCHP register.
+		0=OFF, 1=Level 1, 2=Level 2, 3=Level 3.
+
+config GD32E11X_TIMER0_TRGO
+	int "TIMER0 TRGO source"
+	default 0
+	range 0 7
+	depends on GD32E11X_TIMER0_PWM && GD32E11X_PWM_TRGO
+	---help---
+		TRGO output source selection (CTL1.MMC).
+		0=Reset, 1=Enable, 2=Update, 3=CH0 pulse,
+		4=CH0CV match, 5=CH1CV match, 6=CH2CV match, 7=CH3CV match.
 
 config GD32E11X_TIMER0_CHANNEL0
 	bool "TIMER0 PWM Channel 0"
@@ -901,6 +1010,972 @@ config GD32E11X_TIMER0_CH0NIDLE
 	depends on GD32E11X_TIMER0_CH0ON
 	---help---
 		TIMER0 Channel 0 Complementary output IDLE state
+
+config GD32E11X_TIMER0_CH1P
+	int "TIMER0 Channel 1 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER0_CH1O
+	---help---
+		TIMER0 Channel 1 output polarity
+
+config GD32E11X_TIMER0_CH1IDLE
+	int "TIMER0 Channel 1 Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER0_CH1O
+	---help---
+		TIMER0 Channel 1 output IDLE state
+
+config GD32E11X_TIMER0_CH1NP
+	int "TIMER0 Channel 1 Complementary Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER0_CH1ON
+	---help---
+		TIMER0 Channel 1 Complementary output polarity
+
+config GD32E11X_TIMER0_CH1NIDLE
+	int "TIMER0 Channel 1 Complementary Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER0_CH1ON
+	---help---
+		TIMER0 Channel 1 Complementary output IDLE state
+
+config GD32E11X_TIMER0_CH2P
+	int "TIMER0 Channel 2 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER0_CH2O
+	---help---
+		TIMER0 Channel 2 output polarity
+
+config GD32E11X_TIMER0_CH2IDLE
+	int "TIMER0 Channel 2 Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER0_CH2O
+	---help---
+		TIMER0 Channel 2 output IDLE state
+
+config GD32E11X_TIMER0_CH2NP
+	int "TIMER0 Channel 2 Complementary Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER0_CH2ON
+	---help---
+		TIMER0 Channel 2 Complementary output polarity
+
+config GD32E11X_TIMER0_CH2NIDLE
+	int "TIMER0 Channel 2 Complementary Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER0_CH2ON
+	---help---
+		TIMER0 Channel 2 Complementary output IDLE state
+
+config GD32E11X_TIMER0_CH3P
+	int "TIMER0 Channel 3 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER0_CH3O
+	---help---
+		TIMER0 Channel 3 output polarity
+
+config GD32E11X_TIMER0_CH3IDLE
+	int "TIMER0 Channel 3 Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER0_CH3O
+	---help---
+		TIMER0 Channel 3 output IDLE state
+
+config GD32E11X_TIMER7_PWM
+	bool "TIMER7 PWM"
+	default n
+	depends on GD32E11X_TIMER7
+	select GD32E11X_PWM
+	select ARCH_HAVE_PWM_PULSECOUNT
+	---help---
+		Reserve timer 7 for use by PWM (Advanced Timer)
+
+config GD32E11X_TIMER7_MODE
+	int "TIMER7 Mode"
+	default 0
+	range 0 4
+	depends on GD32E11X_TIMER7_PWM
+	---help---
+		Specifies the timer mode.
+
+config GD32E11X_TIMER7_FDTS
+	int "TIMER7 CKDIV for f_DTS"
+	default 0
+	range 0 2
+	depends on GD32E11X_TIMER7_PWM
+	---help---
+		The CKDIV bits specify division ratio between the timer
+		clock (TIMER_CK) and the dead-time and sampling clock (DTS).
+
+config GD32E11X_TIMER7_DEADTIME
+	int "TIMER7 Dead-time configure"
+	default 0
+	range 0 255
+	depends on GD32E11X_TIMER7_PWM
+	---help---
+		This controls the value of the dead-time.
+
+config GD32E11X_TIMER7_BREAK
+	bool "TIMER7 Break input enable"
+	default n
+	depends on GD32E11X_TIMER7_PWM
+	---help---
+		Enable break (emergency stop) input for TIMER7.
+
+config GD32E11X_TIMER7_BRKP
+	int "TIMER7 Break polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_BREAK
+	---help---
+		Break input polarity. 0=active low, 1=active high.
+
+config GD32E11X_TIMER7_LOCK
+	int "TIMER7 Lock level"
+	default 0
+	range 0 3
+	depends on GD32E11X_TIMER7_PWM
+	---help---
+		Register lock level for TIMER7 CCHP register.
+
+config GD32E11X_TIMER7_TRGO
+	int "TIMER7 TRGO source"
+	default 0
+	range 0 7
+	depends on GD32E11X_TIMER7_PWM && GD32E11X_PWM_TRGO
+	---help---
+		TRGO output source selection (CTL1.MMC).
+
+config GD32E11X_TIMER7_CHANNEL0
+	bool "TIMER7 PWM Channel 0"
+	default n
+	depends on GD32E11X_TIMER7_PWM
+	---help---
+		Enables channel 0.
+
+config GD32E11X_TIMER7_CH0MODE
+	int "TIMER7 Channel 0 compare output mode control"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER7_CHANNEL0
+
+config GD32E11X_TIMER7_CH0O
+	bool "TIMER7 Channel 0 Output"
+	default n
+	depends on GD32E11X_TIMER7_CHANNEL0
+
+config GD32E11X_TIMER7_CH0ON
+	bool "TIMER7 Channel 0 Complementary Output"
+	default n
+	depends on GD32E11X_TIMER7_CHANNEL0
+
+config GD32E11X_TIMER7_CH0P
+	int "TIMER7 Channel 0 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH0O
+
+config GD32E11X_TIMER7_CH0IDLE
+	int "TIMER7 Channel 0 Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH0O
+
+config GD32E11X_TIMER7_CH0NP
+	int "TIMER7 Channel 0 Complementary Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH0ON
+
+config GD32E11X_TIMER7_CH0NIDLE
+	int "TIMER7 Channel 0 Complementary Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH0ON
+
+config GD32E11X_TIMER7_CHANNEL1
+	bool "TIMER7 PWM Channel 1"
+	default n
+	depends on GD32E11X_TIMER7_PWM
+
+config GD32E11X_TIMER7_CH1MODE
+	int "TIMER7 Channel 1 compare output mode control"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER7_CHANNEL1
+
+config GD32E11X_TIMER7_CH1O
+	bool "TIMER7 Channel 1 Output"
+	default n
+	depends on GD32E11X_TIMER7_CHANNEL1
+
+config GD32E11X_TIMER7_CH1ON
+	bool "TIMER7 Channel 1 Complementary Output"
+	default n
+	depends on GD32E11X_TIMER7_CHANNEL1
+
+config GD32E11X_TIMER7_CH1P
+	int "TIMER7 Channel 1 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH1O
+
+config GD32E11X_TIMER7_CH1IDLE
+	int "TIMER7 Channel 1 Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH1O
+
+config GD32E11X_TIMER7_CH1NP
+	int "TIMER7 Channel 1 Complementary Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH1ON
+
+config GD32E11X_TIMER7_CH1NIDLE
+	int "TIMER7 Channel 1 Complementary Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH1ON
+
+config GD32E11X_TIMER7_CHANNEL2
+	bool "TIMER7 PWM Channel 2"
+	default n
+	depends on GD32E11X_TIMER7_PWM
+
+config GD32E11X_TIMER7_CH2MODE
+	int "TIMER7 Channel 2 compare output mode control"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER7_CHANNEL2
+
+config GD32E11X_TIMER7_CH2O
+	bool "TIMER7 Channel 2 Output"
+	default n
+	depends on GD32E11X_TIMER7_CHANNEL2
+
+config GD32E11X_TIMER7_CH2ON
+	bool "TIMER7 Channel 2 Complementary Output"
+	default n
+	depends on GD32E11X_TIMER7_CHANNEL2
+
+config GD32E11X_TIMER7_CH2P
+	int "TIMER7 Channel 2 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH2O
+
+config GD32E11X_TIMER7_CH2IDLE
+	int "TIMER7 Channel 2 Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH2O
+
+config GD32E11X_TIMER7_CH2NP
+	int "TIMER7 Channel 2 Complementary Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH2ON
+
+config GD32E11X_TIMER7_CH2NIDLE
+	int "TIMER7 Channel 2 Complementary Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH2ON
+
+config GD32E11X_TIMER7_CHANNEL3
+	bool "TIMER7 PWM Channel 3"
+	default n
+	depends on GD32E11X_TIMER7_PWM
+
+config GD32E11X_TIMER7_CH3MODE
+	int "TIMER7 Channel 3 compare output mode control"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER7_CHANNEL3
+
+config GD32E11X_TIMER7_CH3O
+	bool "TIMER7 Channel 3 Output"
+	default n
+	depends on GD32E11X_TIMER7_CHANNEL3
+
+config GD32E11X_TIMER7_CH3P
+	int "TIMER7 Channel 3 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH3O
+
+config GD32E11X_TIMER7_CH3IDLE
+	int "TIMER7 Channel 3 Idle State"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER7_CH3O
+
+comment "General Timers PWM Configuration"
+
+config GD32E11X_TIMER1_PWM
+	bool "TIMER1 PWM"
+	default n
+	depends on GD32E11X_TIMER1
+	select GD32E11X_PWM
+	---help---
+		Reserve timer 1 for use by PWM (General 16-bit timer, 4 channels)
+
+config GD32E11X_TIMER1_MODE
+	int "TIMER1 Mode"
+	default 0
+	range 0 4
+	depends on GD32E11X_TIMER1_PWM
+
+config GD32E11X_TIMER1_CHANNEL0
+	bool "TIMER1 PWM Channel 0"
+	default n
+	depends on GD32E11X_TIMER1_PWM
+
+config GD32E11X_TIMER1_CH0MODE
+	int "TIMER1 Channel 0 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER1_CHANNEL0
+
+config GD32E11X_TIMER1_CH0O
+	bool "TIMER1 Channel 0 Output"
+	default n
+	depends on GD32E11X_TIMER1_CHANNEL0
+
+config GD32E11X_TIMER1_CH0P
+	int "TIMER1 Channel 0 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER1_CH0O
+
+config GD32E11X_TIMER1_CHANNEL1
+	bool "TIMER1 PWM Channel 1"
+	default n
+	depends on GD32E11X_TIMER1_PWM
+
+config GD32E11X_TIMER1_CH1MODE
+	int "TIMER1 Channel 1 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER1_CHANNEL1
+
+config GD32E11X_TIMER1_CH1O
+	bool "TIMER1 Channel 1 Output"
+	default n
+	depends on GD32E11X_TIMER1_CHANNEL1
+
+config GD32E11X_TIMER1_CH1P
+	int "TIMER1 Channel 1 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER1_CH1O
+
+config GD32E11X_TIMER1_CHANNEL2
+	bool "TIMER1 PWM Channel 2"
+	default n
+	depends on GD32E11X_TIMER1_PWM
+
+config GD32E11X_TIMER1_CH2MODE
+	int "TIMER1 Channel 2 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER1_CHANNEL2
+
+config GD32E11X_TIMER1_CH2O
+	bool "TIMER1 Channel 2 Output"
+	default n
+	depends on GD32E11X_TIMER1_CHANNEL2
+
+config GD32E11X_TIMER1_CH2P
+	int "TIMER1 Channel 2 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER1_CH2O
+
+config GD32E11X_TIMER1_CHANNEL3
+	bool "TIMER1 PWM Channel 3"
+	default n
+	depends on GD32E11X_TIMER1_PWM
+
+config GD32E11X_TIMER1_CH3MODE
+	int "TIMER1 Channel 3 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER1_CHANNEL3
+
+config GD32E11X_TIMER1_CH3O
+	bool "TIMER1 Channel 3 Output"
+	default n
+	depends on GD32E11X_TIMER1_CHANNEL3
+
+config GD32E11X_TIMER1_CH3P
+	int "TIMER1 Channel 3 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER1_CH3O
+
+config GD32E11X_TIMER2_PWM
+	bool "TIMER2 PWM"
+	default n
+	depends on GD32E11X_TIMER2
+	select GD32E11X_PWM
+	---help---
+		Reserve timer 2 for use by PWM (General 16-bit timer, 4 channels)
+
+config GD32E11X_TIMER2_MODE
+	int "TIMER2 Mode"
+	default 0
+	range 0 4
+	depends on GD32E11X_TIMER2_PWM
+
+config GD32E11X_TIMER2_CHANNEL0
+	bool "TIMER2 PWM Channel 0"
+	default n
+	depends on GD32E11X_TIMER2_PWM
+
+config GD32E11X_TIMER2_CH0MODE
+	int "TIMER2 Channel 0 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER2_CHANNEL0
+
+config GD32E11X_TIMER2_CH0O
+	bool "TIMER2 Channel 0 Output"
+	default n
+	depends on GD32E11X_TIMER2_CHANNEL0
+
+config GD32E11X_TIMER2_CH0P
+	int "TIMER2 Channel 0 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER2_CH0O
+
+config GD32E11X_TIMER2_CHANNEL1
+	bool "TIMER2 PWM Channel 1"
+	default n
+	depends on GD32E11X_TIMER2_PWM
+
+config GD32E11X_TIMER2_CH1MODE
+	int "TIMER2 Channel 1 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER2_CHANNEL1
+
+config GD32E11X_TIMER2_CH1O
+	bool "TIMER2 Channel 1 Output"
+	default n
+	depends on GD32E11X_TIMER2_CHANNEL1
+
+config GD32E11X_TIMER2_CH1P
+	int "TIMER2 Channel 1 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER2_CH1O
+
+config GD32E11X_TIMER2_CHANNEL2
+	bool "TIMER2 PWM Channel 2"
+	default n
+	depends on GD32E11X_TIMER2_PWM
+
+config GD32E11X_TIMER2_CH2MODE
+	int "TIMER2 Channel 2 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER2_CHANNEL2
+
+config GD32E11X_TIMER2_CH2O
+	bool "TIMER2 Channel 2 Output"
+	default n
+	depends on GD32E11X_TIMER2_CHANNEL2
+
+config GD32E11X_TIMER2_CH2P
+	int "TIMER2 Channel 2 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER2_CH2O
+
+config GD32E11X_TIMER2_CHANNEL3
+	bool "TIMER2 PWM Channel 3"
+	default n
+	depends on GD32E11X_TIMER2_PWM
+
+config GD32E11X_TIMER2_CH3MODE
+	int "TIMER2 Channel 3 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER2_CHANNEL3
+
+config GD32E11X_TIMER2_CH3O
+	bool "TIMER2 Channel 3 Output"
+	default n
+	depends on GD32E11X_TIMER2_CHANNEL3
+
+config GD32E11X_TIMER2_CH3P
+	int "TIMER2 Channel 3 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER2_CH3O
+
+config GD32E11X_TIMER3_PWM
+	bool "TIMER3 PWM"
+	default n
+	depends on GD32E11X_TIMER3
+	select GD32E11X_PWM
+	---help---
+		Reserve timer 3 for use by PWM (General 16-bit timer, 4 channels)
+
+config GD32E11X_TIMER3_MODE
+	int "TIMER3 Mode"
+	default 0
+	range 0 4
+	depends on GD32E11X_TIMER3_PWM
+
+config GD32E11X_TIMER3_CHANNEL0
+	bool "TIMER3 PWM Channel 0"
+	default n
+	depends on GD32E11X_TIMER3_PWM
+
+config GD32E11X_TIMER3_CH0MODE
+	int "TIMER3 Channel 0 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER3_CHANNEL0
+
+config GD32E11X_TIMER3_CH0O
+	bool "TIMER3 Channel 0 Output"
+	default n
+	depends on GD32E11X_TIMER3_CHANNEL0
+
+config GD32E11X_TIMER3_CH0P
+	int "TIMER3 Channel 0 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER3_CH0O
+
+config GD32E11X_TIMER3_CHANNEL1
+	bool "TIMER3 PWM Channel 1"
+	default n
+	depends on GD32E11X_TIMER3_PWM
+
+config GD32E11X_TIMER3_CH1MODE
+	int "TIMER3 Channel 1 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER3_CHANNEL1
+
+config GD32E11X_TIMER3_CH1O
+	bool "TIMER3 Channel 1 Output"
+	default n
+	depends on GD32E11X_TIMER3_CHANNEL1
+
+config GD32E11X_TIMER3_CH1P
+	int "TIMER3 Channel 1 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER3_CH1O
+
+config GD32E11X_TIMER3_CHANNEL2
+	bool "TIMER3 PWM Channel 2"
+	default n
+	depends on GD32E11X_TIMER3_PWM
+
+config GD32E11X_TIMER3_CH2MODE
+	int "TIMER3 Channel 2 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER3_CHANNEL2
+
+config GD32E11X_TIMER3_CH2O
+	bool "TIMER3 Channel 2 Output"
+	default n
+	depends on GD32E11X_TIMER3_CHANNEL2
+
+config GD32E11X_TIMER3_CH2P
+	int "TIMER3 Channel 2 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER3_CH2O
+
+config GD32E11X_TIMER3_CHANNEL3
+	bool "TIMER3 PWM Channel 3"
+	default n
+	depends on GD32E11X_TIMER3_PWM
+
+config GD32E11X_TIMER3_CH3MODE
+	int "TIMER3 Channel 3 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER3_CHANNEL3
+
+config GD32E11X_TIMER3_CH3O
+	bool "TIMER3 Channel 3 Output"
+	default n
+	depends on GD32E11X_TIMER3_CHANNEL3
+
+config GD32E11X_TIMER3_CH3P
+	int "TIMER3 Channel 3 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER3_CH3O
+
+config GD32E11X_TIMER4_PWM
+	bool "TIMER4 PWM"
+	default n
+	depends on GD32E11X_TIMER4
+	select GD32E11X_PWM
+	---help---
+		Reserve timer 4 for use by PWM (General 16-bit timer, 4 channels)
+
+config GD32E11X_TIMER4_MODE
+	int "TIMER4 Mode"
+	default 0
+	range 0 4
+	depends on GD32E11X_TIMER4_PWM
+
+config GD32E11X_TIMER4_CHANNEL0
+	bool "TIMER4 PWM Channel 0"
+	default n
+	depends on GD32E11X_TIMER4_PWM
+
+config GD32E11X_TIMER4_CH0MODE
+	int "TIMER4 Channel 0 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER4_CHANNEL0
+
+config GD32E11X_TIMER4_CH0O
+	bool "TIMER4 Channel 0 Output"
+	default n
+	depends on GD32E11X_TIMER4_CHANNEL0
+
+config GD32E11X_TIMER4_CH0P
+	int "TIMER4 Channel 0 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER4_CH0O
+
+config GD32E11X_TIMER4_CHANNEL1
+	bool "TIMER4 PWM Channel 1"
+	default n
+	depends on GD32E11X_TIMER4_PWM
+
+config GD32E11X_TIMER4_CH1MODE
+	int "TIMER4 Channel 1 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER4_CHANNEL1
+
+config GD32E11X_TIMER4_CH1O
+	bool "TIMER4 Channel 1 Output"
+	default n
+	depends on GD32E11X_TIMER4_CHANNEL1
+
+config GD32E11X_TIMER4_CH1P
+	int "TIMER4 Channel 1 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER4_CH1O
+
+config GD32E11X_TIMER4_CHANNEL2
+	bool "TIMER4 PWM Channel 2"
+	default n
+	depends on GD32E11X_TIMER4_PWM
+
+config GD32E11X_TIMER4_CH2MODE
+	int "TIMER4 Channel 2 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER4_CHANNEL2
+
+config GD32E11X_TIMER4_CH2O
+	bool "TIMER4 Channel 2 Output"
+	default n
+	depends on GD32E11X_TIMER4_CHANNEL2
+
+config GD32E11X_TIMER4_CH2P
+	int "TIMER4 Channel 2 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER4_CH2O
+
+config GD32E11X_TIMER4_CHANNEL3
+	bool "TIMER4 PWM Channel 3"
+	default n
+	depends on GD32E11X_TIMER4_PWM
+
+config GD32E11X_TIMER4_CH3MODE
+	int "TIMER4 Channel 3 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER4_CHANNEL3
+
+config GD32E11X_TIMER4_CH3O
+	bool "TIMER4 Channel 3 Output"
+	default n
+	depends on GD32E11X_TIMER4_CHANNEL3
+
+config GD32E11X_TIMER4_CH3P
+	int "TIMER4 Channel 3 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER4_CH3O
+
+comment "Small Timers PWM Configuration"
+
+config GD32E11X_TIMER8_PWM
+	bool "TIMER8 PWM"
+	default n
+	depends on GD32E11X_TIMER8
+	select GD32E11X_PWM
+	---help---
+		Reserve timer 8 for use by PWM (2 channels)
+
+config GD32E11X_TIMER8_CHANNEL0
+	bool "TIMER8 PWM Channel 0"
+	default n
+	depends on GD32E11X_TIMER8_PWM
+
+config GD32E11X_TIMER8_CH0MODE
+	int "TIMER8 Channel 0 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER8_CHANNEL0
+
+config GD32E11X_TIMER8_CH0O
+	bool "TIMER8 Channel 0 Output"
+	default n
+	depends on GD32E11X_TIMER8_CHANNEL0
+
+config GD32E11X_TIMER8_CH0P
+	int "TIMER8 Channel 0 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER8_CH0O
+
+config GD32E11X_TIMER8_CHANNEL1
+	bool "TIMER8 PWM Channel 1"
+	default n
+	depends on GD32E11X_TIMER8_PWM
+
+config GD32E11X_TIMER8_CH1MODE
+	int "TIMER8 Channel 1 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER8_CHANNEL1
+
+config GD32E11X_TIMER8_CH1O
+	bool "TIMER8 Channel 1 Output"
+	default n
+	depends on GD32E11X_TIMER8_CHANNEL1
+
+config GD32E11X_TIMER8_CH1P
+	int "TIMER8 Channel 1 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER8_CH1O
+
+config GD32E11X_TIMER9_PWM
+	bool "TIMER9 PWM"
+	default n
+	depends on GD32E11X_TIMER9
+	select GD32E11X_PWM
+	---help---
+		Reserve timer 9 for use by PWM (1 channel)
+
+config GD32E11X_TIMER9_CHANNEL0
+	bool "TIMER9 PWM Channel 0"
+	default n
+	depends on GD32E11X_TIMER9_PWM
+
+config GD32E11X_TIMER9_CH0MODE
+	int "TIMER9 Channel 0 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER9_CHANNEL0
+
+config GD32E11X_TIMER9_CH0O
+	bool "TIMER9 Channel 0 Output"
+	default n
+	depends on GD32E11X_TIMER9_CHANNEL0
+
+config GD32E11X_TIMER9_CH0P
+	int "TIMER9 Channel 0 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER9_CH0O
+
+config GD32E11X_TIMER10_PWM
+	bool "TIMER10 PWM"
+	default n
+	depends on GD32E11X_TIMER10
+	select GD32E11X_PWM
+	---help---
+		Reserve timer 10 for use by PWM (1 channel)
+
+config GD32E11X_TIMER10_CHANNEL0
+	bool "TIMER10 PWM Channel 0"
+	default n
+	depends on GD32E11X_TIMER10_PWM
+
+config GD32E11X_TIMER10_CH0MODE
+	int "TIMER10 Channel 0 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER10_CHANNEL0
+
+config GD32E11X_TIMER10_CH0O
+	bool "TIMER10 Channel 0 Output"
+	default n
+	depends on GD32E11X_TIMER10_CHANNEL0
+
+config GD32E11X_TIMER10_CH0P
+	int "TIMER10 Channel 0 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER10_CH0O
+
+config GD32E11X_TIMER11_PWM
+	bool "TIMER11 PWM"
+	default n
+	depends on GD32E11X_TIMER11
+	select GD32E11X_PWM
+	---help---
+		Reserve timer 11 for use by PWM (2 channels)
+
+config GD32E11X_TIMER11_CHANNEL0
+	bool "TIMER11 PWM Channel 0"
+	default n
+	depends on GD32E11X_TIMER11_PWM
+
+config GD32E11X_TIMER11_CH0MODE
+	int "TIMER11 Channel 0 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER11_CHANNEL0
+
+config GD32E11X_TIMER11_CH0O
+	bool "TIMER11 Channel 0 Output"
+	default n
+	depends on GD32E11X_TIMER11_CHANNEL0
+
+config GD32E11X_TIMER11_CH0P
+	int "TIMER11 Channel 0 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER11_CH0O
+
+config GD32E11X_TIMER11_CHANNEL1
+	bool "TIMER11 PWM Channel 1"
+	default n
+	depends on GD32E11X_TIMER11_PWM
+
+config GD32E11X_TIMER11_CH1MODE
+	int "TIMER11 Channel 1 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER11_CHANNEL1
+
+config GD32E11X_TIMER11_CH1O
+	bool "TIMER11 Channel 1 Output"
+	default n
+	depends on GD32E11X_TIMER11_CHANNEL1
+
+config GD32E11X_TIMER11_CH1P
+	int "TIMER11 Channel 1 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER11_CH1O
+
+config GD32E11X_TIMER12_PWM
+	bool "TIMER12 PWM"
+	default n
+	depends on GD32E11X_TIMER12
+	select GD32E11X_PWM
+	---help---
+		Reserve timer 12 for use by PWM (1 channel)
+
+config GD32E11X_TIMER12_CHANNEL0
+	bool "TIMER12 PWM Channel 0"
+	default n
+	depends on GD32E11X_TIMER12_PWM
+
+config GD32E11X_TIMER12_CH0MODE
+	int "TIMER12 Channel 0 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER12_CHANNEL0
+
+config GD32E11X_TIMER12_CH0O
+	bool "TIMER12 Channel 0 Output"
+	default n
+	depends on GD32E11X_TIMER12_CHANNEL0
+
+config GD32E11X_TIMER12_CH0P
+	int "TIMER12 Channel 0 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER12_CH0O
+
+config GD32E11X_TIMER13_PWM
+	bool "TIMER13 PWM"
+	default n
+	depends on GD32E11X_TIMER13
+	select GD32E11X_PWM
+	---help---
+		Reserve timer 13 for use by PWM (1 channel)
+
+config GD32E11X_TIMER13_CHANNEL0
+	bool "TIMER13 PWM Channel 0"
+	default n
+	depends on GD32E11X_TIMER13_PWM
+
+config GD32E11X_TIMER13_CH0MODE
+	int "TIMER13 Channel 0 compare output mode"
+	default 6
+	range 0 7
+	depends on GD32E11X_TIMER13_CHANNEL0
+
+config GD32E11X_TIMER13_CH0O
+	bool "TIMER13 Channel 0 Output"
+	default n
+	depends on GD32E11X_TIMER13_CHANNEL0
+
+config GD32E11X_TIMER13_CH0P
+	int "TIMER13 Channel 0 Output polarity"
+	default 0
+	range 0 1
+	depends on GD32E11X_TIMER13_CH0O
+
+comment "PWM Global Configuration"
+
+config GD32E11X_PWM_TRGO
+	bool "PWM TRGO synchronization support"
+	default n
+	depends on GD32E11X_PWM
+	---help---
+		Enable TRGO (trigger output) synchronization support.
+		This allows configuring the master mode control (MMC) field
+		in CTL1 register for timer trigger output.
+
+config GD32E11X_PWM_LL_OPS
+	bool "PWM low-level operations"
+	default n
+	depends on GD32E11X_PWM
+	---help---
+		Enable low-level operations interface for direct timer
+		register access. This is useful for advanced PWM control
+		scenarios.
 
 endmenu # GD32E11X TIMER Outputs Configuration
 
