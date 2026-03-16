@@ -136,25 +136,9 @@ PCLK1 = 30MHz (APB1 /4)
 
 ## Programming and Debugging
 
-### Using OpenOCD
+### Using GD-Link
 
-```bash
-openocd -f interface/stlink.cfg -f target/gd32e1x.cfg
-```
-
-### Using GDB
-
-```bash
-arm-none-eabi-gdb nuttx
-(gdb) target remote localhost:3333
-(gdb) monitor reset halt
-(gdb) load
-(gdb) continue
-```
-
-### Using ST-Link
-
-The board supports ST-Link v2 for programming and debugging via SWD interface:
+The board supports GD-Link for programming and debugging via SWD interface:
 - SWDIO: PA13
 - SWCLK: PA14
 - GND and VCC
@@ -189,12 +173,3 @@ The board supports ST-Link v2 for programming and debugging via SWD interface:
 - GD32E113 User Manual
 - GD32E113 Datasheet
 - [GigaDevice Official Website](http://www.gigadevice.com/)
-- [NuttX Documentation](https://nuttx.apache.org/docs/latest/)
-
-## License
-
-This board support package is licensed under Apache License 2.0.
-
-## Maintainer
-
-Created: December 30, 2024

@@ -62,6 +62,10 @@ ifeq ($(CONFIG_GD32E11X_CRC),y)
 CSRCS += gd32e11x_crc.c
 endif
 
+ifeq ($(CONFIG_GD32E11X_RTC),y)
+CSRCS += gd32e11x_rtc.c
+endif
+
 ifeq ($(CONFIG_ADC),y)
 CSRCS += gd32e11x_adc.c
 endif

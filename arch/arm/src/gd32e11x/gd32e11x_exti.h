@@ -252,6 +252,29 @@ bool gd32_exti_interrupt_flag_get(uint32_t linex);
 
 void gd32_exti_interrupt_flag_clear(uint32_t linex);
 
+/****************************************************************************
+ * Name: gd32_exti_alarm
+ *
+ * Description:
+ *   Sets/clears EXTI alarm interrupt.
+ *
+ * Input Parameters:
+ *  - risingedge:  enables interrupt on rising edge
+ *  - fallingedge: enables interrupt on falling edge
+ *  - event:       generate event when set
+ *  - func:        when non-NULL, generate interrupt
+ *  - arg:         Argument passed to the interrupt callback
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_RTC_ALARM
+int gd32_exti_alarm(bool risingedge, bool fallingedge, bool event,
+                    xcpt_t func, void *arg);
+#endif
+
 #undef EXTERN
 #if defined(__cplusplus)
 }

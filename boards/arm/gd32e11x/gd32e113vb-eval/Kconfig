@@ -178,4 +178,13 @@ endif # GD32E113VB_EVAL_WDG_THREAD
 
 endmenu # GD32E113VB-EVAL Watchdog Configuration
 
+config GD32E113VB_EVAL_RTCTEST
+	bool "RTC self-test at board initialization"
+	default n
+	depends on RTC && RTC_DRIVER
+	---help---
+		Run an RTC self-test after board initialization.
+		Tests counter read/write and (if CONFIG_RTC_ALARM is set)
+		alarm set/wait/cancel.  Results are printed via syslog.
+
 endif # ARCH_BOARD_GD32E113VB_EVAL

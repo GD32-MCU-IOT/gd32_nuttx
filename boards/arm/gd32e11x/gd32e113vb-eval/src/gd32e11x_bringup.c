@@ -63,6 +63,10 @@
 #  include <nuttx/input/buttons.h>
 #endif
 
+#ifdef  CONFIG_RTC_DRIVER
+#include <nuttx/timers/rtc.h>
+#endif
+
 #include "gd32e113v_eval.h"
 
 /****************************************************************************
@@ -319,6 +323,39 @@ int gd32_bringup(void)
     {
       syslog(LOG_ERR, "ERROR: gd32_timer_driver_setup() failed: %d\n",
              ret);
+    }
+#endif
+
+#ifdef CONFIG_RTC_DRIVER
+  struct rtc_lowerhalf_s *lower;
+
+  /* Instantiate the GD32 lower-half RTC driver */
+
+  lower = gd32_rtc_lowerhalf();
+  if (lower == NULL)
+    {
+      syslog(LOG_ERR,
+             "ERROR: Failed to instantiate the RTC lower-half driver\n");
+    }
+  else
+    {
+      /* Bind the lower half driver and register the combined RTC driver
+       * as /dev/rtc0.
+       */
+
+      ret = rtc_initialize(0, lower);
+      if (ret < 0)
+        {
+          syslog(LOG_ERR,
+                 "ERROR: Failed to bind/register the RTC driver: %d\n",
+                 ret);
+        }
+      else
+        {
+#  ifdef CONFIG_GD32E113VB_EVAL_RTCTEST
+          gd32_rtc_test();
+#  endif
+        }
     }
 #endif
 
