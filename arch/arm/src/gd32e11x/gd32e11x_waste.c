@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/gd32e11x/gd32e11x.h
+ * arch/arm/src/gd32e11x/gd32e11x_waste.c
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,43 +20,27 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_GD32E11X_GD32E11X_H
-#define __ARCH_ARM_SRC_GD32E11X_GD32E11X_H
-
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
-#include <sys/types.h>
+
 #include <stdint.h>
-#include <stdbool.h>
 
-#include "arm_internal.h"
-
-/* Peripherals **************************************************************/
-
-#include "chip.h"
-
-#include "gd32e11x_adc.h"
-#include "gd32e11x_bkp.h"
-#include "gd32e11x_crc.h"
-#include "gd32e11x_dma.h"
-#include "gd32e11x_exti.h"
-#include "gd32e11x_fmc.h"
-#include "gd32e11x_gpio.h"
-#include "gd32e11x_i2c.h"
-#include "gd32e11x_lowputc.h"
-#include "gd32e11x_pmu.h"
-#include "gd32e11x_pwm.h"
-#include "gd32e11x_rcu.h"
-#include "gd32e11x_rtc.h"
-#include "gd32e11x_serial.h"
-#include "gd32e11x_spi.h"
-#include "gd32e11x_start.h"
-#include "gd32e11x_syscfg.h"
-#include "gd32e11x_timer.h"
 #include "gd32e11x_waste.h"
-#include "gd32e11x_wdg.h"
 
-#endif /* __ARCH_ARM_SRC_GD32E11X_GD32E11X_H */
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+uint32_t g_waste_counter = 0;
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+void gd32_waste(void)
+{
+  g_waste_counter++;
+}

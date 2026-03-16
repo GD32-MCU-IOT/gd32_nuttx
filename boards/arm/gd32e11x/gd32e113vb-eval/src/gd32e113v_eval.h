@@ -37,6 +37,16 @@
 
 /* Configuration ************************************************************/
 
+/* Assume that everything is supported */
+
+#define HAVE_RTC_DRIVER 1
+
+/* Check if we can support the RTC driver */
+
+#if !defined(CONFIG_RTC) || !defined(CONFIG_RTC_DRIVER)
+#  undef HAVE_RTC_DRIVER
+#endif
+
 /* procfs File System */
 
 #ifdef CONFIG_FS_PROCFS
@@ -464,6 +474,19 @@ int gd32_timer_driver_setup(const char *devpath, int timer);
 
 #ifndef GD32E113VBEVAL_TIMER_DEVPATH
 #  define GD32E113VBEVAL_TIMER_DEVPATH "/dev/timer0"
+#endif
+
+/****************************************************************************
+ * Name: gd32_rtc_test
+ *
+ * Description:
+ *   Run a board-level RTC self-test (counter and alarm).
+ *   Called from gd32_bringup() after the RTC driver is registered.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32E113VB_EVAL_RTCTEST
+int gd32_rtc_test(void);
 #endif
 
 #endif /* __BOARDS_ARM_GD32E11X_GD32E113VB_EVAL_SRC_GD32E113V_EVAL_H */

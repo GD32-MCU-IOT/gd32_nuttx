@@ -343,7 +343,6 @@ void up_irqinitialize(void)
 #endif
 
 #if defined(CONFIG_RTC) && !defined(CONFIG_RTC_EXTERNAL)
-#  error "RTC is not ready now!"
 
   /* RTC was initialized earlier but IRQs weren't ready at that time */
 

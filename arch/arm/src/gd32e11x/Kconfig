@@ -296,6 +296,29 @@ config GD32E11X_CAN1
 	default n
 	depends on GD32E11X_HAVE_CAN1
 
+config GD32E11X_BKP
+	bool "BKP"
+	default n
+	---help---
+		Enable access to the backup domain registers used by RTC state
+		retention.
+
+config GD32E11X_PMU
+	bool "PMU"
+	default n
+	---help---
+		Enable the power control block. RTC backup-domain writes depend on
+		this peripheral.
+
+config GD32E11X_RTC
+	bool "RTC"
+	default n
+	select RTC
+	select GD32E11X_BKP
+	select GD32E11X_PMU
+	---help---
+		Enable the GD32E11x counter RTC driver.
+
 config GD32E11X_DAC0
 	bool "DAC0"
 	default n
@@ -551,6 +574,46 @@ config GD32E11X_WDGT
 	default n
 
 endmenu # GD32E11x Peripheral Support
+
+menu "RTC Configuration"
+	depends on GD32E11X_RTC
+
+config GD32E11X_RTC_MAGIC
+	hex "RTC Magic 1"
+	default 0xface
+	---help---
+		Value stored in the backup domain to indicate that RTC basic
+		initialization has completed.
+
+config GD32E11X_RTC_MAGIC_TIME_SET
+	hex "RTC Magic 2"
+	default 0xf00d
+	---help---
+		Value stored in the backup domain to indicate that RTC time has
+		been set.
+
+choice
+	prompt "RTC clock source"
+	default GD32_RTC_LXTALCLOCK
+
+config GD32_RTC_LXTALCLOCK
+	bool "LXTAL clock"
+	---help---
+		Drive the RTC from the external 32.768 kHz low-speed crystal.
+
+config GD32_RTC_LSICLOCK
+	bool "IRC40K/LSI clock"
+	---help---
+		Drive the RTC from the internal low-speed oscillator.
+
+config GD32_RTC_HXTALCLOCK
+	bool "HXTAL clock"
+	---help---
+		Drive the RTC from the high-speed external oscillator.
+
+endchoice
+
+endmenu # RTC Configuration
 
 
 config GD32E11X_NOEXT_VECTORS
