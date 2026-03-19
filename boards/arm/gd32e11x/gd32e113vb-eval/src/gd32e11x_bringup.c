@@ -304,6 +304,16 @@ int gd32_bringup(void)
     }
 #endif
 
+#if defined(CONFIG_DAC) && defined(CONFIG_GD32E11X_DAC)
+  /* Initialize DAC and register the DAC device(s) */
+
+  ret = gd32_dac_setup();
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: gd32_dac_setup() failed: %d\n", ret);
+    }
+#endif
+
 #ifdef CONFIG_PWM
   /* Initialize PWM and register the PWM device */
 

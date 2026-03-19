@@ -324,12 +324,16 @@ config GD32E11X_DAC0
 	default n
 	depends on GD32E11X_HAVE_DAC
 	select GD32E11X_DAC
+	select DAC
+	select ANALOG
 
 config GD32E11X_DAC1
 	bool "DAC1"
 	default n
 	depends on GD32E11X_HAVE_DAC
 	select GD32E11X_DAC
+	select DAC
+	select ANALOG
 
 config GD32E11X_CRC
 	bool "CRC"
