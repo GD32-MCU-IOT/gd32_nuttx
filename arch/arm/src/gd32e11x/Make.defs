@@ -86,3 +86,7 @@ endif
 ifeq ($(CONFIG_RTC_ALARM),y)
 CHIP_CSRCS += gd32e11x_exti_alarm.c
 endif
+
+ifeq ($(CONFIG_GD32E11X_DAC),y)
+CHIP_CSRCS += gd32e11x_dac.c
+endif

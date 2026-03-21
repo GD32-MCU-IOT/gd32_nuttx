@@ -78,4 +78,8 @@ ifeq ($(CONFIG_TIMER),y)
 CSRCS += gd32e11x_timer.c
 endif
 
+ifeq ($(CONFIG_DAC),y)
+CSRCS += gd32e11x_dac.c
+endif
+
 include $(TOPDIR)/boards/Board.mk

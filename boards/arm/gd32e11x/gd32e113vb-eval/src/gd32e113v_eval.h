@@ -427,6 +427,18 @@ int gd32_adc_setup(void);
 #endif
 
 /****************************************************************************
+ * Name: gd32_dac_setup
+ *
+ * Description:
+ *   Initialize and register the DAC device(s).
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_DAC) && defined(CONFIG_GD32E11X_DAC)
+int gd32_dac_setup(void);
+#endif
+
+/****************************************************************************
  * Name: gd32_pwm_setup
  *
  * Description:

@@ -41,6 +41,7 @@
 #include "gd32e11x_adc.h"
 #include "gd32e11x_bkp.h"
 #include "gd32e11x_crc.h"
+#include "gd32e11x_dac.h"
 #include "gd32e11x_dma.h"
 #include "gd32e11x_exti.h"
 #include "gd32e11x_fmc.h"
