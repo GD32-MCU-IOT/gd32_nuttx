@@ -174,6 +174,23 @@ config ARCH_CHIP_GD32E11X
 	---help---
 		GD32MCU GD32E11x architectures (ARM Cortex-M4).
 
+config ARCH_CHIP_GD32H7XX
+	bool "GD32MCU GD32 H7"
+	select ARCH_CORTEXM7
+	select ARCH_HAVE_MPU
+	select ARCH_HAVE_FETCHADD
+	select ARCH_HAVE_I2CRESET
+	select ARCH_HAVE_HEAPCHECK
+	select ARCH_HAVE_PROGMEM
+	select ARCH_HAVE_SPI_BITORDER
+	select ARCH_HAVE_TICKLESS
+	select ARM_HAVE_MPU_UNIFIED
+	select ARMV7M_HAVE_STACKCHECK
+	select ARMV7M_HAVE_ICACHE
+	select ARMV7M_HAVE_DCACHE
+	---help---
+		GD32MCU GD32 H7 architectures (ARM Cortex-M7).
+
 config ARCH_CHIP_IMX1
 	bool "NXP/Freescale iMX.1"
 	select ARCH_ARM920T
@@ -1174,6 +1191,7 @@ config ARCH_CHIP
 	default "eoss3"		if ARCH_CHIP_EOSS3
 	default "gd32f4"	if ARCH_CHIP_GD32F4
 	default "gd32e11x"	if ARCH_CHIP_GD32E11X
+	default "gd32h7xx"	if ARCH_CHIP_GD32H7XX
 	default "imx1"		if ARCH_CHIP_IMX1
 	default "imx6"		if ARCH_CHIP_IMX6
 	default "imx9"		if ARCH_CHIP_IMX9_CORTEX_M
@@ -1613,6 +1631,9 @@ source "arch/arm/src/gd32f4/Kconfig"
 endif
 if ARCH_CHIP_GD32E11X
 source "arch/arm/src/gd32e11x/Kconfig"
+endif
+if ARCH_CHIP_GD32H7XX
+source "arch/arm/src/gd32h7xx/Kconfig"
 endif
 if ARCH_CHIP_IMX1
 source "arch/arm/src/imx1/Kconfig"

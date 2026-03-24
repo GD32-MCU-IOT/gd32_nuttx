@@ -1,0 +1,429 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+comment "GD32H7 Configuration Options"
+
+choice
+	prompt "GD32H7 Chip Selection"
+	default ARCH_CHIP_GD32H759IM
+	depends on ARCH_CHIP_GD32H7XX
+
+config ARCH_CHIP_GD32H759IM
+	bool "GD32H759IM"
+	select GD32H7_GD32H7XX
+	---help---
+		GD32 H7 Cortex M7, 3840 Kb FLASH, 1024 Kb SRAM
+
+endchoice
+
+# GD32H7 family selection
+
+config GD32H7_GD32H7XX
+	bool
+	default n
+	select ARCH_HAVE_FPU
+	select ARCH_HAVE_ICACHE
+	select ARCH_HAVE_DCACHE
+	select ARMV7M_HAVE_ICACHE
+	select ARMV7M_HAVE_DCACHE
+
+menu "GD32H7 Peripheral Support"
+
+# These "hidden" settings determine whether a peripheral option is available
+# for the selected MCU
+
+config GD32H7_HAVE_DMA0
+	bool
+	default y
+
+config GD32H7_HAVE_DMA1
+	bool
+	default y
+
+# These are the peripheral selections proper
+
+config GD32H7_CRC
+	bool "CRC"
+	default n
+
+config GD32H7_DMA0
+	bool "DMA0"
+	default n
+	depends on GD32H7_HAVE_DMA0
+	select GD32H7_DMA
+	select ARCH_DMA
+
+config GD32H7_DMA1
+	bool "DMA1"
+	default n
+	depends on GD32H7_HAVE_DMA1
+	select GD32H7_DMA
+	select ARCH_DMA
+
+config GD32H7_EXTI
+	bool "EXTI"
+	default n
+
+config GD32H7_FMC
+	bool "FMC"
+	default n
+
+config GD32H7_FWDGT
+	bool "FWDGT"
+	default n
+	select GD32H7_WDGT
+	select WATCHDOG
+
+config GD32H7_GPIO
+	bool "GPIO"
+	default y
+
+config GD32H7_PMU
+	bool "PMU"
+	default n
+
+config GD32H7_RCU
+	bool "RCU"
+	default y
+
+config GD32H7_RTC
+	bool "RTC"
+	default n
+
+config GD32H7_SYSCFG
+	bool "SYSCFG"
+	default y
+
+config GD32H7_USART0
+	bool "USART0"
+	default y
+	select GD32H7_USART
+
+config GD32H7_USART1
+	bool "USART1"
+	default n
+	select GD32H7_USART
+
+config GD32H7_USART2
+	bool "USART2"
+	default n
+	select GD32H7_USART
+
+config GD32H7_UART3
+	bool "UART3"
+	default n
+	select GD32H7_USART
+
+config GD32H7_UART4
+	bool "UART4"
+	default n
+	select GD32H7_USART
+
+config GD32H7_USART5
+	bool "USART5"
+	default n
+	select GD32H7_USART
+
+config GD32H7_UART6
+	bool "UART6"
+	default n
+	select GD32H7_USART
+
+config GD32H7_UART7
+	bool "UART7"
+	default n
+	select GD32H7_USART
+
+config GD32H7_WWDGT
+	bool "WWDGT"
+	default n
+	select GD32H7_WDGT
+	select WATCHDOG
+
+endmenu # "GD32H7 Peripheral Support"
+
+# These settings define internal capabilities
+
+config GD32H7_DMA
+	bool
+	default n
+
+config GD32H7_USART
+	bool
+	default n
+
+config GD32H7_WDGT
+	bool
+	default n
+
+config GD32H7_NOEXT_VECTORS
+	bool "Disable the ARMv7-M EXT vectors"
+	default n
+	---help---
+		Sometimes you may not need any Vector support beyond SysTick
+		and wish to save memory. This applies only to ARMv7-M architectures.
+
+choice
+	prompt "JTAG Configuration"
+	default GD32H7_JTAG_DISABLE
+	---help---
+		JTAG Enable settings (by default JTAG-DP and SW-DP are disabled)
+
+config GD32H7_JTAG_DISABLE
+	bool "Disable all JTAG clocking"
+
+config GD32H7_JTAG_FULL_ENABLE
+	bool "Enable full SWJ (JTAG-DP + SW-DP)"
+
+config GD32H7_JTAG_NOJNTRST_ENABLE
+	bool "Enable full SWJ (JTAG-DP + SW-DP) but without JNTRST"
+
+config GD32H7_JTAG_SW_ENABLE
+	bool "Set JTAG-DP disabled and SW-DP enabled"
+
+endchoice
+
+config GD32H7_DISABLE_IDLE_SLEEP_DURING_DEBUG
+	bool "Disable IDLE Sleep (WFI) in debug mode"
+	default n
+	---help---
+		In debug configuration, disables the WFI instruction in the IDLE loop
+		to prevent the JTAG from disconnecting.
+
+config GD32H7_FORCEPOWER
+	bool "Force power"
+	default n
+	---help---
+		Timer and I2C devices may need to the following to force power to be applied
+		unconditionally at power up.  (Otherwise, the device is powered when it is
+		initialized).
+
+config ARCH_BOARD_GD32H7_CUSTOM_CLOCKCONFIG
+	bool "Custom clock configuration"
+	default n
+	---help---
+		Enables special, board-specific GD32H7 clock configuration.
+
+config GD32H7_SERIALDRIVER
+	bool
+	default y if GD32H7_USART0 || GD32H7_USART1 || GD32H7_USART2 || GD32H7_UART3 || GD32H7_UART4 || GD32H7_USART5 || GD32H7_UART6 || GD32H7_UART7
+
+menu "USART Configuration"
+	depends on GD32H7_USART
+
+comment "USART Device Configuration"
+
+choice
+	prompt "USART0 Driver Configuration"
+	default GD32H7_USART0_SERIALDRIVER
+	depends on GD32H7_USART0
+
+config GD32H7_USART0_SERIALDRIVER
+	bool "Standard serial driver"
+	select USART0_SERIALDRIVER
+	select ARCH_HAVE_SERIAL_TERMIOS
+	select GD32H7_SERIALDRIVER
+
+endchoice # USART0 Driver Configuration
+
+if GD32H7_USART0_SERIALDRIVER
+
+config USART0_RS485
+	bool "Enable RS-485 on USART0"
+	default n
+	---help---
+		USART0 RS-485 function configuration. If the user configure the RS-485 on
+		USART, the user's should to provide GPIO_USART0_RS485_DIR pin definition
+		in board initialization.
+
+config USART0_RS485_DIR_POLARITY
+	int "Configure USART0 RS-485 DIR pin polarity"
+	default 1
+	range 0 1
+	depends on USART0_RS485
+	---help---
+		Polarity of GPIO_USART0_RS485_DIR pin for RS-485 on USART0.
+		The state on DIR pin: 0 - receive , 1 - transmit.
+
+config GD32H7_USART0_RXDMA
+	bool "USART0 Rx DMA"
+	default n
+	depends on GD32H7_DMA1
+	select GD32H7_USART_RXDMA
+	select USART0_RXDMA
+	---help---
+		To reduce the burden of the processor in fast data transmit, DMA can be used to
+		access the receiving data buffer.
+
+config GD32H7_USART0_TXDMA
+	bool "USART0 Tx DMA"
+	default n
+	depends on GD32H7_DMA1
+	select GD32H7_USART_TXDMA
+	select USART0_TXDMA
+	---help---
+		To reduce the burden of the processor in fast data transmit, DMA can be used to
+		access the transmitting data buffer.
+
+endif # GD32H7_USART0_SERIALDRIVER
+
+choice
+	prompt "USART1 Driver Configuration"
+	default GD32H7_USART1_SERIALDRIVER
+	depends on GD32H7_USART1
+
+config GD32H7_USART1_SERIALDRIVER
+	bool "Standard serial driver"
+	select USART1_SERIALDRIVER
+	select ARCH_HAVE_SERIAL_TERMIOS
+	select GD32H7_SERIALDRIVER
+
+endchoice # USART1 Driver Configuration
+
+if GD32H7_USART1_SERIALDRIVER
+
+config USART1_RS485
+	bool "Enable RS-485 on USART1"
+	default n
+	---help---
+		USART1 RS-485 function configuration.
+
+config USART1_RS485_DIR_POLARITY
+	int "Configure USART1 RS-485 DIR pin polarity"
+	default 1
+	range 0 1
+	depends on USART1_RS485
+	---help---
+		Polarity of GPIO_USART1_RS485_DIR pin for RS-485 on USART1.
+		The state on DIR pin: 0 - receive , 1 - transmit.
+
+config GD32H7_USART1_RXDMA
+	bool "USART1 Rx DMA"
+	default n
+	depends on GD32H7_DMA0
+	select GD32H7_USART_RXDMA
+	select USART1_RXDMA
+	---help---
+		To reduce the burden of the processor in fast data transmit, DMA can be used to
+		access the receiving data buffer.
+
+config GD32H7_USART1_TXDMA
+	bool "USART1 Tx DMA"
+	default n
+	depends on GD32H7_DMA0
+	select GD32H7_USART_TXDMA
+	select USART1_TXDMA
+	---help---
+		To reduce the burden of the processor in fast data transmit, DMA can be used to
+		access the transmitting data buffer.
+
+endif # GD32H7_USART1_SERIALDRIVER
+
+choice
+	prompt "USART2 Driver Configuration"
+	default GD32H7_USART2_SERIALDRIVER
+	depends on GD32H7_USART2
+
+config GD32H7_USART2_SERIALDRIVER
+	bool "Standard serial driver"
+	select USART2_SERIALDRIVER
+	select ARCH_HAVE_SERIAL_TERMIOS
+	select GD32H7_SERIALDRIVER
+
+endchoice # USART2 Driver Configuration
+
+if GD32H7_USART2_SERIALDRIVER
+
+config USART2_RS485
+	bool "Enable RS-485 on USART2"
+	default n
+
+config USART2_RS485_DIR_POLARITY
+	int "Configure USART2 RS-485 DIR pin polarity"
+	default 1
+	range 0 1
+	depends on USART2_RS485
+
+config GD32H7_USART2_RXDMA
+	bool "USART2 Rx DMA"
+	default n
+	depends on GD32H7_DMA0
+	select GD32H7_USART_RXDMA
+	select USART2_RXDMA
+
+config GD32H7_USART2_TXDMA
+	bool "USART2 Tx DMA"
+	default n
+	depends on GD32H7_DMA0
+	select GD32H7_USART_TXDMA
+	select USART2_TXDMA
+
+endif # GD32H7_USART2_SERIALDRIVER
+
+menu "Serial Driver Configuration"
+	depends on GD32H7_SERIALDRIVER
+
+config GD32H7_SERIAL_RXDMA_BUFFER_SIZE
+	int "Rx DMA buffer size"
+	default 32
+	range 1 65535
+	depends on GD32H7_USART_RXDMA
+	---help---
+		The DMA buffer size when using RX DMA to emulate a FIFO.
+
+config GD32H7_SERIAL_DISABLE_REORDERING
+	bool "Disable reordering of ttySx devices."
+	default n
+	---help---
+		NuttX per default reorders the serial ports (/dev/ttySx) so that the
+		console device is always on /dev/ttyS0. If more than one UART is in use they
+		are assigned to /dev/ttySx in order of the CONFIG_UARTn_SERIAL_CONSOLE.
+		Disabling this feature will disable this behavior and the devices will be
+		numbered in order of their declaration in the Kconfig file.
+
+config GD32H7_FLOWCONTROL_BROKEN
+	bool "Use Software UART RTS flow control"
+	depends on SERIAL_IFLOWCONTROL
+	default n
+	---help---
+		Enable UART RTS flow control using Software. Because most GD32H7
+		have broken HW based RTS behavior (they assert nRTS after every byte)
+
+config GD32H7_USART_BREAKS
+	bool "Add TIOxSBRK to support sending Breaks"
+	default n
+
+config GD32H7_SERIALBRK_BSDCOMPAT
+	bool "Use BSD Compatible Serial Break"
+	default n
+	depends on GD32H7_USART_BREAKS
+	---help---
+		Configure serial break to be compatible with BSD serial break.
+
+config GD32H7_USART_SINGLEWIRE
+	bool "Single Wire Support"
+	default n
+	depends on GD32H7_USART
+
+config GD32H7_USART_INVERT
+	bool "Signal Invert Support"
+	default n
+	depends on GD32H7_USART
+
+endmenu # Serial Driver Configuration
+
+# These settings define DMA usage
+
+config GD32H7_USART_RXDMA
+	bool
+	default n
+	depends on GD32H7_DMA
+
+config GD32H7_USART_TXDMA
+	bool
+	default n
+	depends on GD32H7_DMA
+
+endmenu # USART Configuration

@@ -1,0 +1,85 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+if ARCH_BOARD_GD32H759IM_EVAL
+
+choice
+	prompt "Select Console wiring."
+	default GD32H759IM_EVAL_CONSOLE_BOARD
+	---help---
+		Select where you will connect the console.
+
+		Eval COM Port:
+
+		BOARD USART Connector:
+
+		Advantage: You have a shield so it is easy.
+
+		Disadvantage: You loose the use of the
+		other functions on PA9, PA10
+
+				GD32H759IM_EVAL
+			USART0 GPIO
+			-- ----- --------- ----
+			RX    USART0_RX PA10
+			TX    USART0_TX PA9
+			-- ----- --------- ---
+
+config GD32H759IM_EVAL_CONSOLE_BOARD
+	bool "Eval Com Connector"
+	select GD32H7_USART0
+	select USART0_SERIALDRIVER
+
+config GD32H759IM_EVAL_CONSOLE_VIRTUAL
+	bool "USART2 Console"
+	select GD32H7_USART2
+	select USART2_SERIALDRIVER
+
+config GD32H759IM_EVAL_CONSOLE_NONE
+	bool "No Serial Console"
+
+endchoice # "Select Console wiring"
+
+choice
+	prompt "GD32H759I MCU Crystal Selected"
+	default GD32H759I_BOARD_USE_HXTAL
+
+config GD32H759I_BOARD_USE_HXTAL
+	bool "Use HXTAL as clock source"
+
+config GD32H759I_BOARD_USE_IRC64M
+	bool "Use IRC64M as clock source"
+
+endchoice # "MCU Crystal Selected"
+
+config GD32H759I_BOARD_HXTAL_VALUE
+	int "GD32H759I Eval Board HXTAL Value"
+	default 25000000
+	depends on GD32H759I_BOARD_USE_HXTAL
+	---help---
+		GD32H759I Eval Board HXTAL Value, default is 25MHz.
+
+choice
+	prompt "GD32H759 MCU System Frequency"
+	default GD32H759I_600MHZ
+
+config GD32H759I_600MHZ
+	bool "600 MHz"
+	
+config GD32H759I_480MHZ
+	bool "480 MHz"
+
+config GD32H759I_400MHZ
+	bool "400 MHz"
+
+endchoice # "MCU System Frequency"
+
+config ARCH_BOARD_GD32H7XX_CUSTOM_CLOCKCONFIG
+	bool "Enable board-specific clock configuration"
+	default n
+	---help---
+		Enables board-specific clock configuration in board/src.
+
+endif
