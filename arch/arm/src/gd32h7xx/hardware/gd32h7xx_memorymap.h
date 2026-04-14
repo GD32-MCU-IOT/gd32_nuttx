@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/gd32f4/gd32f4xx.h
+ * arch/arm/src/gd32h7xx/hardware/gd32h7xx_memorymap.h
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,38 +20,20 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_GD32F4_GD32F4XX_H
-#define __ARCH_ARM_SRC_GD32F4_GD32F4XX_H
+#ifndef __ARCH_ARM_SRC_GD32H7_HARDWARE_GD32H7XX_MEMORYMAP_H
+#define __ARCH_ARM_SRC_GD32H7_HARDWARE_GD32H7XX_MEMORYMAP_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
-#include <sys/types.h>
-#include <stdint.h>
-#include <stdbool.h>
-
-#include "arm_internal.h"
-
-/* Peripherals **************************************************************/
-
 #include "chip.h"
-#include "gd32f4xx_exti.h"
-#include "gd32f4xx_enet.h"
-#include "gd32f4xx_dma.h"
-#include "gd32f4xx_gpio.h"
-#include "gd32f4xx_rcu.h"
-#include "gd32f4xx_usart.h"
-#include "gd32f4xx_lowputc.h"
-#include "gd32f4xx_fmc.h"
-#include "gd32f4xx_pmu.h"
-#include "gd32f4xx_spi.h"
-#include "gd32f4xx_i2c.h"
-#include "gd32f4xx_syscfg.h"
-#include "gd32f4xx_sdio.h"
-#include "gd32f4xx_exmc.h"
-#include "gd32f4xx_ipa.h"
-#include "gd32f4xx_tli.h"
 
-#endif /* __ARCH_ARM_SRC_GD32F4_GD32F4XX_H */
+#if defined(CONFIG_ARCH_CHIP_GD32H759IM)
+#  include "hardware/gd32h759im_memorymap.h"
+#else
+#  error "Unsupported GD32H7 memory map"
+#endif
+
+#endif /* __ARCH_ARM_SRC_GD32H7_HARDWARE_GD32H7XX_MEMORYMAP_H */

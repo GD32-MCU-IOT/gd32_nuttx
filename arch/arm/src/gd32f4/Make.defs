@@ -50,6 +50,14 @@ ifeq ($(CONFIG_GD32F4_ENETMAC),y)
 CHIP_CSRCS += gd32f4xx_enet.c
 endif
 
+ifeq ($(CONFIG_GD32F4_EXMC),y)
+CHIP_CSRCS += gd32f4xx_exmc.c
+endif
+
+ifeq ($(CONFIG_GD32F4_IPA),y)
+CHIP_CSRCS += gd32f4xx_ipa.c
+endif
+
 ifeq ($(CONFIG_GD32F4_PMU),y)
 CHIP_CSRCS += gd32f4xx_pmu.c
 endif
@@ -61,6 +69,11 @@ endif
 ifeq ($(CONFIG_GD32F4_I2C),y)
 CHIP_CSRCS += gd32f4xx_i2c.c
 endif
+
 ifeq ($(CONFIG_GD32F4_SDIO),y)
 CHIP_CSRCS += gd32f4xx_sdio.c
+endif
+
+ifeq ($(CONFIG_GD32F4_TLI),y)
+CHIP_CSRCS += gd32f4xx_tli.c
 endif

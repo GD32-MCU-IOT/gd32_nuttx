@@ -364,7 +364,14 @@ config GD32F4_FWDGT
 config GD32F4_IPA
 	bool "IPA"
 	default n
+	select FB
+	select FB_OVERLAY
 	depends on GD32F4_HAVE_IPA
+	---help---
+		The GD32F4xx IPA is an image processing accelerator, it provides a
+		configurable and flexible image format conversion from one or two
+		source image to the destination image available on the GD32F450 and
+		GD32F470 devices.
 
 config GD32F4_IREF
 	bool "IREF"
@@ -533,6 +540,13 @@ config GD32F4_TIMER13
 config GD32F4_TLI
 	bool "TLI"
 	default n
+	select FB
+	depends on GD32F4_HAVE_TLI
+	---help---
+		The GD32F4xx TLI is an LCD-TFT Display Controller available on
+		the GD32F450 and GD32F470 devices.  It is a standard parallel
+		video interface (HSYNC, VSYNC, etc.) for controlling TFT LCD
+		displays.
 
 config GD32F4_TRNG
 	bool "TRNG"
@@ -2104,6 +2118,101 @@ config GD32F4_I2C_DMA
 
 endmenu # I2C Configuration
 
+if GD32F4_IPA
+
+menu "IPA Configuration"
+
+config GD32F4_IPA_NLAYERS
+	int "Number IPA overlays"
+	default 1
+	range 1 256
+	---help---
+		Number of supported IPA layer.
+
+config GD32F4_IPA_LAYER_SHARED
+	bool "Overlays shared memory region"
+	default n
+	---help---
+		Several overlays can share the same memory region.
+		Setup a whole memory area (usually multiple size of the visible screen)
+		allows image preprocessing before they become visible by blit operation.
+
+config GD32F4_IPA_LAYER_PPLINE
+	int "Pixel per line"
+	default 1
+	range 1 65535
+	---help---
+		If you are using the IPA, then you must provide the pixel per line or
+		width of the overlay.
+
+config GD32F4_IPA_FB_BASE
+	hex "Framebuffer memory start address"
+	default 0
+	---help---
+		If you are using the IPA, then you must provide the address of the start
+		of the IPA overlays framebuffer. This address will typically be in the
+		SRAM or SDRAM memory region of the EXMC.
+
+config GD32F4_IPA_FB_SIZE
+	int "Framebuffer memory size (bytes)"
+	default 0
+	---help---
+		Must be the whole size of all IPA overlays.
+
+menu "Supported pixel format"
+
+config GD32F4_IPA_L8
+	depends on GD32F4_FB_CMAP && GD32F4_TLI_L1_L8
+	bool "8 bpp L8 (8-bit CLUT)"
+	default y
+
+config GD32F4_IPA_AL44
+	depends on GD32F4_FB_CMAP && GD32F4_TLI_L1_AL44
+	bool "8 bpp AL44 (4-bit alpha + 4-bit CLUT)"
+	default y
+
+config GD32F4_IPA_AL88
+	depends on GD32F4_FB_CMAP && GD32F4_TLI_L1_AL88
+	bool "16 bpp AL88 (8-bit alpha + 8-bit CLUT)"
+	default y
+
+config GD32F4_IPA_RGB565
+	bool "16 bpp RGB 565"
+	depends on GD32F4_TLI_L1_RGB565
+	default y
+
+config GD32F4_IPA_ARGB4444
+	bool "16 bpp ARGB 4444"
+	depends on GD32F4_TLI_L1_ARGB4444
+	default y
+
+config GD32F4_IPA_ARGB1555
+	bool "16 bpp ARGB 1555"
+	depends on GD32F4_TLI_L1_ARGB15555
+	default y
+
+config GD32F4_IPA_RGB888
+	bool "24 bpp RGB 888"
+	depends on GD32F4_TLI_L1_RGB888
+	default y
+
+config GD32F4_IPA_ARGB8888
+	bool "32 bpp ARGB 8888"
+	depends on GD32F4_TLI_L1_ARGB8888
+	default y
+
+endmenu # Supported pixel format
+
+config GD32F4_IPA_REGDEBUG
+	bool "IPA Register level debug"
+	depends on DEBUG_INFO && DEBUG_LCD
+	default n
+	---help---
+		Output detailed register-level IPA device debug information.
+
+endmenu # IPA Configuration
+endif # GD32F4_IPA
+
 
 config GD32F4_HAVE_RTC_COUNTER
 	bool
@@ -2589,7 +2698,193 @@ endmenu # "CAN driver configuration"
 if GD32F4_TLI
 
 menu "TLI Configuration"
-	depends on GD32F4_TLI
+
+config GD32F4_TLI_BACKLIGHT
+	bool "Backlight support"
+	default y
+
+config GD32F4_TLI_DEFBACKLIGHT
+	hex "Default backlight level"
+	default 0xf0
+
+config GD32F4_TLI_BACKCOLOR
+	hex "Background color"
+	default 0x0
+	---help---
+		This is the background color that will be used as the TLI
+		background layer color.  It is an RGB888 format value.
+
+config GD32F4_TLI_DITHER
+	bool "Dither support"
+	default n
+
+config GD32F4_TLI_DITHER_RED
+	depends on GD32F4_TLI_DITHER
+	int "Dither red width"
+	range 0 7
+	default 2
+	---help---
+		This is the dither red width.
+
+config GD32F4_TLI_DITHER_GREEN
+	depends on GD32F4_TLI_DITHER
+	int "Dither green width"
+	range 0 7
+	default 2
+	---help---
+		This is the dither green width.
+
+config GD32F4_TLI_DITHER_BLUE
+	depends on GD32F4_TLI_DITHER
+	int "Dither blue width"
+	range 0 7
+	default 2
+	---help---
+		This is the dither blue width.
+
+config GD32F4_TLI_FB_BASE
+	hex "Framebuffer memory start address"
+	default 0
+	---help---
+		If you are using the TLI, then you must provide the address
+		of the start of the framebuffer.  This address will typically
+		be in the SRAM or SDRAM memory region of the EXMC.
+
+config GD32F4_TLI_FB_SIZE
+	int "Framebuffer memory size (bytes)"
+	default 0
+	---help---
+		Must be the whole size of the active TLI layer.
+
+config GD32F4_TLI_L1_CHROMAKEYEN
+	bool "Enable chromakey support for layer 1"
+	default y
+
+config GD32F4_TLI_L1_CHROMAKEY
+	hex "Layer L1 initial chroma key"
+	default 0x00000000
+
+config GD32F4_TLI_L1_COLOR
+	hex "Layer L1 default color"
+	default 0x00000000
+
+choice
+	prompt "Layer 1 color format"
+	default GD32F4_TLI_L1_RGB565
+
+config GD32F4_TLI_L1_L8
+	bool "8 bpp L8 (8-bit CLUT)"
+	depends on GD32F4_FB_CMAP
+
+config GD32F4_TLI_L1_AL44
+	bool "8 bpp AL44 (4-bit alpha + 4-bit CLUT)"
+	depends on GD32F4_FB_CMAP
+
+config GD32F4_TLI_L1_AL88
+	bool "16 bpp AL88 (8-bit alpha + 8-bit CLUT)"
+	depends on GD32F4_FB_CMAP
+
+config GD32F4_TLI_L1_RGB565
+	bool "16 bpp RGB 565"
+	depends on !GD32F4_FB_CMAP
+
+config GD32F4_TLI_L1_ARGB4444
+	bool "16 bpp ARGB 4444"
+	depends on !GD32F4_FB_CMAP
+
+config GD32F4_TLI_L1_ARGB1555
+	bool "16 bpp ARGB 1555"
+	depends on !GD32F4_FB_CMAP
+
+config GD32F4_TLI_L1_RGB888
+	bool "24 bpp RGB 888"
+	depends on !GD32F4_FB_CMAP
+
+config GD32F4_TLI_L1_ARGB8888
+	bool "32 bpp ARGB 8888"
+	depends on !GD32F4_FB_CMAP
+
+endchoice # Layer 1 color format
+
+config GD32F4_TLI_L2
+	bool "Enable Layer 2 support"
+	default y
+
+if GD32F4_TLI_L2
+
+config GD32F4_TLI_L2_COLOR
+	hex "Layer L2 default color"
+	default 0x00000000
+
+config GD32F4_TLI_L2_CHROMAKEYEN
+	bool "Enable chromakey support for layer 2"
+	default y
+
+config GD32F4_TLI_L2_CHROMAKEY
+	hex "Layer L2 initial chroma key"
+	default 0x00000000
+
+choice
+	prompt "Layer 2 (top layer) color format"
+	default GD32F4_TLI_L2_RGB565
+
+config GD32F4_TLI_L2_L8
+	depends on GD32F4_TLI_L1_L8
+	bool "8 bpp L8 (8-bit CLUT)"
+
+config GD32F4_TLI_L2_AL44
+	depends on GD32F4_TLI_L1_AL44
+	bool "8 bpp AL44 (4-bit alpha + 4-bit CLUT)"
+
+config GD32F4_TLI_L2_AL88
+	depends on GD32F4_TLI_L1_AL88
+	bool "16 bpp AL88 (8-bit alpha + 8-bit CLUT)"
+
+config GD32F4_TLI_L2_RGB565
+	depends on GD32F4_TLI_L1_RGB565
+	bool "16 bpp RGB 565"
+
+config GD32F4_TLI_L2_ARGB4444
+	depends on GD32F4_TLI_L1_ARGB4444
+	bool "16 bpp ARGB 4444"
+
+config GD32F4_TLI_L2_ARGB1555
+	depends on GD32F4_TLI_L1_ARGB1555
+	bool "16 bpp ARGB 1555"
+
+config GD32F4_TLI_L2_RGB888
+	depends on GD32F4_TLI_L1_RGB888
+	bool "24 bpp RGB 888"
+
+config GD32F4_TLI_L2_ARGB8888
+	depends on GD32F4_TLI_L1_ARGB8888
+	bool "32 bpp ARGB 8888"
+
+endchoice # Layer 2 color format
+
+endif # GD32F4_TLI_L2
+
+config GD32F4_FB_CMAP
+	bool "Color map support"
+	default y
+	select FB_CMAP
+	---help---
+		Enabling color map support is necessary for TLI L8 format.
+
+config GD32F4_FB_TRANSPARENCY
+	bool "Transparency color map support"
+	default y
+	depends on GD32F4_FB_CMAP
+	select FB_TRANSPARENCY
+	---help---
+		Enabling transparency color map support is necessary for TLI L8 format.
+
+config GD32F4_TLI_REGDEBUG
+	bool "TLI Register level debug"
+	depends on DEBUG_INFO && DEBUG_LCD
+	default n
+	---help---
+		Output detailed register-level TLI device debug information.
 
 endmenu # TLI Configuration
 

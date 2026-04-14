@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/gd32f4/gd32f4xx.h
+ * arch/arm/src/gd32h7xx/chip.h
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,38 +20,40 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_GD32F4_GD32F4XX_H
-#define __ARCH_ARM_SRC_GD32F4_GD32F4XX_H
+#ifndef __ARCH_ARM_SRC_GD32H7_CHIP_H
+#define __ARCH_ARM_SRC_GD32H7_CHIP_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
-#include <sys/types.h>
-#include <stdint.h>
-#include <stdbool.h>
 
-#include "arm_internal.h"
+/* Include the chip capabilities file */
 
-/* Peripherals **************************************************************/
+#include <arch/gd32h7xx/chip.h>
 
-#include "chip.h"
-#include "gd32f4xx_exti.h"
-#include "gd32f4xx_enet.h"
-#include "gd32f4xx_dma.h"
-#include "gd32f4xx_gpio.h"
-#include "gd32f4xx_rcu.h"
-#include "gd32f4xx_usart.h"
-#include "gd32f4xx_lowputc.h"
-#include "gd32f4xx_fmc.h"
-#include "gd32f4xx_pmu.h"
-#include "gd32f4xx_spi.h"
-#include "gd32f4xx_i2c.h"
-#include "gd32f4xx_syscfg.h"
-#include "gd32f4xx_sdio.h"
-#include "gd32f4xx_exmc.h"
-#include "gd32f4xx_ipa.h"
-#include "gd32f4xx_tli.h"
+/* Include the chip interrupt definition file */
 
-#endif /* __ARCH_ARM_SRC_GD32F4_GD32F4XX_H */
+#include <arch/gd32h7xx/irq.h>
+
+/* Include the chip memory map */
+
+#include "hardware/gd32h7xx_memorymap.h"
+
+/* Include the chip pinmap */
+
+#include "hardware/gd32h7xx_pinmap.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Provide the required number of peripheral interrupt vector definitions as
+ * well. The definition GD32_IRQ_NEXTINT simply comes from the chip-specific
+ * IRQ header file included by arch/gd32h7xx/irq.h.
+ */
+
+#define ARMV7M_PERIPHERAL_INTERRUPTS  GD32_IRQ_NEXTINT
+
+#endif /* __ARCH_ARM_SRC_GD32H7_CHIP_H */

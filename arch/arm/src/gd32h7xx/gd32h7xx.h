@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/gd32f4/gd32f4xx.h
+ * arch/arm/src/gd32h7xx/gd32h7xx.h
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,8 +20,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_GD32F4_GD32F4XX_H
-#define __ARCH_ARM_SRC_GD32F4_GD32F4XX_H
+#ifndef __ARCH_ARM_SRC_GD32H7_GD32H7XX_H
+#define __ARCH_ARM_SRC_GD32H7_GD32H7XX_H
 
 /****************************************************************************
  * Included Files
@@ -37,21 +37,10 @@
 /* Peripherals **************************************************************/
 
 #include "chip.h"
-#include "gd32f4xx_exti.h"
-#include "gd32f4xx_enet.h"
-#include "gd32f4xx_dma.h"
-#include "gd32f4xx_gpio.h"
-#include "gd32f4xx_rcu.h"
-#include "gd32f4xx_usart.h"
-#include "gd32f4xx_lowputc.h"
-#include "gd32f4xx_fmc.h"
-#include "gd32f4xx_pmu.h"
-#include "gd32f4xx_spi.h"
-#include "gd32f4xx_i2c.h"
-#include "gd32f4xx_syscfg.h"
-#include "gd32f4xx_sdio.h"
-#include "gd32f4xx_exmc.h"
-#include "gd32f4xx_ipa.h"
-#include "gd32f4xx_tli.h"
+#include "gd32h7xx_gpio.h"
+#include "gd32h7xx_lowputc.h"
+#include "gd32h7xx_rcu.h"
+#include "gd32h7xx_syscfg.h"
+#include "gd32h7xx_usart.h"
 
-#endif /* __ARCH_ARM_SRC_GD32F4_GD32F4XX_H */
+#endif /* __ARCH_ARM_SRC_GD32H7_GD32H7XX_H */

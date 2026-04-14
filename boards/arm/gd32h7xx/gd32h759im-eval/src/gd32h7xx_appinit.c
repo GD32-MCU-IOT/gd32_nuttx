@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/gd32f4/gd32f470ik-eval/src/gd32f4xx_boot.c
+ * boards/arm/gd32h7xx/gd32h759im-eval/src/gd32h7xx_appinit.c
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,66 +26,53 @@
 
 #include <nuttx/config.h>
 
+#include <stdbool.h>
+#include <stdio.h>
 #include <debug.h>
+#include <errno.h>
 
 #include <nuttx/board.h>
-#include <arch/board/board.h>
 
-#include "gd32f470i_eval.h"
+#include "gd32h759im_eval.h"
 
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Name: gd32_boardinitialize
+ * Name: board_app_initialize
  *
  * Description:
- *   All GD32F4xx architectures must provide the following entry point.
- *   This entry point is called early in the initialization
- *   after all memory has been configured and mapped but
- *   before any devices have been initialized.
+ *   Perform application specific initialization.  This function is never
+ *   called directly from application code, but only indirectly via the
+ *   (non-standard) boardctl() interface using the command BOARDIOC_INIT.
+ *
+ * Input Parameters:
+ *   arg - The boardctl() argument is passed to the board_app_initialize()
+ *         implementation without modification.  The argument has no
+ *         meaning to NuttX; the meaning of the argument is a contract
+ *         between the board-specific initialization logic and the
+ *         matching application logic.  The value could be such things as a
+ *         mode enumeration value, a set of DIP switch switch settings, a
+ *         pointer to configuration data read from a file or serial FLASH,
+ *         or whatever you would like to do with it.  Every implementation
+ *         should accept zero/NULL as a default configuration.
+ *
+ * Returned Value:
+ *   Zero (OK) is returned on success; a negated errno value is returned on
+ *   any failure to indicate the nature of the failure.
  *
  ****************************************************************************/
 
-void gd32_boardinitialize(void)
+int board_app_initialize(uintptr_t arg)
 {
-#ifdef CONFIG_ARCH_LEDS
-  /* Configure on-board LEDs if LED support has been selected. */
-
-  board_autoled_initialize();
-#endif
-
-#if defined(CONFIG_SPI)
-  /* Configure SPI chip selects */
-
-  gd32_spidev_initialize();
-#endif
-
-#ifdef CONFIG_GD32F4_EXMC
-  gd32_sdram_initialize();
-#endif
-}
-
-/****************************************************************************
- * Name: board_late_initialize
- *
- * Description:
- *   If CONFIG_BOARD_LATE_INITIALIZE is selected, then an additional
- *   initialization call will be performed in the boot-up sequence to a
- *   function called board_late_initialize().  board_late_initialize()
- *   will be called immediately after up_initialize() is called and
- *   just before the initial application is started. This additional
- *   initialization phase may be used, for example, to initialize
- *   board-specific device drivers.
- *
- ****************************************************************************/
-
 #ifdef CONFIG_BOARD_LATE_INITIALIZE
-void board_late_initialize(void)
-{
+  /* Board initialization already performed by board_late_initialize() */
+
+  return OK;
+#else
   /* Perform board-specific initialization */
 
-  gd32_bringup();
-}
+  return gd32_bringup();
 #endif
+}

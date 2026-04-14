@@ -1,5 +1,5 @@
 ############################################################################
-# boards/arm/gd32f4/gd32f470ik-eval/src/Makefile
+# boards/arm/gd32h7xx/gd32h759im-eval/src/Makefile
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -22,53 +22,31 @@
 
 include $(TOPDIR)/Make.defs
 
-CSRCS = gd32f4xx_boot.c
-
-# ifeq ($(CONFIG_BOARDCTL),y)
-# CSRCS += gd32f4xx_appinit.c
-# endif
+CSRCS = gd32h7xx_boot.c
 
 ifeq ($(CONFIG_BOARDCTL),y)
-CSRCS += gd32f4xx_appinit.c gd32f4xx_bringup.c
+CSRCS += gd32h7xx_appinit.c gd32h7xx_bringup.c
 else ifeq ($(CONFIG_BOARD_LATE_INITIALIZE),y)
-CSRCS += gd32f4xx_bringup.c
+CSRCS += gd32h7xx_bringup.c
 endif
 
 ifeq ($(CONFIG_ARCH_LEDS),y)
-CSRCS += gd32f4xx_autoleds.c
+CSRCS += gd32h7xx_autoleds.c
 else
-CSRCS += gd32f4xx_userleds.c
+CSRCS += gd32h7xx_userleds.c
 endif
 
 ifeq ($(CONFIG_DEV_GPIO),y)
-CSRCS += gd32f4xx_gpio.c
+CSRCS += gd32h7xx_gpio.c
 endif
 
 ifeq ($(CONFIG_ARCH_BUTTONS),y)
-CSRCS += gd32f4xx_buttons.c
+CSRCS += gd32h7xx_buttons.c
 endif
 
-ifeq ($(CONFIG_SPI),y)
-CSRCS += gd32f4xx_spi.c
+
+ifeq ($(CONFIG_ARCH_BOARD_GD32H7XX_CUSTOM_CLOCKCONFIG),y)
+CSRCS += gd32h7xx_clockconfig.c
 endif
 
-ifeq ($(CONFIG_MMCSD),y)
-CSRCS += gd32f4xx_sdio.c
-endif
-
-ifeq ($(CONFIG_MTD_GD25),y)
-CSRCS += gd32f4xx_gd25.c
-endif
-
-ifeq ($(CONFIG_MTD_AT24XX), y)
-CSRCS += gd32f4xx_at24.c
-endif
-
-ifeq ($(CONFIG_VIDEO_FB), y)
-CSRCS += gd32f4xx_lcd.c
-endif
-
-ifeq ($(CONFIG_GD32F4_EXMC), y)
-CSRCS += gd32f4xx_extmem.c
-endif
 include $(TOPDIR)/boards/Board.mk

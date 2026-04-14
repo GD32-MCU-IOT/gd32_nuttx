@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/gd32f4/gd32f470ik-eval/src/gd32f4xx_bringup.c
+ * boards/arm/gd32h7xx/gd32h759im-eval/src/gd32h7xx_bringup.c
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -40,7 +40,7 @@
 #include <nuttx/spi/spi_transfer.h>
 #include <nuttx/rc/dummy.h>
 
-#include "gd32f4xx.h"
+#include "gd32h7xx.h"
 
 #ifdef CONFIG_USERLED
 #  include <nuttx/leds/userled.h>
@@ -50,15 +50,11 @@
 #  include <nuttx/input/buttons.h>
 #endif
 
-#ifdef CONFIG_GD32F4_ROMFS
-#include "gd32f4xx_romfs.h"
+#ifdef CONFIG_GD32H7_ROMFS
+#include "gd32h7xx_romfs.h"
 #endif
 
-#ifdef CONFIG_VIDEO_FB
-#include <nuttx/video/fb.h>
-#endif
-
-#include "gd32f470i_eval.h"
+#include "gd32h759im_eval.h"
 
 /****************************************************************************
  * Public Functions
@@ -361,16 +357,5 @@ int gd32_bringup(void)
     syslog(LOG_INFO, "INFO: FAT volume /mnt/sd mount "
            "sd card success: %d\n", ret);
 #endif
-
-#ifdef CONFIG_VIDEO_FB
-  /* Initialize and register the framebuffer driver */
-
-  ret = fb_register(0, 0);
-  if (ret < 0)
-    {
-      syslog(LOG_ERR, "ERROR: fb_register() failed: %d\n", ret);
-    }
-#endif
-
   return ret;
 }

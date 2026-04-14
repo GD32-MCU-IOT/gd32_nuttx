@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/gd32f4/gd32f470ik-eval/src/gd32f4xx_boot.c
+ * arch/arm/src/gd32h7xx/gd32h7xx_lowputc.h
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,72 +20,75 @@
  *
  ****************************************************************************/
 
+#ifndef __ARCH_ARM_SRC_GD32H7_GD32H7XX_LOWPUTC_H
+#define __ARCH_ARM_SRC_GD32H7_GD32H7XX_LOWPUTC_H
+
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
 
-#include <debug.h>
-
-#include <nuttx/board.h>
-#include <arch/board/board.h>
-
-#include "gd32f470i_eval.h"
+#include "chip.h"
 
 /****************************************************************************
- * Public Functions
+ * Public Function Prototypes
  ****************************************************************************/
 
+#ifndef __ASSEMBLY__
+
+#undef EXTERN
+#if defined(__cplusplus)
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
+
 /****************************************************************************
- * Name: gd32_boardinitialize
+ * Name: gd32_lowsetup
  *
  * Description:
- *   All GD32F4xx architectures must provide the following entry point.
- *   This entry point is called early in the initialization
- *   after all memory has been configured and mapped but
- *   before any devices have been initialized.
+ *   Called at the very beginning of _start.
+ *   Performs low level initialization of serial console.
  *
  ****************************************************************************/
 
-void gd32_boardinitialize(void)
-{
-#ifdef CONFIG_ARCH_LEDS
-  /* Configure on-board LEDs if LED support has been selected. */
-
-  board_autoled_initialize();
-#endif
-
-#if defined(CONFIG_SPI)
-  /* Configure SPI chip selects */
-
-  gd32_spidev_initialize();
-#endif
-
-#ifdef CONFIG_GD32F4_EXMC
-  gd32_sdram_initialize();
-#endif
-}
+void gd32_lowsetup(void);
 
 /****************************************************************************
- * Name: board_late_initialize
+ * Name: gd32_usart_reset
  *
  * Description:
- *   If CONFIG_BOARD_LATE_INITIALIZE is selected, then an additional
- *   initialization call will be performed in the boot-up sequence to a
- *   function called board_late_initialize().  board_late_initialize()
- *   will be called immediately after up_initialize() is called and
- *   just before the initial application is started. This additional
- *   initialization phase may be used, for example, to initialize
- *   board-specific device drivers.
+ *   Reset the USART.
  *
  ****************************************************************************/
 
-#ifdef CONFIG_BOARD_LATE_INITIALIZE
-void board_late_initialize(void)
-{
-  /* Perform board-specific initialization */
+void gd32_usart_reset(uint32_t usartbase);
 
-  gd32_bringup();
+/****************************************************************************
+ * Name: gd32_usart_clock_enable
+ *
+ * Description:
+ *   Enable USART clock
+ ****************************************************************************/
+
+void gd32_usart_clock_enable(uint32_t usartbase);
+
+/****************************************************************************
+ * Name: gd32_usart_clock_disable
+ *
+ * Description:
+ *   Disable USART clock
+ ****************************************************************************/
+
+void gd32_usart_clock_disable(uint32_t usartbase);
+
+#undef EXTERN
+#if defined(__cplusplus)
 }
 #endif
+
+#endif /* __ASSEMBLY__ */
+#endif /* __ARCH_ARM_SRC_GD32H7_GD32H7XX_LOWPUTC_H */

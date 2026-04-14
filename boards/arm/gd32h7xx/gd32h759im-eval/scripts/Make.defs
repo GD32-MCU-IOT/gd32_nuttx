@@ -1,5 +1,5 @@
 ############################################################################
-# boards/arm/gd32f4/gd32f470ik-eval/src/Makefile
+# boards/arm/gd32h7xx/gd32h759im-eval/scripts/Make.defs
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -20,55 +20,24 @@
 #
 ############################################################################
 
-include $(TOPDIR)/Make.defs
+include $(TOPDIR)/.config
+include $(TOPDIR)/tools/Config.mk
+include $(TOPDIR)/arch/arm/src/armv7-m/Toolchain.defs
 
-CSRCS = gd32f4xx_boot.c
+LDSCRIPT = ld.script
+ARCHSCRIPT += $(BOARD_DIR)$(DELIM)scripts$(DELIM)$(LDSCRIPT)
 
-# ifeq ($(CONFIG_BOARDCTL),y)
-# CSRCS += gd32f4xx_appinit.c
-# endif
+ARCHPICFLAGS = -fpic -msingle-pic-base -mpic-register=r10
 
-ifeq ($(CONFIG_BOARDCTL),y)
-CSRCS += gd32f4xx_appinit.c gd32f4xx_bringup.c
-else ifeq ($(CONFIG_BOARD_LATE_INITIALIZE),y)
-CSRCS += gd32f4xx_bringup.c
-endif
+CFLAGS := $(ARCHCFLAGS) $(ARCHOPTIMIZATION) $(ARCHCPUFLAGS) $(ARCHINCLUDES) $(ARCHDEFINES) $(EXTRAFLAGS) -pipe
+CPICFLAGS = $(ARCHPICFLAGS) $(CFLAGS)
+CXXFLAGS := $(ARCHCXXFLAGS) $(ARCHOPTIMIZATION) $(ARCHCPUFLAGS) $(ARCHXXINCLUDES) $(ARCHDEFINES) $(EXTRAFLAGS) -pipe
+CXXPICFLAGS = $(ARCHPICFLAGS) $(CXXFLAGS)
+CPPFLAGS := $(ARCHINCLUDES) $(ARCHDEFINES) $(EXTRAFLAGS)
+AFLAGS := $(CFLAGS) -D__ASSEMBLY__
 
-ifeq ($(CONFIG_ARCH_LEDS),y)
-CSRCS += gd32f4xx_autoleds.c
-else
-CSRCS += gd32f4xx_userleds.c
-endif
+NXFLATLDFLAGS1 = -r -d -warn-common
+NXFLATLDFLAGS2 = $(NXFLATLDFLAGS1) -T$(TOPDIR)/binfmt/libnxflat/gnu-nxflat-pcrel.ld -no-check-sections
+LDNXFLATFLAGS = -e main -s 2048
 
-ifeq ($(CONFIG_DEV_GPIO),y)
-CSRCS += gd32f4xx_gpio.c
-endif
-
-ifeq ($(CONFIG_ARCH_BUTTONS),y)
-CSRCS += gd32f4xx_buttons.c
-endif
-
-ifeq ($(CONFIG_SPI),y)
-CSRCS += gd32f4xx_spi.c
-endif
-
-ifeq ($(CONFIG_MMCSD),y)
-CSRCS += gd32f4xx_sdio.c
-endif
-
-ifeq ($(CONFIG_MTD_GD25),y)
-CSRCS += gd32f4xx_gd25.c
-endif
-
-ifeq ($(CONFIG_MTD_AT24XX), y)
-CSRCS += gd32f4xx_at24.c
-endif
-
-ifeq ($(CONFIG_VIDEO_FB), y)
-CSRCS += gd32f4xx_lcd.c
-endif
-
-ifeq ($(CONFIG_GD32F4_EXMC), y)
-CSRCS += gd32f4xx_extmem.c
-endif
-include $(TOPDIR)/boards/Board.mk
+EXEEXT = .elf

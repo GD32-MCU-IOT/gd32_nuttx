@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/gd32f4/gd32f470ik-eval/src/gd32f4xx_boot.c
+ * arch/arm/src/gd32h7xx/gd32h7xx_start.h
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,72 +20,30 @@
  *
  ****************************************************************************/
 
+#ifndef __ARCH_ARM_SRC_GD32H7_GD32H7XX_START_H
+#define __ARCH_ARM_SRC_GD32H7_GD32H7XX_START_H
+
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
 
-#include <debug.h>
-
-#include <nuttx/board.h>
-#include <arch/board/board.h>
-
-#include "gd32f470i_eval.h"
-
 /****************************************************************************
- * Public Functions
+ * Public Function Prototypes
  ****************************************************************************/
 
 /****************************************************************************
  * Name: gd32_boardinitialize
  *
  * Description:
- *   All GD32F4xx architectures must provide the following entry point.
- *   This entry point is called early in the initialization
- *   after all memory has been configured and mapped but
- *   before any devices have been initialized.
+ *   All GD32 architectures must provide the following entry point. This
+ *   entry point is called early in the initialization -- after clocking
+ *   and memory have been configured but before caches have been enabled
+ *   and before any devices have been initialized.
  *
  ****************************************************************************/
 
-void gd32_boardinitialize(void)
-{
-#ifdef CONFIG_ARCH_LEDS
-  /* Configure on-board LEDs if LED support has been selected. */
+void gd32_boardinitialize(void);
 
-  board_autoled_initialize();
-#endif
-
-#if defined(CONFIG_SPI)
-  /* Configure SPI chip selects */
-
-  gd32_spidev_initialize();
-#endif
-
-#ifdef CONFIG_GD32F4_EXMC
-  gd32_sdram_initialize();
-#endif
-}
-
-/****************************************************************************
- * Name: board_late_initialize
- *
- * Description:
- *   If CONFIG_BOARD_LATE_INITIALIZE is selected, then an additional
- *   initialization call will be performed in the boot-up sequence to a
- *   function called board_late_initialize().  board_late_initialize()
- *   will be called immediately after up_initialize() is called and
- *   just before the initial application is started. This additional
- *   initialization phase may be used, for example, to initialize
- *   board-specific device drivers.
- *
- ****************************************************************************/
-
-#ifdef CONFIG_BOARD_LATE_INITIALIZE
-void board_late_initialize(void)
-{
-  /* Perform board-specific initialization */
-
-  gd32_bringup();
-}
-#endif
+#endif /* __ARCH_ARM_SRC_GD32H7_GD32H7XX_START_H */

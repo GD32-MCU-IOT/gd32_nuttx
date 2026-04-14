@@ -1,5 +1,5 @@
 ############################################################################
-# boards/arm/gd32f4/gd32f470ik-eval/src/Makefile
+# arch/arm/src/gd32h7xx/Make.defs
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -20,55 +20,38 @@
 #
 ############################################################################
 
-include $(TOPDIR)/Make.defs
+include armv7-m/Make.defs
 
-CSRCS = gd32f4xx_boot.c
+# Required GD32H7 files
 
-# ifeq ($(CONFIG_BOARDCTL),y)
-# CSRCS += gd32f4xx_appinit.c
-# endif
+CHIP_CSRCS  = gd32h7xx_allocateheap.c gd32h7xx_start.c gd32h7xx_rcu.c
+CHIP_CSRCS += gd32h7xx_gpio.c gd32h7xx_lowputc.c gd32h7xx_irq.c
 
-ifeq ($(CONFIG_BOARDCTL),y)
-CSRCS += gd32f4xx_appinit.c gd32f4xx_bringup.c
-else ifeq ($(CONFIG_BOARD_LATE_INITIALIZE),y)
-CSRCS += gd32f4xx_bringup.c
-endif
+# Optional GD32H7 files
 
-ifeq ($(CONFIG_ARCH_LEDS),y)
-CSRCS += gd32f4xx_autoleds.c
+ifneq ($(CONFIG_SCHED_TICKLESS),y)
+CHIP_CSRCS += gd32h7xx_timerisr.c
 else
-CSRCS += gd32f4xx_userleds.c
+CHIP_CSRCS += gd32h7xx_tickless.c
 endif
 
-ifeq ($(CONFIG_DEV_GPIO),y)
-CSRCS += gd32f4xx_gpio.c
+ifneq ($(CONFIG_ARCH_IDLE_CUSTOM),y)
+CHIP_CSRCS += gd32h7xx_idle.c
 endif
 
-ifeq ($(CONFIG_ARCH_BUTTONS),y)
-CSRCS += gd32f4xx_buttons.c
+ifeq ($(CONFIG_GD32H7_SERIALDRIVER),y)
+CHIP_CSRCS += gd32h7xx_serial.c
 endif
 
-ifeq ($(CONFIG_SPI),y)
-CSRCS += gd32f4xx_spi.c
+ifeq ($(CONFIG_GD32H7_EXTI),y)
+CHIP_CSRCS += gd32h7xx_exti.c
 endif
 
-ifeq ($(CONFIG_MMCSD),y)
-CSRCS += gd32f4xx_sdio.c
+ifeq ($(CONFIG_GD32H7_DMA),y)
+CHIP_CSRCS += gd32h7xx_dma.c
 endif
 
-ifeq ($(CONFIG_MTD_GD25),y)
-CSRCS += gd32f4xx_gd25.c
+ifeq ($(CONFIG_BUILD_PROTECTED),y)
+CHIP_CSRCS += gd32h7xx_userspace.c
+CHIP_CSRCS += gd32h7xx_mpuinit.c
 endif
-
-ifeq ($(CONFIG_MTD_AT24XX), y)
-CSRCS += gd32f4xx_at24.c
-endif
-
-ifeq ($(CONFIG_VIDEO_FB), y)
-CSRCS += gd32f4xx_lcd.c
-endif
-
-ifeq ($(CONFIG_GD32F4_EXMC), y)
-CSRCS += gd32f4xx_extmem.c
-endif
-include $(TOPDIR)/boards/Board.mk
