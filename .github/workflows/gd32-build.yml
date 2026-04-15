@@ -51,7 +51,7 @@ jobs:
       - name: Checkout apps repo
         uses: actions/checkout@v6
         with:
-          repository: apache/nuttx-apps
+          repository: GD32-MCU-IOT/gd32_nuttx-apps
           path: sources/apps
           fetch-depth: 1
 
