@@ -5,11 +5,4 @@ updates:
     schedule:
       interval: "weekly"
     ignore:
-      - dependency-name: "docker/setup-buildx-action"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "actions/download-artifact"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "docker/login-action"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "actions/upload-artifact"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: "*"
