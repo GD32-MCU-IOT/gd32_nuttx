@@ -384,7 +384,7 @@ typedef enum
 
 #define GPIO_SDIO_CMD_PIN   GPIO_SDIO_CMD_2
 #define GPIO_SDIO_CLK_PIN   GPIO_SDIO_CK_2
-#define GPIO_SDIO_DAT0_PIN  GPIO_SDIO_D0_2 
+#define GPIO_SDIO_DAT0_PIN  GPIO_SDIO_D0_2
 #define GPIO_SDIO_DAT1_PIN  GPIO_SDIO_D1_3
 #define GPIO_SDIO_DAT2_PIN  GPIO_SDIO_D2_3
 #define GPIO_SDIO_DAT3_PIN  GPIO_SDIO_D3
@@ -393,4 +393,177 @@ typedef enum
 #  define SDIO_DMA_INTEN    (DMA_CHXCTL_SDEIE | DMA_CHXCTL_TAEIE | DMA_CHXCTL_FTFIE)
 #endif
 
-#endif /* __BOARDS_ARM_GD32F470IK_EVAL_INCLUDE_BOARD_H */
+#ifdef CONFIG_GD32F4_TLI
+
+/* LCD
+ *
+ * The GD32F470IK-EVAL board contains an onboard TFT LCD connected to the
+ * TLI interface of the uC.
+ * The LCD is 480x272 pixels.
+ * Define the parameters of the LCD and the interface here.
+ */
+
+/* Panel configuration
+ *
+ * LCD Panel is 4.3 inch TFT (480x272)
+ *
+ * PLLSAI settings
+ * PLLSAIN                : 192
+ * PLLSAIP                : 2
+ * PLLSAIR                : 3
+ *
+ * Timings
+ * Horizontal Front Porch :  2   (GD32_TLI_HFP)
+ * Horizontal Back Porch  :  2   (GD32_TLI_HBP)
+ * Vertical Front Porch   :  2   (GD32_TLI_VFP)
+ * Vertical Back Porch    :  2   (GD32_TLI_VBP)
+ *
+ * Horizontal Sync        : 41   (GD32_TLI_HSYNC)
+ * Vertical Sync          : 10   (GD32_TLI_VSYNC)
+ *
+ * Active Width           : 480  (BOARD_TLI_WIDTH)
+ * Active Height          : 272  (BOARD_TLI_HEIGHT)
+ */
+
+/* LTDC PLL configuration
+ *
+ * PLLSAI_VCO = GD32_HXTAL_FREQUENCY / PLLM
+ *            = 8000000ul / 8
+ *            = 1,000,000
+ *
+ * PLL LCD clock output
+ *            = PLLSAI_VCO * PLLSAIN / PLLSAIR / PLLSAIDIVR
+ *            = 1,000,000 * 192 / 4 /8
+ *            = 6,000,000
+ */
+
+/* Defined panel settings */
+
+#  define BOARD_TLI_WIDTH              480
+#  define BOARD_TLI_HEIGHT             272
+
+#  define BOARD_TLI_OUTPUT_BPP           16 /* TODO */
+#  define BOARD_TLI_HFP                  2
+#  define BOARD_TLI_HBP                  2
+#  define BOARD_TLI_VFP                  2
+#  define BOARD_TLI_VBP                  2
+#  define BOARD_TLI_HSYNC                41
+#  define BOARD_TLI_VSYNC                10
+
+#  define BOARD_TLI_PLLSAIN              192
+#  define BOARD_TLI_PLLSAIP              2
+#  define BOARD_TLI_PLLSAIR              3
+/* #  define BOARD_TLI_PLLSAIQ              3 */
+
+/* Division factor for LCD clock */
+
+/* #  define GD32_RCU_DCKCFGR_PLLSAIDIVR    RCC_DCKCFGR_PLLSAIDIVR_DIV8 */
+
+#  define GD32_RCU_CFG1_PLLSAIRDIV    RCU_CFG1_PLLSAIRDIV_DIV_8
+
+/* Pixel Clock Polarity */
+
+#  define BOARD_TLI_GCR_PCPOL            0 /* !TLI_GCR_PCPOL */
+
+/* Data Enable Polarity */
+
+#  define BOARD_TLI_GCR_DEPOL            0 /* !TLI_GCR_DEPOL */
+
+/* Vertical Sync Polarity */
+
+#  define BOARD_TLI_GCR_VSPOL            0 /* !TLI_GCR_VSPOL */
+
+/* Horizontal Sync Polarity */
+
+#  define BOARD_TLI_GCR_HSPOL            0 /* !TLI_GCR_HSPOL */
+
+#  define BOARD_TLI_GCR_BCR              0xFF /* LI_GCR_BCR */
+
+#  define BOARD_TLI_GCR_BCG              0xFF /* LI_GCR_BCG */
+
+#  define BOARD_TLI_GCR_BCB              0xFF /* LI_GCR_BCB */
+
+/* GPIO pinset */
+
+#define GPIO_TLI_PINS                  28 /* 18-bit display */
+#define GPIO_TLI_R2                    GPIO_TLI_R2_2
+#define GPIO_TLI_R3                    GPIO_TLI_R3_2
+#define GPIO_TLI_R4                    GPIO_TLI_R4_2
+#define GPIO_TLI_R5                    GPIO_TLI_R5_2
+#define GPIO_TLI_R6                    GPIO_TLI_R6_3
+#define GPIO_TLI_R7                    GPIO_TLI_R7_2
+#define GPIO_TLI_G2                    GPIO_TLI_G2_2
+#define GPIO_TLI_G3                    GPIO_TLI_G3_3
+#define GPIO_TLI_G4                    GPIO_TLI_G4_2
+#define GPIO_TLI_G5                    GPIO_TLI_G5_2
+#define GPIO_TLI_G6                    GPIO_TLI_G6_2
+#define GPIO_TLI_G7                    GPIO_TLI_G7_2
+#define GPIO_TLI_B2                    GPIO_TLI_B2_2
+#define GPIO_TLI_B3                    GPIO_TLI_B3_2
+#define GPIO_TLI_B4                    GPIO_TLI_B4_3
+#define GPIO_TLI_B5                    GPIO_TLI_B5_2
+#define GPIO_TLI_B6                    GPIO_TLI_B6_2
+#define GPIO_TLI_B7                    GPIO_TLI_B7_2
+
+#define GPIO_TLI_VSYNC                 GPIO_TLI_VSYNC_2  /* PI9 */
+#define GPIO_TLI_HSYNC                 GPIO_TLI_HSYNC_2  /* PI10 */
+#define GPIO_TLI_DE                    GPIO_TLI_DE_2  
+#define GPIO_TLI_CLK                   GPIO_TLI_PIXCLK_2 /* PG7 */
+#define GPIO_LCD_PWM                   (GPIO_CFG_MODE_OUTPUT | \
+                                        GPIO_CFG_PUPD_PULLUP | \
+                                        GPIO_CFG_PP | \
+                                        GPIO_CFG_SPEED_50MHZ | \
+                                        GPIO_CFG_PORT_B | \
+                                        GPIO_CFG_PIN_15)
+
+/* Alternate GPIO pin settings (18-bit display)
+ *
+ * #  define GPIO_TLI_PINS                  18
+ *
+ * #  define GPIO_TLI_R2                    GPIO_TLI_R2_1
+ * #  define GPIO_TLI_R3                    GPIO_TLI_R3_1
+ * #  define GPIO_TLI_R4                    GPIO_TLI_R4_1
+ * #  define GPIO_TLI_R5                    GPIO_TLI_R5_1
+ * #  define GPIO_TLI_R6                    GPIO_TLI_R6_1
+ * #  define GPIO_TLI_R7                    GPIO_TLI_R7_1
+ *
+ * #  define GPIO_TLI_G2                    GPIO_TLI_G2_1
+ * #  define GPIO_TLI_G3                    GPIO_TLI_G3_1
+ * #  define GPIO_TLI_G4                    GPIO_TLI_G4_1
+ * #  define GPIO_TLI_G5                    GPIO_TLI_G5_1
+ * #  define GPIO_TLI_G6                    GPIO_TLI_G6_1
+ * #  define GPIO_TLI_G7                    GPIO_TLI_G7_1
+ *
+ * #  define GPIO_TLI_B2                    GPIO_TLI_B2_1
+ * #  define GPIO_TLI_B3                    GPIO_TLI_B3_1
+ * #  define GPIO_TLI_B4                    GPIO_TLI_B4_1
+ * #  define GPIO_TLI_B5                    GPIO_TLI_B5_1
+ * #  define GPIO_TLI_B6                    GPIO_TLI_B6_1
+ * #  define GPIO_TLI_B7                    GPIO_TLI_B7_1
+ *
+ * #  define GPIO_TLI_VSYNC                 GPIO_TLI_VSYNC_1
+ * #  define GPIO_TLI_HSYNC                 GPIO_TLI_HSYNC_1
+ * #  define GPIO_TLI_DE                    GPIO_TLI_DE_1
+ * #  define GPIO_TLI_CLK                   GPIO_TLI_CLK_1
+ */
+
+/* Configure PLLSAI */
+
+/* Alternate PLLSAI settings
+ *
+ * #define GD32_RCU_PLLSAICFGR_PLLSAIN
+ *         RCC_PLLSAICFGR_PLLSAIN(BOARD_TLI_PLLSAIN)
+ * #define GD32_RCU_PLLSAICFGR_PLLSAIR
+ *         RCC_PLLSAICFGR_PLLSAIR(BOARD_TLI_PLLSAIR)
+ * #define GD32_RCU_PLLSAICFGR_PLLSAIQ
+ *         RCC_PLLSAICFGR_PLLSAIQ(BOARD_TLI_PLLSAIQ)
+ */
+
+#define GD32_RCU_PLLSAI_PLLSAIN    RCU_PLLSAI_PLLSAIN(BOARD_TLI_PLLSAIN)
+#define GD32_RCU_PLLSAI_PLLSAIP    RCU_PLLSAI_PLLSAIP(BOARD_TLI_PLLSAIP)
+#define GD32_RCU_PLLSAI_PLLSAIR    RCU_PLLSAI_PLLSAIR(BOARD_TLI_PLLSAIR)
+/* #define GD32_RCU_PLLSAI_PLLSAIQ    RCU_PLLSAI_PLLSAIQ(BOARD_TLI_PLLSAIQ) */
+
+#endif /* CONFIG_GD32F4_TLI */
+
+#endif /* __BOARDS_ARM_GD32F4_GD32F470IK_EVAL_INCLUDE_BOARD_H */

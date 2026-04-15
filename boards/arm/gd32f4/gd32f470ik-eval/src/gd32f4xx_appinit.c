@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <nuttx/board.h>
 
@@ -70,4 +71,28 @@ int board_app_initialize(uintptr_t arg)
   /* Perform board initialization here */
 
   return gd32_bringup();
+}
+
+int nsh_main(int argc, char *argv[]);
+#ifdef CONFIG_EXAMPLES_LVGLDEMO
+int lvgldemo_main(int argc, char *argv[]);
+#endif
+
+int weak_function gd32_app_main(int argc, char *argv[])
+{
+  task_create("nsh", CONFIG_SYSTEM_NSH_PRIORITY, CONFIG_SYSTEM_NSH_STACKSIZE,
+               nsh_main, NULL);
+
+#ifdef CONFIG_EXAMPLES_LVGLDEMO
+  task_create("lvgl", CONFIG_EXAMPLES_LVGLDEMO_PRIORITY,
+              CONFIG_EXAMPLES_LVGLDEMO_STACKSIZE,
+              lvgldemo_main, NULL);
+#endif
+
+  for (; ; )
+    {
+      usleep(10 * 1000);
+    }
+
+  return 0;
 }
