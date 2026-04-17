@@ -602,6 +602,24 @@ static void gd32_system_clock_pll_irc64m(void)
     {
     }
 
+  /* Configure EXMC and OSPI clock source in CFG4
+   * Use board-defined values if available, otherwise default to PLL0Q
+   */
+
+  regval = getreg32(GD32_RCU_CFG4);
+  regval &= ~(RCU_CFG4_EXMCSEL_MASK | RCU_CFG4_OSPISEL_MASK);
+#if defined(GD32_RCU_CFG4_EXMCSEL)
+  regval |= GD32_RCU_CFG4_EXMCSEL;
+#else
+  regval |= RCU_CFG4_EXMCSEL_PLL0Q;
+#endif
+#if defined(GD32_RCU_CFG4_OSPISEL)
+  regval |= GD32_RCU_CFG4_OSPISEL;
+#else
+  regval |= RCU_CFG4_OSPISEL_PLL0Q;
+#endif
+  putreg32(regval, GD32_RCU_CFG4);
+
   /* Select PLL0P as system clock */
 
   regval = getreg32(GD32_RCU_CFG0);
@@ -757,6 +775,24 @@ static void gd32_system_clock_pll_hxtal(void)
     {
     }
 
+  /* Configure EXMC and OSPI clock source in CFG4
+   * Use board-defined values if available, otherwise default to PLL0Q
+   */
+
+  regval = getreg32(GD32_RCU_CFG4);
+  regval &= ~(RCU_CFG4_EXMCSEL_MASK | RCU_CFG4_OSPISEL_MASK);
+#if defined(GD32_RCU_CFG4_EXMCSEL)
+  regval |= GD32_RCU_CFG4_EXMCSEL;
+#else
+  regval |= RCU_CFG4_EXMCSEL_PLL0Q;
+#endif
+#if defined(GD32_RCU_CFG4_OSPISEL)
+  regval |= GD32_RCU_CFG4_OSPISEL;
+#else
+  regval |= RCU_CFG4_OSPISEL_PLL0Q;
+#endif
+  putreg32(regval, GD32_RCU_CFG4);
+
   /* Switch SYSCLK to PLL0P */
 
   regval = getreg32(GD32_RCU_CFG0);
@@ -781,6 +817,8 @@ static void gd32_system_clock_pll_hxtal(void)
 
 static void gd32_system_clock_config(void)
 {
+  uint32_t regval;
+
 #ifdef GD32_BOARD_SYSCLK_IRC64MEN
 
   /* Select IRC64M as SYSCLK based on board.h setting. */
@@ -806,6 +844,13 @@ static void gd32_system_clock_config(void)
 #else
   #error "Invalid system clock configuration."
 #endif
+
+  /* Enable EXMC, OSPI0, OSPI1 and OSPIM peripheral clocks */
+
+  regval = getreg32(GD32_RCU_AHB3EN);
+  regval |= (RCU_AHB3EN_EXMCEN | RCU_AHB3EN_OSPIMEN |
+             RCU_AHB3EN_OSPI0EN | RCU_AHB3EN_OSPI1EN);
+  putreg32(regval, GD32_RCU_AHB3EN);
 }
 
 /****************************************************************************
@@ -1001,7 +1046,7 @@ void gd32_rcu_periph_clock_enable(uint32_t periph_clk)
         break;
 
       default:
-        break;
+        return;
     }
 
   regval = getreg32(regaddr);
@@ -1062,7 +1107,7 @@ void gd32_rcu_periph_clock_disable(uint32_t periph_clk)
         break;
 
       default:
-        break;
+        return;
     }
 
   regval = getreg32(regaddr);
@@ -1123,7 +1168,7 @@ void gd32_rcu_periph_reset_enable(uint32_t periph_rst)
         break;
 
       default:
-        break;
+        return;
     }
 
   regval = getreg32(regaddr);
@@ -1184,7 +1229,7 @@ void gd32_rcu_periph_reset_disable(uint32_t periph_rst)
         break;
 
       default:
-        break;
+        return;
     }
 
   regval = getreg32(regaddr);

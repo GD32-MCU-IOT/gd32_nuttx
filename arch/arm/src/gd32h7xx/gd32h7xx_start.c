@@ -164,6 +164,14 @@ void __start(void)
 
   gd32_boardinitialize();
 
+#ifdef CONFIG_ARCH_DMA
+  /* Attach DMA interrupts before drivers start
+   * using DMA-backed peripherals.
+   */
+
+  arm_dma_initialize();
+#endif
+
   showprogress('B');
 
 #ifdef CONFIG_ARM_MPU
