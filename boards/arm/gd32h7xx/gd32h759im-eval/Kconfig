@@ -82,4 +82,12 @@ config ARCH_BOARD_GD32H7XX_CUSTOM_CLOCKCONFIG
 	---help---
 		Enables board-specific clock configuration in board/src.
 
+
+config GD32H759IM_EVAL_AT24_TEST
+	bool "Enable AT24 EEPROM read/write test"
+	default n
+	depends on MTD_AT24XX && (GD32H7_I2C0 || GD32H7_I2C1)
+	---help---
+		Enables AT24C02 EEPROM write/read test on startup.
+
 endif

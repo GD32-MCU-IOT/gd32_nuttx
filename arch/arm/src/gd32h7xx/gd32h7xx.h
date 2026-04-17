@@ -44,4 +44,12 @@
 #include "gd32h7xx_usart.h"
 #include "gd32h7xx_dma.h"
 
+#ifdef CONFIG_GD32H7_DMA
+#  include "gd32h7xx_dma.h"
+#endif
+
+#ifdef CONFIG_GD32H7_I2C
+#  include "gd32h7xx_i2c.h"
+#endif
+
 #endif /* __ARCH_ARM_SRC_GD32H7_GD32H7XX_H */

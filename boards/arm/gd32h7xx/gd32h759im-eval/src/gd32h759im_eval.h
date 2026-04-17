@@ -100,6 +100,23 @@
                            GPIO_CFG_PORT_B | GPIO_CFG_PIN_1)
 #define GPIO_INT1         (GPIO_CFG_MODE_INPUT | GPIO_CFG_PUPD_NONE | GPIO_CFG_PORT_B | GPIO_CFG_PIN_2)
 
+/* AT24 Serial EEPROM
+ *
+ * AT24C02 is connected on I2C1 (PB10/PB11).
+ */
+
+#if defined(CONFIG_MTD_AT24XX) && \
+    (defined(CONFIG_GD32H7_I2C0) || defined(CONFIG_GD32H7_I2C1)) && \
+    defined(CONFIG_GD32H759IM_EVAL_AT24_TEST)
+#  define HAVE_AT24    1
+#  if defined(CONFIG_GD32H7_I2C0)
+#    define AT24_BUS   0
+#  else
+#    define AT24_BUS   1
+#  endif
+#  define AT24_MINOR   0
+#endif
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -119,6 +136,42 @@
  ****************************************************************************/
 
 int gd32_bringup(void);
+
+/****************************************************************************
+ * Name: gd32_i2c_initialize
+ *
+ * Description:
+ *   Initialize I2C bus(es) and register /dev/i2cN character devices.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32H7_I2C
+void gd32_i2c_initialize(void);
+#endif
+
+/****************************************************************************
+ * Name: gd32_at24_wr_test
+ *
+ * Description:
+ *   Write and read the AT24 serial EEPROM test.
+ *
+ ****************************************************************************/
+
+#ifdef HAVE_AT24
+int gd32_at24_wr_test(int minor);
+#endif
+
+/****************************************************************************
+ * Name: gd32_at24_multimsg_dma_test
+ *
+ * Description:
+ *   AT24 EEPROM DMA test using multi-message I2C transfers.
+ *
+ ****************************************************************************/
+
+#if defined(HAVE_AT24) && defined(CONFIG_GD32H7_I2C_DMA)
+int gd32_at24_multimsg_dma_test(int minor);
+#endif
 
 /****************************************************************************
  * Name: gd32_usart_setup

@@ -268,8 +268,7 @@ int gd32_bringup(void)
 #  endif
 
 #  ifdef HAVE_GD25
-
-      ret = gd32_gd25_automount(0);
+  ret = gd32_gd25_automount(0);
       if (ret < 0)
         {
           syslog(LOG_ERR, "ERROR: Failed to mount the NXFFS \
@@ -278,14 +277,27 @@ int gd32_bringup(void)
 
 #  endif
 
-#  ifdef HAVE_AT24
+#  ifdef CONFIG_GD32H7_I2C
+      gd32_i2c_initialize();
+#  endif
 
-     ret = gd32_at24_wr_test(AT24_MINOR);
+#  ifdef HAVE_AT24
+      ret = gd32_at24_wr_test(AT24_MINOR);
       if (ret < 0)
         {
-          syslog(LOG_ERR, "ERROR: I2C EEPROM write and read test fail: \
-                 %d\n", ret);
+          syslog(LOG_ERR,
+                 "ERROR: I2C EEPROM wr test fail: %d\n",
+                 ret);
         }
+
+#    ifdef CONFIG_GD32H7_I2C_DMA
+      ret = gd32_at24_multimsg_dma_test(AT24_MINOR);
+      if (ret < 0)
+        {
+          syslog(LOG_ERR,
+                 "ERROR: I2C DMA test fail: %d\n", ret);
+        }
+#    endif
 
 #  endif
 
