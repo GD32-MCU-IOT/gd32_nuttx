@@ -268,7 +268,7 @@ int gd32_bringup(void)
 #  endif
 
 #  ifdef HAVE_GD25
-  ret = gd32_gd25_automount(0);
+      ret = gd32_gd25_automount(0);
       if (ret < 0)
         {
           syslog(LOG_ERR, "ERROR: Failed to mount the NXFFS \

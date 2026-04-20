@@ -128,13 +128,15 @@ int gd32_at24_wr_test(int minor)
   if (nblocks < AT24_NBLOCK)
     {
       ferr("ERROR: AT24 bwrite failed: %zd\n", nblocks);
-      return (int)nblocks;
+      ret = (nblocks < 0) ? (int)nblocks : -EIO;
+      goto errout;
     }
 
   read_buf = kmm_malloc(AT24_BUFF_SIZE);
   if (read_buf == NULL)
     {
-      return -ENOMEM;
+      ret = -ENOMEM;
+      goto errout;
     }
 
   /* Read back the data */
@@ -143,8 +145,8 @@ int gd32_at24_wr_test(int minor)
   if (nblocks < AT24_NBLOCK)
     {
       ferr("ERROR: AT24 bread failed: %zd\n", nblocks);
-      kmm_free(read_buf);
-      return (int)nblocks;
+      ret = (nblocks < 0) ? (int)nblocks : -EIO;
+      goto errout_free;
     }
 
   /* Verify */
@@ -152,18 +154,26 @@ int gd32_at24_wr_test(int minor)
   if (memcmp(read_buf, g_write_buf, AT24_BUFF_SIZE) != 0)
     {
       ferr("ERROR: AT24 read data mismatch\n");
-      kmm_free(read_buf);
-      return -EIO;
+      ret = -EIO;
+      goto errout_free;
     }
 
+  ret = OK;
+
+errout_free:
   kmm_free(read_buf);
 
-  ret = gd32_i2cbus_uninitialize(i2c);
+errout:
+  gd32_i2cbus_uninitialize(i2c);
   initialized = false;
   i2c  = NULL;
   at24 = NULL;
 
-  syslog(LOG_INFO, "AT24 polled write/read test PASSED\n");
+  if (ret == OK)
+    {
+      syslog(LOG_INFO, "AT24 polled write/read test PASSED\n");
+    }
+
   return ret;
 }
 
@@ -199,6 +209,8 @@ int gd32_at24_multimsg_dma_test(int minor)
   uint8_t               tx_buf[AT24_PAGE_SIZE + 1];  /* EEPROM addr + data */
   uint8_t              *read_buf;
   uint8_t               small_buf[2];
+  uint8_t              *unaligned_alloc;
+  uint8_t              *unaligned_buf;
   char                  line[52];
   int                   page;
   int                   i;
@@ -428,6 +440,131 @@ int gd32_at24_multimsg_dma_test(int minor)
   syslog(LOG_INFO, "Small read PASSED (0x%02x 0x%02x)\n",
          small_buf[0], small_buf[1]);
 
+  /* Step 5: DMA read without RELOAD (100 bytes, <= 255)
+   * Tests dma_read() single-chunk path (no RELOAD/TCR needed).
+   */
+
+  syslog(LOG_INFO, "DMA read no-RELOAD (100 bytes) ...\n");
+
+  addr_buf[0] = 0x00;
+
+  msgs[0].frequency = AT24_I2C_FREQ;
+  msgs[0].addr      = AT24_I2C_ADDR;
+  msgs[0].flags     = 0;
+  msgs[0].buffer    = addr_buf;
+  msgs[0].length    = 1;
+
+  ret = I2C_TRANSFER(i2c, msgs, 1);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: Set address pointer failed: %d\n", ret);
+      goto errout;
+    }
+
+  memset(read_buf, 0, AT24_TEST_SIZE);
+
+  msgs[0].frequency = AT24_I2C_FREQ;
+  msgs[0].addr      = AT24_I2C_ADDR;
+  msgs[0].flags     = I2C_M_READ;
+  msgs[0].buffer    = read_buf;
+  msgs[0].length    = 100;
+
+  ret = I2C_TRANSFER(i2c, msgs, 1);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: DMA read 100 bytes failed: %d\n", ret);
+      goto errout;
+    }
+
+  for (i = 0; i < 100; i++)
+    {
+      if (read_buf[i] != ((i + 1) & 0xff))
+        {
+          syslog(LOG_ERR,
+                 "ERROR: Mismatch at %d: "
+                 "exp 0x%02x got 0x%02x\n",
+                 i, (i + 1) & 0xff, read_buf[i]);
+          ret = -EIO;
+          goto errout;
+        }
+    }
+
+  syslog(LOG_INFO, "DMA read no-RELOAD PASSED\n");
+
+  /* Step 6: Non-aligned buffer DMA read (bounce buffer test)
+   * Allocate buffer+1 and use offset to force cache-line misalignment.
+   * This exercises the bounce buffer path in dma_read() when
+   * CONFIG_ARMV7M_DCACHE is enabled.
+   */
+
+  syslog(LOG_INFO, "Non-aligned buffer DMA read (32 bytes) ...\n");
+
+  unaligned_alloc = kmm_malloc(64);
+  if (unaligned_alloc == NULL)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to allocate unaligned buffer\n");
+      ret = -ENOMEM;
+      goto errout;
+    }
+
+  /* Force misalignment: if already misaligned use as-is,
+   * otherwise offset by 1.
+   */
+
+  if (((uintptr_t)unaligned_alloc & 0x1f) != 0)
+    {
+      unaligned_buf = unaligned_alloc;
+    }
+  else
+    {
+      unaligned_buf = unaligned_alloc + 1;
+    }
+
+  syslog(LOG_INFO, "  alloc=%p use=%p (aligned=%s)\n",
+         unaligned_alloc, unaligned_buf,
+         ((uintptr_t)unaligned_buf & 0x1f) == 0 ? "yes" : "no");
+
+  addr_buf[0] = 0x00;
+
+  msgs[0].frequency = AT24_I2C_FREQ;
+  msgs[0].addr      = AT24_I2C_ADDR;
+  msgs[0].flags     = 0;
+  msgs[0].buffer    = addr_buf;
+  msgs[0].length    = 1;
+
+  memset(unaligned_buf, 0, 32);
+
+  msgs[1].frequency = AT24_I2C_FREQ;
+  msgs[1].addr      = AT24_I2C_ADDR;
+  msgs[1].flags     = I2C_M_READ;
+  msgs[1].buffer    = unaligned_buf;
+  msgs[1].length    = 32;
+
+  ret = I2C_TRANSFER(i2c, msgs, 2);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: Non-aligned DMA read failed: %d\n", ret);
+      kmm_free(unaligned_alloc);
+      goto errout;
+    }
+
+  for (i = 0; i < 32; i++)
+    {
+      if (unaligned_buf[i] != ((i + 1) & 0xff))
+        {
+          syslog(LOG_ERR,
+                 "ERROR: Mismatch at %d: "
+                 "exp 0x%02x got 0x%02x\n",
+                 i, (i + 1) & 0xff, unaligned_buf[i]);
+          kmm_free(unaligned_alloc);
+          ret = -EIO;
+          goto errout;
+        }
+    }
+
+  kmm_free(unaligned_alloc);
+  syslog(LOG_INFO, "Non-aligned buffer DMA read PASSED\n");
+
   syslog(LOG_INFO, "=== All AT24 DMA tests PASSED ===\n");
   syslog(LOG_INFO, "  Step 1: Page write %u bytes - OK\n", AT24_TEST_SIZE);
   syslog(LOG_INFO, "  Step 2: Single-msg DMA read %u bytes (RELOAD) - OK\n",
@@ -435,6 +572,8 @@ int gd32_at24_multimsg_dma_test(int minor)
   syslog(LOG_INFO, "  Step 3: Multi-msg DMA read %u bytes (RELOAD) - OK\n",
          AT24_TEST_SIZE);
   syslog(LOG_INFO, "  Step 4: Small read 2 bytes (polling fallback) - OK\n");
+  syslog(LOG_INFO, "  Step 5: DMA read 100 bytes (no RELOAD) - OK\n");
+  syslog(LOG_INFO, "  Step 6: Non-aligned buffer DMA read (bounce) - OK\n");
   ret = OK;
 
 errout:

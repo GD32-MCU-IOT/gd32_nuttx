@@ -241,10 +241,6 @@ endmenu # "GD32H7 I2C Options"
 
 endif # GD32H7_I2C
 
-config GD32H7_WDGT
-	bool
-	default n
-
 config GD32H7_NOEXT_VECTORS
 	bool "Disable the ARMv7-M EXT vectors"
 	default n

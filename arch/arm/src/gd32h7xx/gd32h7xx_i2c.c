@@ -88,6 +88,16 @@
 #  ifndef CONFIG_GD32H7_I2C_DMATHRESHOLD
 #    define CONFIG_GD32H7_I2C_DMATHRESHOLD 4
 #  endif
+#  ifdef CONFIG_ARMV7M_DCACHE
+#    ifndef ARMV7M_DCACHE_LINESIZE
+#      define ARMV7M_DCACHE_LINESIZE 32
+#    endif
+#    define I2C_DMA_ALIGN_MASK   (ARMV7M_DCACHE_LINESIZE - 1)
+#    define I2C_DMA_BUFSIZE      ((I2C_MAX_RELOAD_SIZE + I2C_DMA_ALIGN_MASK) \
+                                  & ~I2C_DMA_ALIGN_MASK)
+#    define I2C_DMA_BUF_ALIGN    aligned_data(ARMV7M_DCACHE_LINESIZE)
+#    define I2C_IS_ALIGNED(a)    (((uintptr_t)(a) & I2C_DMA_ALIGN_MASK) == 0)
+#  endif
 #endif
 
 /* I2C interrupt state machine */
@@ -153,6 +163,9 @@ struct gd32_i2c_priv_s
   sem_t                       rxsem;      /* RX DMA completion sem */
   volatile uint16_t           txresult;   /* TX DMA result */
   volatile uint16_t           rxresult;   /* RX DMA result */
+#ifdef CONFIG_ARMV7M_DCACHE
+  uint8_t                    *rxbuf;      /* Cache-aligned RX bounce buf */
+#endif
 #endif
 };
 
@@ -225,6 +238,25 @@ static const struct i2c_ops_s gd32_i2c_ops =
 #endif
 };
 
+/* DMA RX bounce buffers - cache-line aligned for safe D-Cache invalidation
+ * when user buffer is not cache-line aligned.
+ */
+
+#if defined(CONFIG_GD32H7_I2C_DMA) && defined(CONFIG_ARMV7M_DCACHE)
+#  ifdef CONFIG_GD32H7_I2C0_DMA
+static uint8_t g_i2c0_rxbuf[I2C_DMA_BUFSIZE] I2C_DMA_BUF_ALIGN;
+#  endif
+#  ifdef CONFIG_GD32H7_I2C1_DMA
+static uint8_t g_i2c1_rxbuf[I2C_DMA_BUFSIZE] I2C_DMA_BUF_ALIGN;
+#  endif
+#  ifdef CONFIG_GD32H7_I2C2_DMA
+static uint8_t g_i2c2_rxbuf[I2C_DMA_BUFSIZE] I2C_DMA_BUF_ALIGN;
+#  endif
+#  ifdef CONFIG_GD32H7_I2C3_DMA
+static uint8_t g_i2c3_rxbuf[I2C_DMA_BUFSIZE] I2C_DMA_BUF_ALIGN;
+#  endif
+#endif
+
 /* I2C0 */
 
 #ifdef CONFIG_GD32H7_I2C0
@@ -261,6 +293,9 @@ static struct gd32_i2c_priv_s gd32_i2c0_priv =
 #ifdef CONFIG_GD32H7_I2C0_DMA
   .txsem    = SEM_INITIALIZER(0),
   .rxsem    = SEM_INITIALIZER(0),
+#ifdef CONFIG_ARMV7M_DCACHE
+  .rxbuf    = g_i2c0_rxbuf,
+#endif
 #endif
 };
 #endif
@@ -301,6 +336,9 @@ static struct gd32_i2c_priv_s gd32_i2c1_priv =
 #ifdef CONFIG_GD32H7_I2C1_DMA
   .txsem    = SEM_INITIALIZER(0),
   .rxsem    = SEM_INITIALIZER(0),
+#ifdef CONFIG_ARMV7M_DCACHE
+  .rxbuf    = g_i2c1_rxbuf,
+#endif
 #endif
 };
 #endif
@@ -341,6 +379,9 @@ static struct gd32_i2c_priv_s gd32_i2c2_priv =
 #ifdef CONFIG_GD32H7_I2C2_DMA
   .txsem    = SEM_INITIALIZER(0),
   .rxsem    = SEM_INITIALIZER(0),
+#ifdef CONFIG_ARMV7M_DCACHE
+  .rxbuf    = g_i2c2_rxbuf,
+#endif
 #endif
 };
 #endif
@@ -381,6 +422,9 @@ static struct gd32_i2c_priv_s gd32_i2c3_priv =
 #ifdef CONFIG_GD32H7_I2C3_DMA
   .txsem    = SEM_INITIALIZER(0),
   .rxsem    = SEM_INITIALIZER(0),
+#ifdef CONFIG_ARMV7M_DCACHE
+  .rxbuf    = g_i2c3_rxbuf,
+#endif
 #endif
 };
 #endif
@@ -949,10 +993,14 @@ static int gd32_i2c_isr(int irq, void *context, void *arg)
         }
       else
         {
-          /* All messages done. Generate STOP */
+          /* All messages done. Generate STOP unless NOSTOP */
 
-          gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET, 0,
-                             I2C_CTL1_STOP);
+          if (!(priv->flags & I2C_M_NOSTOP))
+            {
+              gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET, 0,
+                                 I2C_CTL1_STOP);
+            }
+
           gd32_i2c_modifyreg(priv, GD32_I2C_CTL0_OFFSET,
                              I2C_CTL0_INT_MASK, 0);
           priv->intstate = INTSTATE_DONE;
@@ -1120,7 +1168,7 @@ static int gd32_i2c_dma_write(struct gd32_i2c_priv_s *priv,
           gd32_dma_stop(priv->txdma);
           gd32_i2c_modifyreg(priv, GD32_I2C_CTL0_OFFSET,
                              I2C_CTL0_DENT, 0);
-          return ret;
+          goto errout;
         }
 
       /* Check DMA result for errors */
@@ -1129,7 +1177,8 @@ static int gd32_i2c_dma_write(struct gd32_i2c_priv_s *priv,
         {
           gd32_i2c_modifyreg(priv, GD32_I2C_CTL0_OFFSET,
                              I2C_CTL0_DENT, 0);
-          return -EIO;
+          ret = -EIO;
+          goto errout;
         }
 
       /* Disable DMA transmit */
@@ -1146,7 +1195,7 @@ static int gd32_i2c_dma_write(struct gd32_i2c_priv_s *priv,
           ret = gd32_i2c_wait_flag(priv, I2C_STAT_TCR);
           if (ret < 0)
             {
-              return ret;
+              goto errout;
             }
         }
     }
@@ -1158,13 +1207,18 @@ static int gd32_i2c_dma_write(struct gd32_i2c_priv_s *priv,
       ret = gd32_i2c_wait_flag(priv, I2C_STAT_STPDET);
       if (ret < 0)
         {
-          return ret;
+          goto errout;
         }
 
       gd32_i2c_putreg(priv, GD32_I2C_STATC_OFFSET, I2C_STATC_STPDETC);
     }
 
   return OK;
+
+errout:
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET, 0, I2C_CTL1_STOP);
+  gd32_i2c_putreg(priv, GD32_I2C_STATC_OFFSET, I2C_STATC_ALL);
+  return ret;
 }
 
 /****************************************************************************
@@ -1207,10 +1261,23 @@ static int gd32_i2c_dma_read(struct gd32_i2c_priv_s *priv,
 
       /* Configure DMA: peripheral to memory, 8-bit, memory increment */
 
+#ifdef CONFIG_ARMV7M_DCACHE
+      /* Use bounce buffer if either end of the DMA range is not
+       * cache-line aligned, to prevent D-Cache invalidation from
+       * corrupting adjacent data sharing the same cache line.
+       */
+
+      bool use_bounce = !I2C_IS_ALIGNED(buf) ||
+                        !I2C_IS_ALIGNED(buf + chunk);
+      uint8_t *dma_buf = use_bounce ? priv->rxbuf : buf;
+#else
+      uint8_t *dma_buf = buf;
+#endif
+
       memset(&dmaconfig, 0, sizeof(dmaconfig));
       dmaconfig.periph_addr = priv->config->i2c_base +
                               GD32_I2C_RDATA_OFFSET;
-      dmaconfig.memory_addr = (uint32_t)(uintptr_t)buf;
+      dmaconfig.memory_addr = (uint32_t)(uintptr_t)dma_buf;
       dmaconfig.direction   = DMA_PERIPH_TO_MEMORY;
       dmaconfig.number      = chunk;
       dmaconfig.periph_width = DMA_PERIPH_WIDTH_8BIT;
@@ -1221,10 +1288,13 @@ static int gd32_i2c_dma_read(struct gd32_i2c_priv_s *priv,
 
       gd32_dma_setup(priv->rxdma, &dmaconfig);
 
-      /* Invalidate D-Cache so CPU reads fresh DMA data after transfer */
+      /* Invalidate D-Cache before DMA so stale cached data won't
+       * be written back over DMA data later.
+       */
 
 #ifdef CONFIG_ARMV7M_DCACHE
-      up_invalidate_dcache((uintptr_t)buf, (uintptr_t)buf + chunk);
+      up_invalidate_dcache((uintptr_t)dma_buf,
+                           (uintptr_t)dma_buf + chunk);
 #endif
 
       /* Reset DMA semaphore and result */
@@ -1275,14 +1345,15 @@ static int gd32_i2c_dma_read(struct gd32_i2c_priv_s *priv,
           gd32_dma_stop(priv->rxdma);
           gd32_i2c_modifyreg(priv, GD32_I2C_CTL0_OFFSET,
                              I2C_CTL0_DENR, 0);
-          return ret;
+          goto errout;
         }
 
       if (priv->rxresult & DMA_INTF_ERRIF)
         {
           gd32_i2c_modifyreg(priv, GD32_I2C_CTL0_OFFSET,
                              I2C_CTL0_DENR, 0);
-          return -EIO;
+          ret = -EIO;
+          goto errout;
         }
 
       /* Disable DMA receive */
@@ -1294,8 +1365,12 @@ static int gd32_i2c_dma_read(struct gd32_i2c_priv_s *priv,
        */
 
 #ifdef CONFIG_ARMV7M_DCACHE
-      up_invalidate_dcache((uintptr_t)(buf),
-                           (uintptr_t)(buf) + chunk);
+      up_invalidate_dcache((uintptr_t)dma_buf,
+                           (uintptr_t)dma_buf + chunk);
+      if (use_bounce)
+        {
+          memcpy(buf, dma_buf, chunk);
+        }
 #endif
 
       buf += chunk;
@@ -1306,7 +1381,7 @@ static int gd32_i2c_dma_read(struct gd32_i2c_priv_s *priv,
           ret = gd32_i2c_wait_flag(priv, I2C_STAT_TCR);
           if (ret < 0)
             {
-              return ret;
+              goto errout;
             }
         }
     }
@@ -1318,21 +1393,28 @@ static int gd32_i2c_dma_read(struct gd32_i2c_priv_s *priv,
       ret = gd32_i2c_wait_flag(priv, I2C_STAT_STPDET);
       if (ret < 0)
         {
-          return ret;
+          goto errout;
         }
 
       gd32_i2c_putreg(priv, GD32_I2C_STATC_OFFSET, I2C_STATC_STPDETC);
     }
 
   return OK;
+
+errout:
+  gd32_i2c_modifyreg(priv, GD32_I2C_CTL1_OFFSET, 0, I2C_CTL1_STOP);
+  gd32_i2c_putreg(priv, GD32_I2C_STATC_OFFSET, I2C_STATC_ALL);
+  return ret;
 }
 
 /****************************************************************************
  * Name: gd32_i2c_dma_writeread
  *
  * Description:
- *   Combined write-then-read using DMA for the read phase.
- *   Phase 1 (Write): Send register address using polling (no AUTOEND).
+ *   Combined write-then-read transfer.
+ *   Phase 1 (Write): Polling - send register/memory address bytes.
+ *                     Write message is typically 1-3 bytes (device address),
+ *                     no AUTOEND (no STOP).
  *   Phase 2 (Read):  Read data using DMA with repeated START.
  *
  *   This follows the official H7xx Demo EEPROM read flow:
@@ -1349,7 +1431,11 @@ static int gd32_i2c_dma_writeread(struct gd32_i2c_priv_s *priv,
   int ret;
   int j;
 
-  /* Phase 1: Write register address (polling, no AUTOEND) */
+  /* Phase 1: Write address/register bytes via polling.
+   * In write-then-read pattern the write message is typically just
+   * a device register address (1-3 bytes), always below DMA threshold,
+   * so polling is the only sensible approach here.
+   */
 
   gd32_i2c_sendstart(priv, wrmsg->addr, I2C_DIR_WRITE,
                      (uint8_t)wrmsg->length, false, false);
@@ -1362,10 +1448,11 @@ static int gd32_i2c_dma_writeread(struct gd32_i2c_priv_s *priv,
           goto errout;
         }
 
-      gd32_i2c_putreg(priv, GD32_I2C_TDATA_OFFSET, wrmsg->buffer[j]);
+      gd32_i2c_putreg(priv, GD32_I2C_TDATA_OFFSET,
+                      wrmsg->buffer[j]);
     }
 
-  /* Wait for Transfer Complete (all write bytes sent) */
+  /* Wait for Transfer Complete (all write bytes sent, no AUTOEND) */
 
   ret = gd32_i2c_wait_flag(priv, I2C_STAT_TC);
   if (ret < 0)
@@ -1395,9 +1482,9 @@ errout:
  *
  *   DMA path is used when:
  *   - DMA is enabled for this I2C port
- *   - Single write message >= threshold 鈫?dma_write
- *   - Single read message >= threshold 鈫?dma_read
- *   - Two messages (write + read) and read >= threshold 鈫?dma_writeread
+ *   - Single write message >= threshold -> dma_write
+ *   - Single read message >= threshold -> dma_read
+ *   - Two messages (write + read) and read >= threshold -> dma_writeread
  *   Otherwise, polling path is used.
  *
  ****************************************************************************/
@@ -1622,10 +1709,17 @@ static void gd32_i2c_init(struct gd32_i2c_priv_s *priv)
 #endif
 
 #ifdef CONFIG_GD32H7_I2C_DMA
-  /* Allocate DMA channels */
+  /* Allocate DMA channels if per-bus DMA is configured (reqid != 0) */
 
-  priv->txdma = gd32_dma_channel_alloc(config->txdma_reqid);
-  priv->rxdma = gd32_dma_channel_alloc(config->rxdma_reqid);
+  if (config->txdma_reqid != 0)
+    {
+      priv->txdma = gd32_dma_channel_alloc(config->txdma_reqid);
+    }
+
+  if (config->rxdma_reqid != 0)
+    {
+      priv->rxdma = gd32_dma_channel_alloc(config->rxdma_reqid);
+    }
 #endif
 }
 

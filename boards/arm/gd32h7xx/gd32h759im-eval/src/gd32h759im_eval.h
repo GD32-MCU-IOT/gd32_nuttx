@@ -102,18 +102,14 @@
 
 /* AT24 Serial EEPROM
  *
- * AT24C02 is connected on I2C1 (PB10/PB11).
+ * AT24C02 is connected on I2C1 (PH4/PB11).
  */
 
 #if defined(CONFIG_MTD_AT24XX) && \
-    (defined(CONFIG_GD32H7_I2C0) || defined(CONFIG_GD32H7_I2C1)) && \
+    defined(CONFIG_GD32H7_I2C1) && \
     defined(CONFIG_GD32H759IM_EVAL_AT24_TEST)
 #  define HAVE_AT24    1
-#  if defined(CONFIG_GD32H7_I2C0)
-#    define AT24_BUS   0
-#  else
-#    define AT24_BUS   1
-#  endif
+#  define AT24_BUS     1
 #  define AT24_MINOR   0
 #endif
 
