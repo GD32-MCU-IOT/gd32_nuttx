@@ -27,6 +27,7 @@
 
 #include <nuttx/config.h>
 #include <nuttx/video/fb.h>
+#include "hardware/gd32f4xx_ipa.h"
 
 #ifdef CONFIG_FB_OVERLAY
 
@@ -34,18 +35,18 @@
  * Public Types
  ****************************************************************************/
 
-/* This structure describes DMA2D overlay information */
+/* This structure describes IPA overlay information */
 
 struct gd32_ipa_overlay_s
 {
-  uint8_t    fmt;                 /* DMA2D pixel format */
-  uint8_t    transp_mode;         /* DMA2D transparency mode */
+  uint8_t    fmt;                 /* IPA pixel format */
+  uint8_t    transp_mode;         /* IPA transparency mode */
   fb_coord_t xres;                /* X-resolution overlay */
   fb_coord_t yres;                /* Y-resolution overlay */
   struct fb_overlayinfo_s *oinfo; /* Framebuffer overlay information */
 };
 
-/* DMA2D is controlled by the following interface */
+/* IPA is controlled by the following interface */
 
 struct ipa_layer_s
 {

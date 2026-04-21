@@ -49,8 +49,6 @@
 
 #include "chip.h"
 #include "gd32f4xx.h"
-#include "hardware/gd32f4xx_tli.h" /* TODO */
-#include "hardware/gd32f4xx_ipa.h"
 #include "gd32f4xx_tli.h"
 #include "gd32f4xx_ipa.h"
 
@@ -71,36 +69,36 @@
 #define GD32_TLI_HEIGHT BOARD_TLI_HEIGHT
 #define GD32_TLI_WIDTH BOARD_TLI_WIDTH
 
-/* Configure LTDC register */
+/* Configure TLI register */
 
-/* LTDC_LxWHPCR register */
+/* TLI_LxWHPCR register */
 
 #define GD32_TLI_LXHPOS_WLP (BOARD_TLI_HSYNC + BOARD_TLI_HBP - 1)
 #define GD32_TLI_LXHPOS_WRP (BOARD_TLI_HSYNC + BOARD_TLI_HBP + \
                              GD32_TLI_WIDTH - 1)
 
-/* LTDC_LxWVPCR register */
+/* TLI_LxWVPCR register */
 
 #define GD32_TLI_LXVPOS_WTP (BOARD_TLI_VSYNC + BOARD_TLI_VBP - 1)
 #define GD32_TLI_LXVPOS_WRP (BOARD_TLI_VSYNC + BOARD_TLI_VBP + \
                              GD32_TLI_HEIGHT - 1)
 
-/* LTDC_SSCR register */
+/* TLI_SSCR register */
 
 #define GD32_TLI_SPSZ_VPSZ TLI_SPSZ_VPSZ(BOARD_TLI_VSYNC - 1)
 #define GD32_TLI_SPSZ_HPSZ TLI_SPSZ_HPSZ(BOARD_TLI_HSYNC - 1)
 
-/* LTDC_BPCR register */
+/* TLI_BPCR register */
 
 #define GD32_TLI_BPSZ_VBPSZ TLI_BPSZ_VBPSZ(GD32_TLI_LXVPOS_WTP)
 #define GD32_TLI_BPSZ_HBPSZ TLI_BPSZ_HBPSZ(GD32_TLI_LXHPOS_WLP)
 
-/* LTDC_AWCR register */
+/* TLI_AWCR register */
 
 #define GD32_TLI_ASZ_VASZ TLI_ASZ_VASZ(GD32_TLI_LXVPOS_WRP)
 #define GD32_TLI_ASZ_HASZ TLI_ASZ_HASZ(GD32_TLI_LXHPOS_WRP)
 
-/* LTDC_TWCR register */
+/* TLI_TWCR register */
 
 #define GD32_TLI_TSZ_VTSZ TLI_TSZ_VTSZ(BOARD_TLI_VSYNC + \
                                        BOARD_TLI_VBP +   \
@@ -172,7 +170,7 @@
 #define GD32_TLI_L1PPF_PF TLI_LXPPF_PPF(TLI_PF_ARGB8888)
 #define GD32_TLI_L1_IPA_PF IPA_PF_ARGB8888
 #else
-#error "LTDC pixel format not supported"
+#error "TLI pixel format not supported"
 #endif
 
 /* Layer 2 format */
@@ -218,7 +216,7 @@
 #error Undefined or unrecognized base resolution
 #endif
 
-/* LTDC only supports 8 bit per pixel overall */
+/* TLI only supports 8 bit per pixel overall */
 
 #define GD32_TLI_LX_BYPP(n) ((n) / 8)
 
@@ -275,7 +273,7 @@
 #define reginfo(x...)
 #endif
 
-/* Preallocated LTDC framebuffers */
+/* Preallocated TLI framebuffers */
 
 /* Position the framebuffer memory in the center of the memory set aside.  We
  * will use any skirts before or after the framebuffer memory as a guard
@@ -306,7 +304,7 @@
 #define GD32_TLI_ENDBUF_L2 GD32_TLI_ENDBUF_L1
 #endif
 
-/* LTDC layer */
+/* TLI layer */
 
 #ifdef CONFIG_GD32F4_TLI_L2
 #define TLI_NLAYERS 2
@@ -314,12 +312,12 @@
 #define TLI_NLAYERS 1
 #endif
 
-/* DMA2D layer */
+/* IPA layer */
 
 #ifdef CONFIG_GD32F4_IPA
 #define IPA_NLAYERS CONFIG_GD32F4_IPA_NLAYERS
 #if IPA_NLAYERS < 1
-#error "DMA2D must at least support 1 overlay"
+#error "IPA must at least support 1 overlay"
 #endif
 
 #define GD32_IPA_WIDTH CONFIG_GD32F4_IPA_LAYER_PPLINE
@@ -341,7 +339,7 @@
 #define GD32_IPA_BPP 32
 #define GD32_IPA_COLOR_FMT IPA_PF_ARGB8888
 #else
-#error "DMA2D pixel format not supported"
+#error "IPA pixel format not supported"
 #endif
 
 #ifdef CONFIG_GD32F4_IPA_LAYER_SHARED
@@ -351,7 +349,7 @@
 #define GD32_IPA_FBSIZE CONFIG_GD32F4_IPA_FB_SIZE / IPA_NLAYERS
 #define GD32_IPA_LAYER_SIZE GD32_IPA_FBSIZE
 #if GD32_IPA_FBSIZE * IPA_NLAYERS > CONFIG_GD32F4_IPA_FB_SIZE
-#error "DMA2D framebuffer size to small for configured number of overlays"
+#error "IPA framebuffer size to small for configured number of overlays"
 #endif
 #endif /* CONFIG_GD32F4_IPA_LAYER_SHARED */
 
@@ -432,31 +430,31 @@
 #define GD32_TLI_BF1_RESET 6
 #define GD32_TLI_BF2_RESET 7
 
-/* Check pixel format support by DMA2D driver */
+/* Check pixel format support by IPA driver */
 
 #ifdef CONFIG_GD32F4_IPA
 #if defined(CONFIG_GD32F4_TLI_L1_L8) || \
     defined(CONFIG_GD32F4_TLI_L2_L8)
 #if !defined(CONFIG_GD32F4_IPA_L8)
-#error "DMA2D must support FB_FMT_RGB8 pixel format"
+#error "IPA must support FB_FMT_RGB8 pixel format"
 #endif
 #endif
 #if defined(CONFIG_GD32F4_TLI_L1_RGB565) || \
     defined(CONFIG_GD32F4_TLI_L2_RGB565)
 #if !defined(CONFIG_GD32F4_IPA_RGB565)
-#error "DMA2D must support FB_FMT_RGB16_565 pixel format"
+#error "IPA must support FB_FMT_RGB16_565 pixel format"
 #endif
 #endif
 #if defined(CONFIG_GD32F4_TLI_L1_RGB888) || \
     defined(CONFIG_GD32F4_TLI_L2_RGB888)
 #if !defined(CONFIG_GD32F4_IPA_RGB888)
-#error "DMA2D must support FB_FMT_RGB24 pixel format"
+#error "IPA must support FB_FMT_RGB24 pixel format"
 #endif
 #endif
 #if defined(CONFIG_GD32F4_TLI_L1_ARGB8888) || \
     defined(CONFIG_GD32F4_TLI_L2_ARGB8888)
 #if !defined(CONFIG_GD32F4_IPA_ARGB8888)
-#error "DMA2D must support FB_FMT_RGB32 pixel format"
+#error "IPA must support FB_FMT_RGB32 pixel format"
 #endif
 #endif
 #endif
@@ -465,7 +463,7 @@
 
 #ifdef CONFIG_GD32F4_FB_CMAP
 #if defined(CONFIG_GD32F4_IPA) && !defined(CONFIG_GD32F4_IPA_L8)
-#error "DMA2D must also support L8 CLUT pixel format if supported by LTDC"
+#error "IPA must also support L8 CLUT pixel format if supported by TLI"
 #endif
 #ifdef GD32_TLI_L1CMAP
 #ifdef CONFIG_GD32F4_FB_TRANSPARENCY
@@ -519,7 +517,7 @@
 
 /* Hardware acceleration support */
 
-/* Acceleration support for LTDC overlays */
+/* Acceleration support for TLI overlays */
 
 #ifdef CONFIG_GD32F4_TLI_L1_CHROMAKEYEN
 #define GD32_TLI_L1_CHROMAEN true
@@ -566,7 +564,7 @@
 #define TLI_L2_ACCL TLI_TLI_ACCL_L2 | TLI_IPA_ACCL
 #endif
 
-/* Acceleration support for DMA2D overlays */
+/* Acceleration support for IPA overlays */
 
 #ifdef CONFIG_GD32F4_FB_CMAP
 #ifdef CONFIG_FB_OVERLAY_BLIT
@@ -613,7 +611,7 @@ enum gd32_layer_e
   TLI_LAYER_L2,     /* LCD Layer 2 */
 };
 
-/* LTDC General layer information */
+/* TLI General layer information */
 
 struct gd32_tli_s
 {
@@ -624,13 +622,13 @@ struct gd32_tli_s
 #endif
 
 #ifdef CONFIG_GD32F4_IPA
-  struct gd32_ipa_overlay_s ipainfo; /* Overlay info for DMA2D */
+  struct gd32_ipa_overlay_s ipainfo; /* Overlay info for IPA */
 #endif
 
   mutex_t *lock; /* Layer exclusive access */
 };
 
-/* This structure provides the overall state of the LTDC layer */
+/* This structure provides the overall state of the TLI layer */
 
 struct gd32_tlidev_s
 {
@@ -657,7 +655,7 @@ struct gd32_tlidev_s
   struct gd32_tli_s layer[TLI_NOVERLAYS];
 
 #ifdef CONFIG_GD32F4_IPA
-  /* Interface to the dma2d controller */
+  /* Interface to the ipa controller */
 
   struct ipa_layer_s *ipa;
 #endif
@@ -676,7 +674,7 @@ struct gd32_interrupt_s
  * Private Function Prototypes
  ****************************************************************************/
 
-/* Overall LTDC helper */
+/* Overall TLI helper */
 
 static void gd32_tli_enable(bool enable);
 static void gd32_tli_gpioconfig(void);
@@ -812,7 +810,7 @@ static uint8_t g_transpclut[GD32_TLI_NCLUT];
 #endif
 #endif /* CONFIG_GD32F4_FB_CMAP */
 
-/* The LTDC mutex that enforces mutually exclusive access */
+/* The TLI mutex that enforces mutually exclusive access */
 
 static mutex_t g_lock = NXMUTEX_INITIALIZER;
 
@@ -1007,7 +1005,7 @@ static struct gd32_tlidev_s g_vtable =
 
 /* Configuration lookup tables */
 
-/* LTDC width */
+/* TLI width */
 
 static const uint32_t gd32_width_layer_t[TLI_NLAYERS] =
 {
@@ -1018,7 +1016,7 @@ static const uint32_t gd32_width_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC height */
+/* TLI height */
 
 static const uint32_t gd32_height_layer_t[TLI_NLAYERS] =
 {
@@ -1029,7 +1027,7 @@ static const uint32_t gd32_height_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC stride */
+/* TLI stride */
 
 static const uint32_t gd32_stride_layer_t[TLI_NLAYERS] =
 {
@@ -1040,7 +1038,7 @@ static const uint32_t gd32_stride_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC bpp */
+/* TLI bpp */
 
 static const uint32_t gd32_bpp_layer_t[TLI_NLAYERS] =
 {
@@ -1051,7 +1049,7 @@ static const uint32_t gd32_bpp_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC framebuffer len */
+/* TLI framebuffer len */
 
 static const uint32_t gd32_fbsize_layer_t[TLI_NLAYERS] =
 {
@@ -1062,7 +1060,7 @@ static const uint32_t gd32_fbsize_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC framebuffer */
+/* TLI framebuffer */
 
 static const uint32_t gd32_buffer_layer_t[TLI_NLAYERS] =
 {
@@ -1073,7 +1071,7 @@ static const uint32_t gd32_buffer_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC default color lookup table */
+/* TLI default color lookup table */
 
 static const uint32_t gd32_defaultcolor_layer_t[TLI_NLAYERS] =
 {
@@ -1084,7 +1082,7 @@ static const uint32_t gd32_defaultcolor_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC default chromakey */
+/* TLI default chromakey */
 
 static const uint32_t gd32_chromakey_layer_t[TLI_NLAYERS] =
 {
@@ -1095,7 +1093,7 @@ static const uint32_t gd32_chromakey_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC chromakey enabled state */
+/* TLI chromakey enabled state */
 
 static const bool gd32_chromaen_layer_t[TLI_NLAYERS] =
 {
@@ -1106,7 +1104,7 @@ static const bool gd32_chromaen_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC pixel format lookup table */
+/* TLI pixel format lookup table */
 
 static const uint32_t gd32_pf_layer_t[TLI_NLAYERS] =
 {
@@ -1119,7 +1117,7 @@ static const uint32_t gd32_pf_layer_t[TLI_NLAYERS] =
 
 /* Register lookup tables */
 
-/* LTDC_LxCR */
+/* TLI_LxCR */
 
 static const uintptr_t gd32_ctl_layer_t[TLI_NLAYERS] =
 {
@@ -1130,7 +1128,7 @@ static const uintptr_t gd32_ctl_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC_LxWHPCR */
+/* TLI_LxWHPCR */
 
 static const uintptr_t gd32_hpos_layer_t[TLI_NLAYERS] =
 {
@@ -1141,7 +1139,7 @@ static const uintptr_t gd32_hpos_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC_LxWVPCR */
+/* TLI_LxWVPCR */
 
 static const uintptr_t gd32_vpos_layer_t[TLI_NLAYERS] =
 {
@@ -1152,7 +1150,7 @@ static const uintptr_t gd32_vpos_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC_LxPFCR */
+/* TLI_LxPFCR */
 
 static const uintptr_t gd32_ppf_layer_t[TLI_NLAYERS] =
 {
@@ -1163,7 +1161,7 @@ static const uintptr_t gd32_ppf_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC_LxDCCR */
+/* TLI_LxDCCR */
 
 static const uintptr_t gd32_dc_layer_t[TLI_NLAYERS] =
 {
@@ -1174,7 +1172,7 @@ static const uintptr_t gd32_dc_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC_LxCKCR */
+/* TLI_LxCKCR */
 
 static const uintptr_t gd32_ckey_layer_t[TLI_NLAYERS] =
 {
@@ -1185,7 +1183,7 @@ static const uintptr_t gd32_ckey_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC_LxCACR */
+/* TLI_LxCACR */
 
 static const uintptr_t gd32_sa_layer_t[TLI_NLAYERS] =
 {
@@ -1196,7 +1194,7 @@ static const uintptr_t gd32_sa_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC_LxBFCR */
+/* TLI_LxBFCR */
 
 static const uintptr_t gd32_blend_layer_t[TLI_NLAYERS] =
 {
@@ -1207,7 +1205,7 @@ static const uintptr_t gd32_blend_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC_LxCFBAR */
+/* TLI_LxCFBAR */
 
 static const uintptr_t gd32_fbaddr_layer_t[TLI_NLAYERS] =
 {
@@ -1218,7 +1216,7 @@ static const uintptr_t gd32_fbaddr_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC_LxCFBLR */
+/* TLI_LxCFBLR */
 
 static const uintptr_t gd32_fllen_layer_t[TLI_NLAYERS] =
 {
@@ -1229,7 +1227,7 @@ static const uintptr_t gd32_fllen_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC_LxCFBLNR */
+/* TLI_LxCFBLNR */
 
 static const uintptr_t gd32_ftln_layer_t[TLI_NLAYERS] =
 {
@@ -1240,7 +1238,7 @@ static const uintptr_t gd32_ftln_layer_t[TLI_NLAYERS] =
 #endif
 };
 
-/* LTDC_LxCLUTWR */
+/* TLI_LxCLUTWR */
 
 #ifdef CONFIG_GD32F4_FB_CMAP
 static const uintptr_t gd32_lut_layer_t[TLI_NLAYERS] =
@@ -1265,7 +1263,7 @@ static bool g_initialized;
  * Name: gd32_tli_gpioconfig
  *
  * Description:
- *   Configure GPIO pins for use with the LTDC
+ *   Configure GPIO pins for use with the TLI
  *
  ****************************************************************************/
 
@@ -1306,7 +1304,7 @@ static void gd32_tli_periphconfig(void)
 
   gd32_tli_gpioconfig();
 
-  /* Configure APB2 LTDC clock external */
+  /* Configure APB2 TLI clock external */
 
   /* Configure the SAI PLL external to provide the LCD_CLK */
 
@@ -1349,35 +1347,35 @@ static void gd32_tli_periphconfig(void)
     {
     }
 
-  /* Configure LTDC_SSCR */
+  /* Configure TLI_SSCR */
 
   regval = (GD32_TLI_SPSZ_VPSZ | GD32_TLI_SPSZ_HPSZ);
   reginfo("set TLI_SPSZ=%08x\n", regval);
   putreg32(regval, GD32_TLI_SPSZ);
   reginfo("configured TLI_SPSZ=%08x\n", getreg32(GD32_TLI_SPSZ));
 
-  /* Configure LTDC_BPCR */
+  /* Configure TLI_BPCR */
 
   regval = (GD32_TLI_BPSZ_VBPSZ | GD32_TLI_BPSZ_HBPSZ);
   reginfo("set TLI_BPSZ=%08x\n", regval);
   putreg32(regval, GD32_TLI_BPSZ);
   reginfo("configured TLI_BPSZ=%08x\n", getreg32(GD32_TLI_BPSZ));
 
-  /* Configure LTDC_AWCR */
+  /* Configure TLI_AWCR */
 
   regval = (GD32_TLI_ASZ_VASZ | GD32_TLI_ASZ_HASZ);
   reginfo("set TLI_ASZ=%08x\n", regval);
   putreg32(regval, GD32_TLI_ASZ);
   reginfo("configured TLI_ASZ=%08x\n", getreg32(GD32_TLI_ASZ));
 
-  /* Configure LTDC_TWCR */
+  /* Configure TLI_TWCR */
 
   regval = (GD32_TLI_TSZ_VTSZ | GD32_TLI_TSZ_HTSZ);
   reginfo("set TLI_TSZ=%08x\n", regval);
   putreg32(regval, GD32_TLI_TSZ);
   reginfo("configured TLI_TSZ=%08x\n", getreg32(GD32_TLI_TSZ));
 
-  /* Configure LTDC_GCR */
+  /* Configure TLI_GCR */
 
   regval = (GD32_TLI_GCR_BCB |
             (GD32_TLI_GCR_BCR << 8U) |
@@ -1386,7 +1384,7 @@ static void gd32_tli_periphconfig(void)
   putreg32(regval, GD32_TLI_BGC);
   reginfo("configured TLI_BGC=%08x\n", getreg32(GD32_TLI_BGC));
 
-  /* Configure LTDC_CTL */
+  /* Configure TLI_CTL */
 
   regval = getreg32(GD32_TLI_CTL);
   regval &= ~(TLI_CTL_CLKPS | TLI_CTL_DEPS | TLI_CTL_VPPS |
@@ -1493,7 +1491,7 @@ static void gd32_tli_dither(bool enable, uint8_t red,
 
 static void gd32_tli_linepos(void)
 {
-  /* Configure LTDC_LIPCR */
+  /* Configure TLI_LIPCR */
 
   reginfo("set TLI_LM_LM=%08x\n", GD32_TLI_LM_LM);
   putreg32(GD32_TLI_LM_LM, GD32_TLI_LM_LM);
@@ -1504,7 +1502,7 @@ static void gd32_tli_linepos(void)
  * Name: gd32_tli_irqctrl
  *
  * Description:
- *   Control  interrupts generated by the ltdc controller
+ *   Control  interrupts generated by the tli controller
  *
  * Input Parameters:
  *   setirqs  - set interrupt mask
@@ -1528,7 +1526,7 @@ static void gd32_tli_irqctrl(uint32_t setirqs, uint32_t clrirqs)
  * Name: gd32_tliirq
  *
  * Description:
- *   LTDC interrupt handler
+ *   TLI interrupt handler
  *
  ****************************************************************************/
 
@@ -1601,7 +1599,7 @@ static int gd32_tliirq(int irq, void *context, void *arg)
  * Name: gd32_tli_waitforirq
  *
  * Description:
- *   Helper waits until the ltdc irq occurs. In the current design That means
+ *   Helper waits until the tli irq occurs. In the current design That means
  *   that a register reload was been completed.
  *   Note! The caller must use this function within a critical section.
  *
@@ -1681,7 +1679,7 @@ static int gd32_tli_reload(uint8_t value, bool waitvblank)
 
 static void gd32_tli_irqconfig(void)
 {
-  /* Attach LTDC interrupt vector */
+  /* Attach TLI interrupt vector */
 
   irq_attach(g_interrupt.irq, gd32_tliirq, NULL);
 
@@ -2288,7 +2286,7 @@ static void gd32_tli_linit(uint8_t overlay)
 
   if (dev->vinfo.fmt == FB_FMT_RGB8)
     {
-      /* Initialize LTDC clut register */
+      /* Initialize TLI clut register */
 
       gd32_tli_lputclut(layer, &g_vtable.cmap);
 
@@ -2304,10 +2302,10 @@ static void gd32_tli_linit(uint8_t overlay)
 }
 
 /****************************************************************************
- * Name: gd32_tli_dma2dlinit
+ * Name: gd32_tli_ipalinit
  *
  * Description:
- *   Initialize dma2d layer to their default states.
+ *   Initialize ipa layer to their default states.
  *
  *   Initialize:
  *   - layer framebuffer
@@ -2471,7 +2469,7 @@ static int gd32_getcmap(struct fb_vtable_s *vtable,
   else
     {
       /* Currently, there is no api to set color map for each overlay
-       * separately. LTDC layers can have different color maps. Get the cmap
+       * separately. TLI layers can have different color maps. Get the cmap
        * from the main overlay.
        */
 
@@ -2532,7 +2530,7 @@ static int gd32_putcmap(struct fb_vtable_s *vtable,
   else
     {
       /* Currently, there is no api to set color map for each overlay
-       * separately. LTDC layers can have different color maps, but is shared
+       * separately. TLI layers can have different color maps, but is shared
        * for now.
        */
 
@@ -2547,7 +2545,7 @@ static int gd32_putcmap(struct fb_vtable_s *vtable,
           priv_cmap->green[n] = cmap->green[n];
           priv_cmap->blue[n] = cmap->blue[n];
 #ifdef CONFIG_GD32F4_FB_TRANSPARENCY
-          /* Not supported by LTDC */
+          /* Not supported by TLI */
 
           priv_cmap->transp[n] = cmap->transp[n];
 #endif
@@ -2567,7 +2565,7 @@ static int gd32_putcmap(struct fb_vtable_s *vtable,
         }
 
 #ifdef CONFIG_GD32F4_IPA
-      /* Update dma2d cmap */
+      /* Update ipa cmap */
 
       priv->ipa->setclut(cmap);
 #endif
@@ -2670,7 +2668,7 @@ static int gd32_settransp(struct fb_vtable_s *vtable,
       if (oinfo->overlay < TLI_NLAYERS)
 #endif
         {
-          /* Set LTDC blendmode and alpha value */
+          /* Set TLI blendmode and alpha value */
 
           gd32_tli_ltransp(layer, layer->oinfo.transp.transp,
                            layer->oinfo.transp.transp_mode);
@@ -2743,7 +2741,7 @@ static int gd32_setchromakey(struct fb_vtable_s *vtable,
 #ifdef CONFIG_GD32F4_IPA
   else if (oinfo->overlay < TLI_NOVERLAYS)
     {
-      /* Chromakey not supported by DMA2D */
+      /* Chromakey not supported by IPA */
 
       return -ENOSYS;
     }
@@ -2770,8 +2768,8 @@ static int gd32_setcolor(struct fb_vtable_s *vtable,
     {
 #ifdef CONFIG_GD32F4_IPA
 
-      /* Set color within the active overlay is not supported by LTDC. So use
-       * DMA2D controller instead when configured.
+      /* Set color within the active overlay is not supported by TLI. So use
+       * IPA controller instead when configured.
        */
 
       int ret;
@@ -2790,7 +2788,7 @@ static int gd32_setcolor(struct fb_vtable_s *vtable,
 
       return ret;
 #else
-      /* Coloring not supported by LTDC */
+      /* Coloring not supported by TLI */
 
       return -ENOSYS;
 #endif
@@ -2832,7 +2830,7 @@ static int gd32_setblank(struct fb_vtable_s *vtable,
 #ifdef CONFIG_GD32F4_IPA
   else if (oinfo->overlay < TLI_NOVERLAYS)
     {
-      /* DMA2D overlays are non visible */
+      /* IPA overlays are non visible */
 
       return OK;
     }
@@ -2858,7 +2856,7 @@ static int gd32_setarea(struct fb_vtable_s *vtable,
 
   if (oinfo->overlay < TLI_NLAYERS)
     {
-      /* LTDC area is defined by the overlay size (display resolution) only */
+      /* TLI area is defined by the overlay size (display resolution) only */
 
       return -ENOSYS;
     }
@@ -2910,7 +2908,7 @@ static int gd32_blit(struct fb_vtable_s *vtable,
       DEBUGASSERT(&dlayer->oinfo == dlayer->ipainfo.oinfo &&
                   &slayer->oinfo == slayer->ipainfo.oinfo);
 
-      /* DMA2D doesn't support image scale, so set to the smallest area */
+      /* IPA doesn't support image scale, so set to the smallest area */
 
       memcpy(&sarea, &blit->src.area, sizeof(struct fb_area_s));
 
@@ -2932,7 +2930,7 @@ static int gd32_blit(struct fb_vtable_s *vtable,
 
       return ret;
 #else
-      /* LTDC doesn't support blit transfer */
+      /* TLI doesn't support blit transfer */
 
       return -ENOSYS;
 #endif
@@ -2975,7 +2973,7 @@ static int gd32_blend(struct fb_vtable_s *vtable,
                   &flayer->oinfo == flayer->ipainfo.oinfo &&
                   &blayer->oinfo == blayer->ipainfo.oinfo);
 
-      /* DMA2D doesn't support image scale, so set to the smallest area */
+      /* IPA doesn't support image scale, so set to the smallest area */
 
       memcpy(&barea, &blend->background.area, sizeof(struct fb_area_s));
 
@@ -3002,7 +3000,7 @@ static int gd32_blend(struct fb_vtable_s *vtable,
 
       return ret;
 #else
-      /* LTDC doesn't support blend transfer */
+      /* TLI doesn't support blend transfer */
 
       return -ENOSYS;
 #endif
@@ -3022,7 +3020,7 @@ static int gd32_blend(struct fb_vtable_s *vtable,
  * Name: gd32_tlireset
  *
  * Description:
- *   Reset LTDC via APB2RSTR
+ *   Reset TLI via APB2RSTR
  *
  ****************************************************************************/
 
@@ -3037,7 +3035,7 @@ void gd32_tlireset(void)
  * Name: gd32_tliinitialize
  *
  * Description:
- *   Initialize the ltdc controller
+ *   Initialize the tli controller
  *
  * Returned Value:
  *   OK
@@ -3048,7 +3046,7 @@ int gd32_tliinitialize(void)
 {
   int ret = OK;
 
-  lcdinfo("Initialize LTDC driver\n");
+  lcdinfo("Initialize TLI driver\n");
 
   if (g_initialized == true)
     {
@@ -3071,13 +3069,13 @@ int gd32_tliinitialize(void)
   lcdinfo("Configure interrupts\n");
   gd32_tli_irqconfig();
 
-  /* Configure global ltdc register */
+  /* Configure global tli register */
 
   lcdinfo("Configure global register\n");
   gd32_tli_globalconfig();
 
 #ifdef CONFIG_GD32F4_IPA
-  /* Initialize the dma2d controller */
+  /* Initialize the ipa controller */
 
   ret = gd32_ipainitialize();
 
@@ -3086,7 +3084,7 @@ int gd32_tliinitialize(void)
       return ret;
     }
 
-  /* Bind the dma2d interface */
+  /* Bind the ipa interface */
 
   g_vtable.ipa = gd32_ipadev();
   DEBUGASSERT(g_vtable.ipa != NULL);
@@ -3103,7 +3101,7 @@ int gd32_tliinitialize(void)
 #endif
 #endif /* CONFIG_GD32F4_FB_CMAP */
 
-  /* Initialize ltdc layer */
+  /* Initialize tli layer */
 
   lcdinfo("Initialize tli layer\n");
   gd32_tli_linit(TLI_LAYER_L1);
@@ -3174,7 +3172,7 @@ struct fb_vtable_s *gd32_tligetvplane(int vplane)
 
 void gd32_tliuninitialize(void)
 {
-  /* Disable all ltdc interrupts */
+  /* Disable all tli interrupts */
 
   gd32_tli_irqctrl(0, TLI_INTEN_LCRIE | TLI_INTEN_TEIE |
                           TLI_INTEN_FEIE | TLI_INTEN_LMIE);

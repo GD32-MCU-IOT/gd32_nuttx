@@ -37,7 +37,6 @@
 #include "arm_internal.h"
 #include "gd32f470i_eval.h"
 #include "gd32f4xx_tli.h"
-#include "hardware/gd32f4xx_tli.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -247,8 +246,8 @@
 # error "display orientation not defined"
 #endif
 
-#define ILI9341_XRES BOARD_LTDC_WIDTH
-#define ILI9341_YRES BOARD_LTDC_HEIGHT
+#define ILI9341_XRES BOARD_TLI_WIDTH
+#define ILI9341_YRES BOARD_TLI_HEIGHT
 #endif /* CONFIG_GD32F470IK_EVAL_ILI9341_FBIFACE */
 
 /****************************************************************************
@@ -260,7 +259,7 @@ struct lcd_dev_s *g_lcd = NULL;
 #endif
 
 #ifdef CONFIG_GD32F470IK_EVAL_ILI9341_FBIFACE
-struct ili9341_lcd_s *g_ltdc = NULL;
+struct ili9341_lcd_s *g_tli = NULL;
 #endif
 
 /****************************************************************************
@@ -278,7 +277,7 @@ struct ili9341_lcd_s *g_ltdc = NULL;
 
 static int gd32_ili9341_initialize(void)
 {
-  struct ili9341_lcd_s *lcd = g_ltdc;
+  struct ili9341_lcd_s *lcd = g_tli;
 
   lcd = gd32_ili93414ws_initialize();
 

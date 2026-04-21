@@ -425,7 +425,7 @@ typedef enum
  * Active Height          : 272  (BOARD_TLI_HEIGHT)
  */
 
-/* LTDC PLL configuration
+/* TLI PLL configuration
  *
  * PLLSAI_VCO = GD32_HXTAL_FREQUENCY / PLLM
  *            = 8000000ul / 8

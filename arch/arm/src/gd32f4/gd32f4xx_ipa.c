@@ -44,19 +44,17 @@
 
 #include "arm_internal.h"
 #include "gd32f4xx.h"
-#include "hardware/gd32f4xx_tli.h"
-#include "hardware/gd32f4xx_ipa.h"
 #include "gd32f4xx_ipa.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-/* DMA2D supported operation layer (output, foreground, background) */
+/* IPA supported operation layer (output, foreground, background) */
 
 #define IPA_NLAYERS                       3
 
-/* DMA2D blender control */
+/* IPA blender control */
 
 #define GD32_IPA_CTL_PFCM_BLIT            IPA_CTL_PFCM(0)
 #define GD32_IPA_CTL_PFCM_BLITPFC         IPA_CTL_PFCM(1)
@@ -100,11 +98,11 @@
  * Private Types
  ****************************************************************************/
 
-/* DMA2D General layer information */
+/* IPA General layer information */
 
 struct gd32_ipa_s
 {
-  struct ipa_layer_s ipa;  /* Public dma2d interface */
+  struct ipa_layer_s ipa;  /* Public ipa interface */
 
 #ifdef CONFIG_GD32F4_FB_CMAP
   uint32_t *clut;              /* Color lookup table */
@@ -121,7 +119,7 @@ struct gd32_interrupt_s
   sem_t *sem;       /* Semaphore for waiting for irq */
 };
 
-/* This enumeration foreground and background layer supported by the dma2d
+/* This enumeration foreground and background layer supported by the ipa
  * controller
  */
 
@@ -132,7 +130,7 @@ enum gd32_layer_e
   IPA_LAYER_LOUT,            /* Output Layer */
 };
 
-/* DMA2D memory address register */
+/* IPA memory address register */
 
 static const uintptr_t gd32_mar_layer_t[IPA_NLAYERS] =
 {
@@ -141,7 +139,7 @@ static const uintptr_t gd32_mar_layer_t[IPA_NLAYERS] =
   GD32_IPA_DMADDR
 };
 
-/* DMA2D offset register */
+/* IPA offset register */
 
 static const uintptr_t gd32_or_layer_t[IPA_NLAYERS] =
 {
@@ -150,7 +148,7 @@ static const uintptr_t gd32_or_layer_t[IPA_NLAYERS] =
   GD32_IPA_DLOFF
 };
 
-/* DMA2D pfc control register */
+/* IPA pfc control register */
 
 static const uintptr_t gd32_pfccr_layer_t[IPA_NLAYERS] =
 {
@@ -159,7 +157,7 @@ static const uintptr_t gd32_pfccr_layer_t[IPA_NLAYERS] =
   GD32_IPA_DPCTL
 };
 
-/* DMA2D color register */
+/* IPA color register */
 
 static const uintptr_t gd32_color_layer_t[IPA_NLAYERS] =
 {
@@ -168,7 +166,7 @@ static const uintptr_t gd32_color_layer_t[IPA_NLAYERS] =
   GD32_IPA_DPV
 };
 
-/* DMA2D clut memory address register */
+/* IPA clut memory address register */
 
 #ifdef CONFIG_GD32F4_FB_CMAP
 static const uintptr_t gd32_cmar_layer_t[IPA_NLAYERS - 1] =
@@ -246,7 +244,7 @@ static uint32_t g_clut[GD32_IPA_NCLUT *
                       / 4];
 #endif /* CONFIG_GD32F4_FB_CMAP */
 
-/* The DMA2D mutex that enforces mutually exclusive access */
+/* The IPA mutex that enforces mutually exclusive access */
 
 static mutex_t g_lock = NXMUTEX_INITIALIZER;
 
@@ -489,7 +487,7 @@ static int gd32_ipa_loadclut(uintptr_t pfcreg)
  * Input Parameters:
  *   reg       - Register to set the start
  *   startflag - The related flag to start the dma transfer
- *   irqflag   - The interrupt enable flag in the DMA2D_CR register
+ *   irqflag   - The interrupt enable flag in the IPA_CTL register
  *
  ****************************************************************************/
 
@@ -641,7 +639,7 @@ static void gd32_ipa_llnr(const struct fb_area_s *area)
  *   Set the output PFC control register
  *
  * Input Parameters:
- *   fmt - DMA2D pixel format
+ *   fmt - IPA pixel format
  *
  ****************************************************************************/
 
@@ -664,7 +662,7 @@ static int gd32_ipa_loutpfc(uint8_t fmt)
  *
  * Input Parameters:
  *   lid       - Layer id (output, foreground, background)
- *   blendmode - Layer blendmode (dma2d register values)
+ *   blendmode - Layer blendmode (ipa register values)
  *   alpha     - Transparency
  *
  ****************************************************************************/
@@ -717,6 +715,10 @@ static int gd32_ipa_lpfc(int lid, uint32_t blendmode, uint8_t alpha,
           lcderr("ERROR: gd32_ipa_loadclut failed: %d\n", ret);
           return ret;
         }
+
+      /* Clear CLUT-load start bit after loading completes */
+
+      pfccrreg &= ~IPA_FPCTL_FLLEN;
     }
 #endif /* CONFIG_GD32F4_FB_CMAP */
 
@@ -793,7 +795,7 @@ static int gd32_ipa_setclut(const struct fb_cmap_s *cmap)
                    (uint32_t)IPA_NCLUT_BLUE(cmap->blue[src]);
 
       reginfo("n=%d, alpha=%02x, red=%02x, green=%02x, blue=%02x\n", dest,
-                IPA_NCLUT_ALPHA(cmap->transp[src]),
+                IPA_CLUT_ALPHA(cmap->transp[src]),
                 IPA_NCLUT_RED(cmap->red[src]),
                 IPA_NCLUT_GREEN(cmap->green[src]),
                 IPA_NCLUT_BLUE(cmap->blue[src]));
@@ -869,7 +871,7 @@ static int gd32_ipa_fillcolor(struct gd32_ipa_overlay_s *oinfo,
 
   gd32_ipa_control(GD32_IPA_CTL_PFCM_COLOR, GD32_IPA_CTL_PFCM_CLEAR);
 
-  /* Start DMA2D and wait until completed */
+  /* Start IPA and wait until completed */
 
   ret = gd32_ipa_start();
 
@@ -920,6 +922,17 @@ static int gd32_ipa_blit(struct gd32_ipa_overlay_s *doverlay,
           ", soverlay=%p, sarea=%p\n",
           doverlay, destxpos, destypos, soverlay, sarea);
 
+#ifdef CONFIG_GD32F4_FB_CMAP
+  if (doverlay->fmt == IPA_PF_L8)
+    {
+      /* CLUT output not supported */
+
+      lcderr("ERROR: Returning ENOSYS, "
+             "output to layer with CLUT format not supported.\n");
+      return -ENOSYS;
+    }
+#endif
+
   nxmutex_lock(priv->lock);
 
   /* Set output pfc */
@@ -949,7 +962,7 @@ static int gd32_ipa_blit(struct gd32_ipa_overlay_s *doverlay,
 
   gd32_ipa_llnr(sarea);
 
-  /* Set dma2d mode for blit operation */
+  /* Set ipa mode for blit operation */
 
   if (doverlay->fmt == soverlay->fmt)
     {
@@ -966,7 +979,7 @@ static int gd32_ipa_blit(struct gd32_ipa_overlay_s *doverlay,
 
   gd32_ipa_control(mode, GD32_IPA_CTL_PFCM_CLEAR);
 
-  /* Start DMA2D and wait until completed */
+  /* Start IPA and wait until completed */
 
   ret = gd32_ipa_start();
 
@@ -1084,11 +1097,11 @@ static int gd32_ipa_blend(struct gd32_ipa_overlay_s *doverlay,
 
   /* Set watermark */
 
-  /* Enable DMA2D blender */
+  /* Enable IPA blender */
 
   gd32_ipa_control(GD32_IPA_CTL_PFCM_BLEND, GD32_IPA_CTL_PFCM_CLEAR);
 
-  /* Start DMA2D and wait until completed */
+  /* Start IPA and wait until completed */
 
   ret = gd32_ipa_start();
 
@@ -1129,7 +1142,7 @@ int gd32_ipainitialize(void)
        */
 
 #ifdef CONFIG_GD32F4_FB_CMAP
-      /* Enable dma2d transfer, clut loading, and error interrupts */
+      /* Enable ipa transfer, clut loading, and error interrupts */
 
       gd32_ipa_control(IPA_CTL_FTFIE | IPA_CTL_LLFIE |
                        IPA_CTL_TAEIE | IPA_CTL_TLMIE |
@@ -1143,7 +1156,7 @@ int gd32_ipainitialize(void)
                        IPA_CTL_LLFIE);
 #endif
 
-      /* Attach DMA2D interrupt vector */
+      /* Attach IPA interrupt vector */
 
       irq_attach(g_interrupt.irq, gd32_ipairq, NULL);
 

@@ -31,6 +31,7 @@
 
 #include <nuttx/video/fb.h>
 #include <nuttx/nx/nxglib.h>
+#include "hardware/gd32f4xx_tli.h"
 
 /****************************************************************************
  * Public Function Prototypes
