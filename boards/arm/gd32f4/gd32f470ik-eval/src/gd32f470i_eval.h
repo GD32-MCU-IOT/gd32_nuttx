@@ -282,5 +282,17 @@ int gd32_dma_alloc_init(void);
 int gd32_sdio_initialize(void);
 #endif
 
+/****************************************************************************
+ * Name: gd32_sdram_initialize
+ *
+ * Description:
+ *   Called from gd32_board_initialize to initialize external SDRAM access.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32F4_EXMC
+void gd32_sdram_initialize(void);
+#endif
+
 #endif /* __ASSEMBLY__ */
 #endif /* __BOARDS_ARM_GD32F4_GD32F470IK_EVAL_SRC_GD32F470I_EVAL_H */

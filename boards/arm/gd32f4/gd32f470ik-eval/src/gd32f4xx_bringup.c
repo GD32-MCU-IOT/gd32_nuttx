@@ -54,6 +54,10 @@
 #include "gd32f4xx_romfs.h"
 #endif
 
+#ifdef CONFIG_VIDEO_FB
+#include <nuttx/video/fb.h>
+#endif
+
 #include "gd32f470i_eval.h"
 
 /****************************************************************************
@@ -357,5 +361,16 @@ int gd32_bringup(void)
     syslog(LOG_INFO, "INFO: FAT volume /mnt/sd mount "
            "sd card success: %d\n", ret);
 #endif
+
+#ifdef CONFIG_VIDEO_FB
+  /* Initialize and register the framebuffer driver */
+
+  ret = fb_register(0, 0);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: fb_register() failed: %d\n", ret);
+    }
+#endif
+
   return ret;
 }

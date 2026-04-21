@@ -61,6 +61,10 @@ void gd32_boardinitialize(void)
 
   gd32_spidev_initialize();
 #endif
+
+#ifdef CONFIG_GD32F4_EXMC
+  gd32_sdram_initialize();
+#endif
 }
 
 /****************************************************************************
