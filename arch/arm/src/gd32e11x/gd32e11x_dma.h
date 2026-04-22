@@ -52,6 +52,13 @@
 
 #define DMA_INT_MASK               (DMA_CHXCTL_ERRIE | DMA_CHXCTL_FTFIE)
 
+/* RX DMA interrupt mask - enable half-transfer interrupt for circular
+ * mode to prevent buffer overrun when continuous data arrives.
+ */
+
+#define RXDMA_INT_MASK             (DMA_CHXCTL_ERRIE | DMA_CHXCTL_FTFIE | \
+                                    DMA_CHXCTL_HTFIE)
+
 /* The DMA controllers */
 
 #define GD32_DMA0                  (GD32_DMA0_BASE)
@@ -220,7 +227,7 @@ void gd32_dma_start(DMA_HANDLE handle, dma_callback_t callback, void *arg,
 void gd32_dma_stop(DMA_HANDLE handle);
 
 /****************************************************************************
- * Name: gd32_dma_tansnum_get
+ * Name: gd32_dma_transnum_get
  *
  * Description:
  *   Get the number of remaining data to be transferred by the DMA
@@ -230,7 +237,7 @@ void gd32_dma_stop(DMA_HANDLE handle);
  *
  ****************************************************************************/
 
-size_t gd32_dma_tansnum_get(DMA_HANDLE handle);
+size_t gd32_dma_transnum_get(DMA_HANDLE handle);
 
 /****************************************************************************
  * Name: gd32_dma_sample
