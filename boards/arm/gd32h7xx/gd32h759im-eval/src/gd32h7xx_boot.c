@@ -69,6 +69,12 @@ void gd32_boardinitialize(void)
 
   board_button_initialize();
 #endif
+
+#ifdef CONFIG_GD32H7_SPI
+  /* Configure SPI chip select GPIO pins */
+
+  gd32_spidev_initialize();
+#endif
 }
 
 /****************************************************************************

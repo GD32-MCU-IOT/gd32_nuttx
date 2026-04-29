@@ -142,6 +142,42 @@ config GD32H7_WWDGT
 	select GD32H7_WDGT
 	select WATCHDOG
 
+config GD32H7_SPI0
+	bool "SPI0"
+	default n
+	select SPI
+	select GD32H7_SPI
+
+config GD32H7_SPI1
+	bool "SPI1"
+	default n
+	select SPI
+	select GD32H7_SPI
+
+config GD32H7_SPI2
+	bool "SPI2"
+	default n
+	select SPI
+	select GD32H7_SPI
+
+config GD32H7_SPI3
+	bool "SPI3"
+	default n
+	select SPI
+	select GD32H7_SPI
+
+config GD32H7_SPI4
+	bool "SPI4"
+	default n
+	select SPI
+	select GD32H7_SPI
+
+config GD32H7_SPI5
+	bool "SPI5"
+	default n
+	select SPI
+	select GD32H7_SPI
+
 endmenu # "GD32H7 Peripheral Support"
 
 # These settings define internal capabilities
@@ -155,6 +191,10 @@ config GD32H7_USART
 	default n
 
 config GD32H7_WDGT
+	bool
+	default n
+
+config GD32H7_SPI
 	bool
 	default n
 
@@ -427,3 +467,122 @@ config GD32H7_USART_TXDMA
 	depends on GD32H7_DMA
 
 endmenu # USART Configuration
+
+menu "GD32H7 SPI Configuration"
+	depends on GD32H7_SPI
+
+config GD32H7_SPI_INTERRUPTS
+	bool "SPI Interrupt driven transfer support"
+	default n
+	---help---
+		Handle SPI transfer via interrupt.
+
+config GD32H7_SPI_TIMEOUTMS
+	int "SPI timeout in milliseconds"
+	default 500
+	---help---
+		Timeout for SPI operations in milliseconds. This value is used
+		for waiting TX/RX FIFO ready and SPI suspend operations.
+
+config GD32H7_SPI_DMA
+	bool "SPI DMA"
+	default n
+	depends on GD32H7_DMA
+	---help---
+		Use DMA to improve SPI transfer performance. Cannot be used with
+		GD32H7_SPI_INTERRUPTS.
+
+config GD32H7_SPI_DMATHRESHOLD
+	int "SPI DMA threshold"
+	default 4
+	depends on GD32H7_SPI_DMA
+	---help---
+		When SPI DMA is enabled, small DMA transfers will still be performed
+		by polling logic. But we need a threshold value to determine what
+		is small.
+
+config GD32H7_SPI0_DMA
+	bool "SPI0 DMA"
+	default n
+	depends on GD32H7_SPI0 && GD32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI0 transfer performance.
+
+config GD32H7_SPI0_DMA_BUFFER
+	int "SPI0 DMA buffer size"
+	default 0
+	depends on GD32H7_SPI0_DMA
+	---help---
+		Size of internal DMA buffer for SPI0. If 0, DMA will use user buffer directly.
+
+config GD32H7_SPI1_DMA
+	bool "SPI1 DMA"
+	default n
+	depends on GD32H7_SPI1 && GD32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI1 transfer performance.
+
+config GD32H7_SPI1_DMA_BUFFER
+	int "SPI1 DMA buffer size"
+	default 0
+	depends on GD32H7_SPI1_DMA
+	---help---
+		Size of internal DMA buffer for SPI1. If 0, DMA will use user buffer directly.
+
+config GD32H7_SPI2_DMA
+	bool "SPI2 DMA"
+	default n
+	depends on GD32H7_SPI2 && GD32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI2 transfer performance.
+
+config GD32H7_SPI2_DMA_BUFFER
+	int "SPI2 DMA buffer size"
+	default 0
+	depends on GD32H7_SPI2_DMA
+	---help---
+		Size of internal DMA buffer for SPI2. If 0, DMA will use user buffer directly.
+
+config GD32H7_SPI3_DMA
+	bool "SPI3 DMA"
+	default n
+	depends on GD32H7_SPI3 && GD32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI3 transfer performance.
+
+config GD32H7_SPI3_DMA_BUFFER
+	int "SPI3 DMA buffer size"
+	default 0
+	depends on GD32H7_SPI3_DMA
+	---help---
+		Size of internal DMA buffer for SPI3. If 0, DMA will use user buffer directly.
+
+config GD32H7_SPI4_DMA
+	bool "SPI4 DMA"
+	default n
+	depends on GD32H7_SPI4 && GD32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI4 transfer performance.
+
+config GD32H7_SPI4_DMA_BUFFER
+	int "SPI4 DMA buffer size"
+	default 0
+	depends on GD32H7_SPI4_DMA
+	---help---
+		Size of internal DMA buffer for SPI4. If 0, DMA will use user buffer directly.
+
+config GD32H7_SPI5_DMA
+	bool "SPI5 DMA"
+	default n
+	depends on GD32H7_SPI5 && GD32H7_SPI_DMA
+	---help---
+		Use DMA to improve SPI5 transfer performance.
+
+config GD32H7_SPI5_DMA_BUFFER
+	int "SPI5 DMA buffer size"
+	default 0
+	depends on GD32H7_SPI5_DMA
+	---help---
+		Size of internal DMA buffer for SPI5. If 0, DMA will use user buffer directly.
+
+endmenu # GD32H7 SPI Configuration
