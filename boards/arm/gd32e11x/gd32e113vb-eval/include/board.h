@@ -337,17 +337,6 @@ typedef enum
 #  endif
 #endif
 
-#if CONFIG_GD32E11X_USART0_TXDMA
-#  define DMA_CHANNEL_USART0_TX    DMA_REQ_USART0_TX_1
-#endif
-#if CONFIG_GD32E11X_USART0_RXDMA
-#  define DMA_CHANNEL_USART0_RX    DMA_REQ_USART0_RX_1
-#endif
-
-#if defined(CONFIG_GD32E11X_USART_RXDMA) || defined(CONFIG_GD32E11X_USART_TXDMA)
-#  define USART_DMA_INTEN          (DMA_CHXCTL_SDEIE | DMA_CHXCTL_TAEIE | DMA_CHXCTL_FTFIE)
-#endif
-
 /* USART1:
  * Use USART1 as alternative console or general UART
  * USART1 uses PA2 (TX) and PA3 (RX) by default (no remap)
@@ -366,13 +355,6 @@ typedef enum
 #  if defined(CONFIG_SERIAL_OFLOWCONTROL) && defined(CONFIG_USART1_OFLOWCONTROL)
 #    define GPIO_USART1_CTS (GPIO_USART1_CTS_1 | GPIO_CFG_SPEED_50MHZ)
 #  endif
-#endif
-
-#if CONFIG_GD32E11X_USART1_TXDMA
-#  define DMA_CHANNEL_USART1_TX    DMA_REQ_USART1_TX_1
-#endif
-#if CONFIG_GD32E11X_USART1_RXDMA
-#  define DMA_CHANNEL_USART1_RX    DMA_REQ_USART1_RX_1
 #endif
 
 /* I2C pin definitions

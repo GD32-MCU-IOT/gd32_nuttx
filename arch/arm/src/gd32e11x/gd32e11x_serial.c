@@ -1098,7 +1098,7 @@ static size_t up_dma_nextrx(struct up_dev_s *priv)
 {
   size_t dmaresidual;
 
-  dmaresidual = gd32_dma_tansnum_get(priv->rxdma);
+  dmaresidual = gd32_dma_transnum_get(priv->rxdma);
 
   return (RXDMA_BUFFER_SIZE - (size_t)dmaresidual);
 }
@@ -1165,7 +1165,7 @@ static int up_dma_setup(struct uart_dev_s *dev)
        * (per GD32 official demo sequence)
        */
 
-      gd32_dma_start(priv->rxdma, up_dma_rx_callback, dev, 0);
+      gd32_dma_start(priv->rxdma, up_dma_rx_callback, dev, RXDMA_INT_MASK);
 
       /* Enable receive DMA for the UART */
 
@@ -2077,7 +2077,7 @@ static void up_dma_txavailable(struct uart_dev_s *dev)
 
   /* Only send when the DMA is idle */
 
-  if (gd32_dma_tansnum_get(priv->txdma) == 0)
+  if (gd32_dma_transnum_get(priv->txdma) == 0)
     {
       uart_xmitchars_dma(dev);
     }
