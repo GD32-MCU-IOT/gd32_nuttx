@@ -883,6 +883,20 @@
 #define RCU_CFG4_SDIO0SEL              (1 << 0)    /* Bit 0: SDIO0 clock source selection */
 #define RCU_CFG4_EXMCSEL_SHIFT         (8)         /* Bits 8-9: EXMC clock source selection */
 #define RCU_CFG4_EXMCSEL_MASK          (3 << RCU_CFG4_EXMCSEL_SHIFT)
+#define RCU_CFG4_EXMCSEL(n)            ((n) << RCU_CFG4_EXMCSEL_SHIFT)
+#  define RCU_CFG4_EXMCSEL_AHB         RCU_CFG4_EXMCSEL(0)   /* EXMC clock = AHB */
+#  define RCU_CFG4_EXMCSEL_PLL0Q       RCU_CFG4_EXMCSEL(1)   /* EXMC clock = PLL0Q */
+#  define RCU_CFG4_EXMCSEL_PLL1R       RCU_CFG4_EXMCSEL(2)   /* EXMC clock = PLL1R */
+#  define RCU_CFG4_EXMCSEL_PER         RCU_CFG4_EXMCSEL(3)   /* EXMC clock = CK_PER */
+
+/* Bits 16-17: OSPI clock source selection */
+#define RCU_CFG4_OSPISEL_SHIFT         (16)
+#define RCU_CFG4_OSPISEL_MASK          (3 << RCU_CFG4_OSPISEL_SHIFT)
+#define RCU_CFG4_OSPISEL(n)            ((n) << RCU_CFG4_OSPISEL_SHIFT)
+#  define RCU_CFG4_OSPISEL_AHB         RCU_CFG4_OSPISEL(0)   /* OSPI clock = AHB */
+#  define RCU_CFG4_OSPISEL_PLL0Q       RCU_CFG4_OSPISEL(1)   /* OSPI clock = PLL0Q */
+#  define RCU_CFG4_OSPISEL_PLL1R       RCU_CFG4_OSPISEL(2)   /* OSPI clock = PLL1R */
+#  define RCU_CFG4_OSPISEL_PER         RCU_CFG4_OSPISEL(3)   /* OSPI clock = CK_PER */
 
 /* USB clock control register */
 

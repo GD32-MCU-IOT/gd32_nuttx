@@ -236,6 +236,14 @@ typedef enum
 #define GPIO_USART0_RX (GPIO_USART0_RX_1 | GPIO_CFG_SPEED_85MHZ)
 #define GPIO_USART0_TX (GPIO_USART0_TX_1 | GPIO_CFG_SPEED_85MHZ)
 
+/* USART2 (DMA bring-up port)
+ * TX: PB10
+ * RX: PB11
+ */
+
+#define GPIO_USART2_TX (GPIO_USART2_TX_1 | GPIO_CFG_SPEED_85MHZ)
+#define GPIO_USART2_RX (GPIO_USART2_RX_1 | GPIO_CFG_SPEED_85MHZ)
+
 /****************************************************************************
  * Public Data
  ****************************************************************************/

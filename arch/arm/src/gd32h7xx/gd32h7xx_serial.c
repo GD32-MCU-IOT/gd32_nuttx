@@ -80,8 +80,11 @@
 #if defined(CONFIG_GD32H7_USART_PRIQ)
 #  define USART_DMA_PRIO  CONFIG_GD32H7_USART_PRIQ
 #else
-#  define USART_DMA_PRIO  DMA_PRIO_MEDIUM_SELECT
+#  define USART_DMA_PRIO  DMA_PRIORITY_MEDIUM
 #endif
+
+#  define USART_RXDMA_INTEN (DMA_CHXCTL_HTFIE | DMA_CHXCTL_FTFIE)
+#  define USART_TXDMA_INTEN DMA_CHXCTL_FTFIE
 #endif
 
 #ifdef SERIAL_HAVE_RXDMA
@@ -93,10 +96,31 @@
 #  if !defined(CONFIG_GD32H7_SERIAL_RXDMA_BUFFER_SIZE)
 #    define CONFIG_GD32H7_SERIAL_RXDMA_BUFFER_SIZE 32
 #  endif
-#  define RXDMA_BUFFER_MASK   (4 - 1)
-#  define RXDMA_BUFFER_SIZE   ((CONFIG_GD32H7_SERIAL_RXDMA_BUFFER_SIZE \
-                                + RXDMA_BUFFER_MASK) & ~RXDMA_BUFFER_MASK)
+#  if defined(CONFIG_ARMV7M_DCACHE)
+#    define RXDMA_BUFFER_MASK   (ARMV7M_DCACHE_LINESIZE - 1)
+#    define RXDMA_BUFFER_SIZE   ((CONFIG_GD32H7_SERIAL_RXDMA_BUFFER_SIZE \
+                                  + RXDMA_BUFFER_MASK) & ~RXDMA_BUFFER_MASK)
+#    define RXDMA_BUFFER_ALIGN  aligned_data(ARMV7M_DCACHE_LINESIZE)
+#  else
+#    define RXDMA_BUFFER_SIZE   (CONFIG_GD32H7_SERIAL_RXDMA_BUFFER_SIZE)
+#    define RXDMA_BUFFER_ALIGN
+#  endif
 
+#endif
+
+/* If built with CONFIG_ARMV7M_DCACHE, TX DMA buffers need to be aligned
+ * and multiples of ARMV7M_DCACHE_LINESIZE.
+ */
+
+#ifdef SERIAL_HAVE_TXDMA
+#  if defined(CONFIG_ARMV7M_DCACHE)
+#    define TXDMA_BUF_MASK      (ARMV7M_DCACHE_LINESIZE - 1)
+#    define TXDMA_BUF_SIZE(b)   (((b) + TXDMA_BUF_MASK) & ~TXDMA_BUF_MASK)
+#    define TXDMA_BUF_ALIGN     aligned_data(ARMV7M_DCACHE_LINESIZE)
+#  else
+#    define TXDMA_BUF_SIZE(b)   (b)
+#    define TXDMA_BUF_ALIGN
+#  endif
 #endif
 
 /****************************************************************************
@@ -169,14 +193,14 @@ struct up_dev_s
   /* TX DMA state */
 
 #ifdef SERIAL_HAVE_TXDMA
-  const uint32_t  txdma_channel; /* DMA channel assigned */
+  const uint8_t   txdma_reqid;   /* DMAMUX request ID for TX */
   DMA_HANDLE      txdma;         /* currently-open transmit DMA stream */
 #endif
 
   /* RX DMA state */
 
 #ifdef SERIAL_HAVE_RXDMA
-  const uint32_t  rxdma_channel; /* DMA channel assigned */
+  const uint8_t   rxdma_reqid;   /* DMAMUX request ID for RX */
   DMA_HANDLE      rxdma;         /* currently-open receive DMA stream */
   bool            rxenable;      /* DMA-based reception en/disable */
   uint32_t        rxdmanext;     /* Next byte in the DMA buffer to be read */
@@ -281,7 +305,6 @@ static const struct uart_ops_s g_uart_ops_rxtx_dma =
   .dmasend        = up_dma_send,
   .txready        = up_txready,
   .txempty        = up_txempty,
-  .dmatxavail     = up_dma_txavailable,
 };
 #endif
 
@@ -354,65 +377,113 @@ static const struct uart_ops_s g_uart_ops_no_dma =
 
 #ifdef CONFIG_GD32H7_USART0_SERIALDRIVER
 static char g_usart0rxbuffer[CONFIG_USART0_RXBUFSIZE];
+#  ifdef CONFIG_GD32H7_USART0_TXDMA
+static char g_usart0txbuffer[TXDMA_BUF_SIZE(CONFIG_USART0_TXBUFSIZE)]
+  TXDMA_BUF_ALIGN;
+#  else
 static char g_usart0txbuffer[CONFIG_USART0_TXBUFSIZE];
+#  endif
 #  ifdef CONFIG_GD32H7_USART0_RXDMA
-static char g_usart0rxfifo[RXDMA_BUFFER_SIZE];
+static char g_usart0rxfifo[RXDMA_BUFFER_SIZE]
+  RXDMA_BUFFER_ALIGN;
 #  endif
 #endif
 
 #ifdef CONFIG_GD32H7_USART1_SERIALDRIVER
 static char g_usart1rxbuffer[CONFIG_USART1_RXBUFSIZE];
+#  ifdef CONFIG_GD32H7_USART1_TXDMA
+static char g_usart1txbuffer[TXDMA_BUF_SIZE(CONFIG_USART1_TXBUFSIZE)]
+  TXDMA_BUF_ALIGN;
+#  else
 static char g_usart1txbuffer[CONFIG_USART1_TXBUFSIZE];
+#  endif
 #  ifdef CONFIG_GD32H7_USART1_RXDMA
-static char g_usart1rxfifo[RXDMA_BUFFER_SIZE];
+static char g_usart1rxfifo[RXDMA_BUFFER_SIZE]
+  RXDMA_BUFFER_ALIGN;
 #  endif
 #endif
 
 #ifdef CONFIG_GD32H7_USART2_SERIALDRIVER
 static char g_usart2rxbuffer[CONFIG_USART2_RXBUFSIZE];
+#  ifdef CONFIG_GD32H7_USART2_TXDMA
+static char g_usart2txbuffer[TXDMA_BUF_SIZE(CONFIG_USART2_TXBUFSIZE)]
+  TXDMA_BUF_ALIGN;
+#  else
 static char g_usart2txbuffer[CONFIG_USART2_TXBUFSIZE];
+#  endif
 #  ifdef CONFIG_GD32H7_USART2_RXDMA
-static char g_usart2rxfifo[RXDMA_BUFFER_SIZE];
+static char g_usart2rxfifo[RXDMA_BUFFER_SIZE]
+  RXDMA_BUFFER_ALIGN;
 #  endif
 #endif
 
 #ifdef CONFIG_GD32H7_UART3_SERIALDRIVER
 static char g_uart3rxbuffer[CONFIG_UART3_RXBUFSIZE];
+#  ifdef CONFIG_GD32H7_UART3_TXDMA
+static char g_uart3txbuffer[TXDMA_BUF_SIZE(CONFIG_UART3_TXBUFSIZE)]
+  TXDMA_BUF_ALIGN;
+#  else
 static char g_uart3txbuffer[CONFIG_UART3_TXBUFSIZE];
+#  endif
 #  ifdef CONFIG_GD32H7_UART3_RXDMA
-static char g_uart3rxfifo[RXDMA_BUFFER_SIZE];
+static char g_uart3rxfifo[RXDMA_BUFFER_SIZE]
+  RXDMA_BUFFER_ALIGN;
 #  endif
 #endif
 
 #ifdef CONFIG_GD32H7_UART4_SERIALDRIVER
 static char g_uart4rxbuffer[CONFIG_UART4_RXBUFSIZE];
+#  ifdef CONFIG_GD32H7_UART4_TXDMA
+static char g_uart4txbuffer[TXDMA_BUF_SIZE(CONFIG_UART4_TXBUFSIZE)]
+  TXDMA_BUF_ALIGN;
+#  else
 static char g_uart4txbuffer[CONFIG_UART4_TXBUFSIZE];
+#  endif
 #  ifdef CONFIG_GD32H7_UART4_RXDMA
-static char g_uart4rxfifo[RXDMA_BUFFER_SIZE];
+static char g_uart4rxfifo[RXDMA_BUFFER_SIZE]
+  RXDMA_BUFFER_ALIGN;
 #  endif
 #endif
 
 #ifdef CONFIG_GD32H7_USART5_SERIALDRIVER
 static char g_usart5rxbuffer[CONFIG_USART5_RXBUFSIZE];
+#  ifdef CONFIG_GD32H7_USART5_TXDMA
+static char g_usart5txbuffer[TXDMA_BUF_SIZE(CONFIG_USART5_TXBUFSIZE)]
+  TXDMA_BUF_ALIGN;
+#  else
 static char g_usart5txbuffer[CONFIG_USART5_TXBUFSIZE];
+#  endif
 #  ifdef CONFIG_GD32H7_USART5_RXDMA
-static char g_usart5rxfifo[RXDMA_BUFFER_SIZE];
+static char g_usart5rxfifo[RXDMA_BUFFER_SIZE]
+  RXDMA_BUFFER_ALIGN;
 #  endif
 #endif
 
 #ifdef CONFIG_GD32H7_UART6_SERIALDRIVER
 static char g_uart6rxbuffer[CONFIG_UART6_RXBUFSIZE];
+#  ifdef CONFIG_GD32H7_UART6_TXDMA
+static char g_uart6txbuffer[TXDMA_BUF_SIZE(CONFIG_UART6_TXBUFSIZE)]
+  TXDMA_BUF_ALIGN;
+#  else
 static char g_uart6txbuffer[CONFIG_UART6_TXBUFSIZE];
+#  endif
 #  ifdef CONFIG_GD32H7_UART6_RXDMA
-static char g_uart6rxfifo[RXDMA_BUFFER_SIZE];
+static char g_uart6rxfifo[RXDMA_BUFFER_SIZE]
+  RXDMA_BUFFER_ALIGN;
 #  endif
 #endif
 
 #ifdef CONFIG_GD32H7_UART7_SERIALDRIVER
 static char g_uart7rxbuffer[CONFIG_UART7_RXBUFSIZE];
+#  ifdef CONFIG_GD32H7_UART7_TXDMA
+static char g_uart7txbuffer[TXDMA_BUF_SIZE(CONFIG_UART7_TXBUFSIZE)]
+  TXDMA_BUF_ALIGN;
+#  else
 static char g_uart7txbuffer[CONFIG_UART7_TXBUFSIZE];
+#  endif
 #  ifdef CONFIG_GD32H7_UART7_RXDMA
-static char g_uart7rxfifo[RXDMA_BUFFER_SIZE];
+static char g_uart7rxfifo[RXDMA_BUFFER_SIZE]
+  RXDMA_BUFFER_ALIGN;
 #  endif
 #endif
 
@@ -443,10 +514,10 @@ static struct up_dev_s g_usart0priv =
   .cts_gpio       = GPIO_USART0_CTS,
 #endif
 #ifdef CONFIG_GD32H7_USART0_TXDMA
-  .txdma_channel  = DMA_CHANNEL_USART0_TX,
+  .txdma_reqid    = DMA_REQUEST_USART0_TX,
 #endif
 #ifdef CONFIG_GD32H7_USART0_RXDMA
-  .rxdma_channel  = DMA_CHANNEL_USART0_RX,
+  .rxdma_reqid    = DMA_REQUEST_USART0_RX,
   .rxfifo         = g_usart0rxfifo,
 #endif
 
@@ -473,14 +544,14 @@ static struct uart_dev_s g_usart0port =
   },
   .xmit     =
   {
-    .size   = CONFIG_USART0_TXBUFSIZE,
+    .size   = sizeof(g_usart0txbuffer),
     .buffer = g_usart0txbuffer,
   },
 #if defined(CONFIG_GD32H7_USART0_RXDMA) && defined(CONFIG_GD32H7_USART0_TXDMA)
   .ops      = &g_uart_ops_rxtx_dma,
 #elif defined(CONFIG_GD32H7_USART0_RXDMA) && !defined(CONFIG_GD32H7_USART0_TXDMA)
   .ops      = &g_uart_ops_rx_dma,
-#elif !defined(CONFIG_GD32H7_USART0_TXDMA) && defined(CONFIG_GD32H7_USART0_TXDMA)
+#elif !defined(CONFIG_GD32H7_USART0_RXDMA) && defined(CONFIG_GD32H7_USART0_TXDMA)
   .ops      = &g_uart_ops_tx_dma,
 #else
   .ops      = &g_uart_ops_no_dma,
@@ -513,10 +584,10 @@ static struct up_dev_s g_usart1priv =
   .cts_gpio       = GPIO_USART1_CTS,
 #endif
 #ifdef CONFIG_GD32H7_USART1_TXDMA
-  .txdma_channel  = DMA_CHANNEL_USART1_TX,
+  .txdma_reqid    = DMA_REQUEST_USART1_TX,
 #endif
 #ifdef CONFIG_GD32H7_USART1_RXDMA
-  .rxdma_channel  = DMA_CHANNEL_USART1_RX,
+  .rxdma_reqid    = DMA_REQUEST_USART1_RX,
   .rxfifo         = g_usart1rxfifo,
 #endif
 
@@ -543,7 +614,7 @@ static struct uart_dev_s g_usart1port =
   },
   .xmit     =
   {
-    .size   = CONFIG_USART1_TXBUFSIZE,
+    .size   = sizeof(g_usart1txbuffer),
     .buffer = g_usart1txbuffer,
   },
 #if defined(CONFIG_GD32H7_USART1_RXDMA) && defined(CONFIG_GD32H7_USART1_TXDMA)
@@ -583,10 +654,10 @@ static struct up_dev_s g_usart2priv =
   .cts_gpio       = GPIO_USART2_CTS,
 #endif
 #ifdef CONFIG_GD32H7_USART2_TXDMA
-  .txdma_channel  = DMA_CHANNEL_USART2_TX,
+  .txdma_reqid    = DMA_REQUEST_USART2_TX,
 #endif
 #ifdef CONFIG_GD32H7_USART2_RXDMA
-  .rxdma_channel  = DMA_CHANNEL_USART2_RX,
+  .rxdma_reqid    = DMA_REQUEST_USART2_RX,
   .rxfifo         = g_usart2rxfifo,
 #endif
 
@@ -613,7 +684,7 @@ static struct uart_dev_s g_usart2port =
   },
   .xmit     =
   {
-    .size   = CONFIG_USART2_TXBUFSIZE,
+    .size   = sizeof(g_usart2txbuffer),
     .buffer = g_usart2txbuffer,
   },
 #if defined(CONFIG_GD32H7_USART2_RXDMA) && defined(CONFIG_GD32H7_USART2_TXDMA)
@@ -654,10 +725,10 @@ static struct up_dev_s g_usart5priv =
   .cts_gpio       = GPIO_USART5_CTS,
 #endif
 #ifdef CONFIG_GD32H7_USART5_TXDMA
-  .txdma_channel  = DMA_CHANNEL_USART5_TX,
+  .txdma_reqid    = DMA_REQUEST_USART5_TX,
 #endif
 #ifdef CONFIG_GD32H7_USART5_RXDMA
-  .rxdma_channel  = DMA_CHANNEL_USART5_RX,
+  .rxdma_reqid    = DMA_REQUEST_USART5_RX,
   .rxfifo         = g_usart5rxfifo,
 #endif
 
@@ -684,7 +755,7 @@ static struct uart_dev_s g_usart5port =
   },
   .xmit     =
   {
-    .size   = CONFIG_USART5_TXBUFSIZE,
+    .size   = sizeof(g_usart5txbuffer),
     .buffer = g_usart5txbuffer,
   },
 #if defined(CONFIG_GD32H7_USART5_RXDMA) && defined(CONFIG_GD32H7_USART5_TXDMA)
@@ -725,10 +796,10 @@ static struct up_dev_s g_uart3priv =
   .cts_gpio       = GPIO_UART3_CTS,
 #endif
 #ifdef CONFIG_GD32H7_UART3_TXDMA
-  .txdma_channel  = DMA_CHANNEL_UART3_TX,
+  .txdma_reqid    = DMA_REQUEST_UART3_TX,
 #endif
 #ifdef CONFIG_GD32H7_UART3_RXDMA
-  .rxdma_channel  = DMA_CHANNEL_UART3_RX,
+  .rxdma_reqid    = DMA_REQUEST_UART3_RX,
   .rxfifo         = g_uart3rxfifo,
 #endif
 
@@ -755,7 +826,7 @@ static struct uart_dev_s g_uart3port =
   },
   .xmit     =
   {
-    .size   = CONFIG_UART3_TXBUFSIZE,
+    .size   = sizeof(g_uart3txbuffer),
     .buffer = g_uart3txbuffer,
   },
 #if defined(CONFIG_GD32H7_UART3_RXDMA) && defined(CONFIG_GD32H7_UART3_TXDMA)
@@ -796,10 +867,10 @@ static struct up_dev_s g_uart4priv =
   .cts_gpio       = GPIO_UART4_CTS,
 #endif
 #ifdef CONFIG_GD32H7_UART4_TXDMA
-  .txdma_channel  = DMA_CHANNEL_UART4_TX,
+  .txdma_reqid    = DMA_REQUEST_UART4_TX,
 #endif
 #ifdef CONFIG_GD32H7_UART4_RXDMA
-  .rxdma_channel  = DMA_CHANNEL_UART4_RX,
+  .rxdma_reqid    = DMA_REQUEST_UART4_RX,
   .rxfifo         = g_uart4rxfifo,
 #endif
 
@@ -826,7 +897,7 @@ static struct uart_dev_s g_uart4port =
   },
   .xmit     =
   {
-    .size   = CONFIG_UART4_TXBUFSIZE,
+    .size   = sizeof(g_uart4txbuffer),
     .buffer = g_uart4txbuffer,
   },
 #if defined(CONFIG_GD32H7_UART4_RXDMA) && defined(CONFIG_GD32H7_UART4_TXDMA)
@@ -867,10 +938,10 @@ static struct up_dev_s g_uart6priv =
   .cts_gpio       = GPIO_UART6_CTS,
 #endif
 #ifdef CONFIG_GD32H7_UART6_TXDMA
-  .txdma_channel  = DMA_CHANNEL_UART6_TX,
+  .txdma_reqid    = DMA_REQUEST_UART6_TX,
 #endif
 #ifdef CONFIG_GD32H7_UART6_RXDMA
-  .rxdma_channel  = DMA_CHANNEL_UART6_RX,
+  .rxdma_reqid    = DMA_REQUEST_UART6_RX,
   .rxfifo         = g_uart6rxfifo,
 #endif
 
@@ -897,7 +968,7 @@ static struct uart_dev_s g_uart6port =
   },
   .xmit     =
   {
-    .size   = CONFIG_UART6_TXBUFSIZE,
+    .size   = sizeof(g_uart6txbuffer),
     .buffer = g_uart6txbuffer,
   },
 #if defined(CONFIG_GD32H7_UART6_RXDMA) && defined(CONFIG_GD32H7_UART6_TXDMA)
@@ -938,10 +1009,10 @@ static struct up_dev_s g_uart7priv =
   .cts_gpio       = GPIO_UART7_CTS,
 #endif
 #ifdef CONFIG_GD32H7_UART7_TXDMA
-  .txdma_channel  = DMA_CHANNEL_UART7_TX,
+  .txdma_reqid    = DMA_REQUEST_UART7_TX,
 #endif
 #ifdef CONFIG_GD32H7_UART7_RXDMA
-  .rxdma_channel  = DMA_CHANNEL_UART7_RX,
+  .rxdma_reqid    = DMA_REQUEST_UART7_RX,
   .rxfifo         = g_uart7rxfifo,
 #endif
 
@@ -968,7 +1039,7 @@ static struct uart_dev_s g_uart7port =
   },
   .xmit     =
   {
-    .size   = CONFIG_UART7_TXBUFSIZE,
+    .size   = sizeof(g_uart7txbuffer),
     .buffer = g_uart7txbuffer,
   },
 #if defined(CONFIG_GD32H7_UART7_RXDMA) && defined(CONFIG_GD32H7_UART7_TXDMA)
@@ -1250,7 +1321,7 @@ static void gd32_usart_configure(struct uart_dev_s *dev)
   regval &= ~(USART_CTL2_RTSEN | USART_CTL2_CTSEN);
 
 #if defined(CONFIG_SERIAL_IFLOWCONTROL) && \
-   !defined(CONFIG_GD32F4_FLOWCONTROL_BROKEN)
+  !defined(CONFIG_GD32H7_FLOWCONTROL_BROKEN)
   if (priv->iflow && (priv->rts_gpio != 0))
     {
       regval |= USART_CTL2_RTSEN;
@@ -1298,7 +1369,7 @@ static int up_setup(struct uart_dev_s *dev)
     {
       uint32_t config = priv->rts_gpio;
 
-#ifdef CONFIG_GD32F4_FLOWCONTROL_BROKEN
+#ifdef CONFIG_GD32H7_FLOWCONTROL_BROKEN
       /* Instead of letting hardware manage this pin, we will bitbang */
 
       config = (config & ~GPIO_CFG_MODE_MASK) | GPIO_CFG_OUTPUT;
@@ -1380,60 +1451,84 @@ static int up_dma_setup(struct uart_dev_s *dev)
 #if defined(SERIAL_HAVE_TXDMA)
   /* Acquire the Tx DMA channel.  This should always succeed. */
 
-  if (priv->txdma_channel != 0)
+  if (priv->txdma_reqid != 0)
     {
-      priv->txdma = gd32_dma_channel_alloc(priv->txdma_channel);
+      priv->txdma = gd32_dma_channel_alloc(priv->txdma_reqid);
+      if (priv->txdma == NULL)
+        {
+          return -EBUSY;
+        }
 
-      /* Enable DMA request for transmission */
-
-      modifyreg32(priv->usartbase + GD32_USART_CTL2_OFFSET,
-                  0, USART_CTL2_DENT);
+      /* NOTE: Do NOT enable DENT here. DENT will be toggled in
+       * up_dma_send() to properly trigger DMA requests on H7.
+       */
     }
 #endif
 
 #if defined(SERIAL_HAVE_RXDMA)
   /* Acquire the DMA channel.  This should always succeed. */
 
-  if (priv->rxdma_channel != 0)
+  if (priv->rxdma_reqid != 0)
     {
-      dma_single_data_parameter_struct dma_init_struct;
+      struct gd32_dma_config_s dma_config;
 
-      priv->rxdma = gd32_dma_channel_alloc(priv->rxdma_channel);
+      priv->rxdma = gd32_dma_channel_alloc(priv->rxdma_reqid);
+      if (priv->rxdma == NULL)
+        {
+#if defined(SERIAL_HAVE_TXDMA)
+          /* Free TX channel if RX allocation failed */
 
-      dma_init_struct.direction = DMA_PERIPH_TO_MEMORY;
-      dma_init_struct.memory0_addr = (uint32_t)priv->rxfifo;
-      dma_init_struct.number = RXDMA_BUFFER_SIZE;
-      dma_init_struct.periph_addr = priv->usartbase + GD32_USART_DATA_OFFSET;
-      dma_init_struct.periph_memory_width = DMA_WIDTH_8BITS_SELECT;
-      dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
-      dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_ENABLE;
-      dma_init_struct.priority = USART_DMA_PRIO;
-      dma_init_struct.circular_mode = DMA_CIRCULAR_MODE_ENABLE;
+          if (priv->txdma != NULL)
+            {
+              gd32_dma_channel_free(priv->txdma);
+              priv->txdma = NULL;
+            }
+#endif
+
+          return -EBUSY;
+        }
+
+      dma_config.direction    = DMA_PERIPH_TO_MEMORY;
+      dma_config.memory_addr  = (uint32_t)priv->rxfifo;
+      dma_config.number       = RXDMA_BUFFER_SIZE;
+      dma_config.periph_addr  = priv->usartbase +
+                                GD32_USART_RDATA_OFFSET;
+      dma_config.periph_width = DMA_PERIPH_WIDTH_8BIT;
+      dma_config.memory_width = DMA_MEMORY_WIDTH_8BIT;
+      dma_config.periph_inc   = false;
+      dma_config.memory_inc   = true;
+      dma_config.priority     = USART_DMA_PRIO;
+      dma_config.circular     = true;
 
       /* Configure for circular DMA reception into the RX fifo */
 
-      gd32_dma_setup(priv->rxdma, &dma_init_struct, 1);
+      gd32_dma_setup(priv->rxdma, &dma_config);
 
-      /* Reset our DMA shadow pointer to match the address just
-       * programmed above.
+      /* Reset our DMA shadow pointer and Rx data availability count
+       * to match the address just programmed above.
        */
 
       priv->rxdmanext = 0;
+#ifdef CONFIG_ARMV7M_DCACHE
+      priv->rxdmaavail = 0;
+#endif
+
+      /* Start the DMA channel FIRST, then enable USART DMA
+       * (per GD32 official demo sequence)
+       * Enable half-transfer and full-transfer interrupts for circular mode
+       */
+
+      gd32_dma_start(priv->rxdma, up_dma_rx_callback, (void *)dev,
+                     DMA_CHXCTL_HTFIE | DMA_CHXCTL_FTFIE);
 
       /* Enable receive Rx DMA for the UART */
 
       modifyreg32(priv->usartbase + GD32_USART_CTL2_OFFSET,
                   0, USART_CTL2_DENR);
-
-      /* Start the DMA channel, and arrange for callbacks at the half and
-       * full points in the FIFO.  This ensures that we have half a FIFO
-       * worth of time to claim bytes before they are overwritten.
-       */
-
-      gd32_dma_start(priv->rxdma, up_dma_rx_callback, (void *)dev,
-                     USART_DMA_INTEN);
     }
 #endif
+
+  priv->initialized = true;
 
   return OK;
 }
@@ -1505,7 +1600,10 @@ static void up_dma_shutdown(struct uart_dev_s *dev)
 {
   struct up_dev_s *priv = (struct up_dev_s *)dev->priv;
 
-  /* Stop the DMA channels */
+  /* Disable USART DMA requests first */
+
+  modifyreg32(priv->usartbase + GD32_USART_CTL2_OFFSET,
+              USART_CTL2_DENR | USART_CTL2_DENT, 0);
 
 #ifdef SERIAL_HAVE_RXDMA
   if (priv->rxdma != NULL)
@@ -1522,14 +1620,15 @@ static void up_dma_shutdown(struct uart_dev_s *dev)
       gd32_dma_stop(priv->txdma);
       gd32_dma_channel_free(priv->txdma);
       priv->txdma = NULL;
+
+      dev->dmatx.length = 0;
+      dev->dmatx.nlength = 0;
     }
 #endif
 
-  /* Disable DMA */
+  /* Perform the normal UART shutdown after DMA is quiesced */
 
-  up_serialout(priv, GD32_USART_CTL2_OFFSET,
-               up_serialin(priv, GD32_USART_CTL2_OFFSET) &
-               ~(USART_CTL2_DENT | USART_CTL2_DENR));
+  up_shutdown(dev);
 }
 #endif
 
@@ -1637,8 +1736,7 @@ static int up_interrupt(int irq, void *context, void *arg)
             USART_CTL0_TBEIE))
         {
           gd32_gpio_write(priv->rs485_dir_gpio, !priv->rs485_dir_polarity);
-          priv->ie &= ~USART_CTL0_TCIE
-          priv->ie |= (0x0f000000 & USART_CTL0_TCIE);
+          priv->ie &= ~USART_CTL0_TCIE;
           up_restoreusartint(priv, priv->ie);
         }
 #endif
@@ -1654,20 +1752,26 @@ static int up_interrupt(int irq, void *context, void *arg)
         }
 
 #ifdef SERIAL_HAVE_RXDMA
+      /* Handle IDLE interrupt for DMA reception */
+
       if (((priv->sr & USART_STAT_IDLEF) != 0) &&
-          ((priv->ie & USART_CTL0_IDLIE) ==
-            USART_CTL0_IDLIE))
+          ((priv->ie & USART_CTL0_IDLEIE) != 0))
         {
+          /* Process received data from DMA buffer first */
+
           uart_recvchars(dev);
-          up_serialin(priv, GD32_USART_RDATA_OFFSET);
+
+          /* Clear IDLE flag by writing to INTC register */
+
+          up_serialout(priv, GD32_USART_INTC_OFFSET, USART_INTC_IDLEC);
           handled = true;
         }
 #endif
 
       /* Clear USART err flags. */
 
-      else if ((priv->sr & (USART_STAT_ORERR | USART_STAT_NERR | \
-                            USART_STAT_FERR | USART_STAT_PERR)) != 0)
+      if ((priv->sr & (USART_STAT_ORERR | USART_STAT_NERR | \
+                       USART_STAT_FERR | USART_STAT_PERR)) != 0)
         {
           up_serialin(priv, GD32_USART_RDATA_OFFSET);
           uint32_t regval = (USART_INTC_OREC | USART_INTC_NEC | \
@@ -2194,16 +2298,57 @@ static bool up_rxflowcontrol(struct uart_dev_s *dev,
 static int up_dma_receive(struct uart_dev_s *dev, unsigned int *status)
 {
   struct up_dev_s *priv = (struct up_dev_s *)dev->priv;
+  uint32_t nextrx = up_dma_nextrx(priv);
   int c = 0;
 
-  if (up_dma_nextrx(priv) != priv->rxdmanext)
+  /* Check if more data is available */
+
+  if (nextrx != priv->rxdmanext)
     {
-      /* Invalidate the DMA buffer */
+#ifdef CONFIG_ARMV7M_DCACHE
+      /* If the data cache is enabled, then we will also need to manage
+       * cache coherency.  Are any bytes available in the currently coherent
+       * region of the data cache?
+       */
 
-      up_invalidate_dcache((uintptr_t)priv->rxfifo,
-                           (uintptr_t)priv->rxfifo + RXDMA_BUFFER_SIZE);
+      if (priv->rxdmaavail == 0)
+        {
+          uint32_t rxdmaavail;
+          uintptr_t addr;
 
-      /* Read from the DMA buffer */
+          /* No.. then we will have to invalidate additional space in the
+           * Rx DMA buffer.
+           */
+
+          if (nextrx > priv->rxdmanext)
+            {
+              /* Number of available bytes */
+
+              rxdmaavail = nextrx - priv->rxdmanext;
+            }
+          else
+            {
+              /* Number of available bytes up to the end of RXDMA buffer */
+
+              rxdmaavail = RXDMA_BUFFER_SIZE - priv->rxdmanext;
+            }
+
+          /* Invalidate the DMA buffer range */
+
+          addr = (uintptr_t)&priv->rxfifo[priv->rxdmanext];
+          up_invalidate_dcache(addr, addr + rxdmaavail);
+
+          /* We don't need to invalidate the data cache for the next
+           * rxdmaavail number of next bytes.
+           */
+
+          priv->rxdmaavail = rxdmaavail;
+        }
+
+      priv->rxdmaavail--;
+#endif
+
+      /* Now read from the DMA buffer */
 
       c = priv->rxfifo[priv->rxdmanext];
 
@@ -2248,19 +2393,27 @@ static void up_dma_rxint(struct uart_dev_s *dev, bool enable)
   ie = priv->ie;
   if (enable)
     {
+      /* Clear any stale IDLE condition before enabling the interrupt.
+       * Otherwise we may take an immediate interrupt unrelated to new RX
+       * traffic and misread the DMA state.
+       */
+
+      up_serialout(priv, GD32_USART_INTC_OFFSET, USART_INTC_IDLEC);
+
       /* Receive an interrupt when the DMA receive data. */
 
-      ie |= USART_CTL0_IDLIE;
+      ie |= USART_CTL0_IDLEIE;
     }
   else
     {
       ie &= ~(USART_CTL0_RBNEIE | USART_CTL0_PERRIE |
-              USART_CTL2_ERRIE);
+              USART_CTL0_IDLEIE | USART_CTL2_ERRIE);
     }
 
   /* Then set the new interrupt state */
 
   up_restoreusartint(priv, ie);
+
   leave_critical_section(flags);
 }
 #endif
@@ -2310,35 +2463,42 @@ static void up_dma_tx_callback(DMA_HANDLE handle, uint16_t status, void *arg)
       dev->dmatx.nbytes += dev->dmatx.length;
       if (dev->dmatx.nlength)
         {
-          /* Set up DMA on next buffer */
+          /* Disable DENT before DMA reconfiguration */
 
-          dma_single_data_parameter_struct dma_init_struct;
+          modifyreg32(priv->usartbase + GD32_USART_CTL2_OFFSET,
+                      USART_CTL2_DENT, 0);
 
-          dma_init_struct.direction = DMA_MEMORY_TO_PERIPH;
-          dma_init_struct.memory0_addr = (uint32_t)dev->dmatx.nbuffer;
-          dma_init_struct.number = dev->dmatx.nlength;
-          dma_init_struct.periph_addr = priv->usartbase +
-                                        GD32_USART_DATA_OFFSET;
-          dma_init_struct.periph_memory_width = DMA_WIDTH_8BITS_SELECT;
-          dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
-          dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_ENABLE;
-          dma_init_struct.priority = USART_DMA_PRIO;
-          dma_init_struct.circular_mode = DMA_CIRCULAR_MODE_DISABLE;
+          struct gd32_dma_config_s dma_config;
 
-          /* Configure DMA for USART transmit */
+          dma_config.direction    = DMA_MEMORY_TO_PERIPH;
+          dma_config.memory_addr  = (uint32_t)dev->dmatx.nbuffer;
+          dma_config.number       = dev->dmatx.nlength;
+          dma_config.periph_addr  = priv->usartbase +
+                                    GD32_USART_TDATA_OFFSET;
+          dma_config.periph_width = DMA_PERIPH_WIDTH_8BIT;
+          dma_config.memory_width = DMA_MEMORY_WIDTH_8BIT;
+          dma_config.periph_inc   = false;
+          dma_config.memory_inc   = true;
+          dma_config.priority     = USART_DMA_PRIO;
+          dma_config.circular     = false;
 
-          gd32_dma_setup(priv->txdma, &dma_init_struct, 1);
+#ifdef CONFIG_ARMV7M_DCACHE
+          up_clean_dcache(
+            (uintptr_t)dev->dmatx.nbuffer,
+            (uintptr_t)dev->dmatx.nbuffer +
+            dev->dmatx.nlength);
+#endif
 
-          /* Set length for the next completion */
+          gd32_dma_setup(priv->txdma, &dma_config);
+          up_serialout(priv, GD32_USART_INTC_OFFSET, USART_INTC_TCC);
 
           dev->dmatx.length  = dev->dmatx.nlength;
           dev->dmatx.nlength = 0;
 
-          /* Start transmission with the callback on DMA completion */
-
           gd32_dma_start(priv->txdma, up_dma_tx_callback,
-                         (void *)dev, USART_DMA_INTEN);
-
+                         (void *)dev, USART_TXDMA_INTEN);
+          modifyreg32(priv->usartbase + GD32_USART_CTL2_OFFSET,
+                      0, USART_CTL2_DENT);
           return;
         }
     }
@@ -2346,8 +2506,6 @@ static void up_dma_tx_callback(DMA_HANDLE handle, uint16_t status, void *arg)
     {
       dev->dmatx.nbytes += dev->dmatx.length / 2;
     }
-
-  /* Adjust the pointers */
 
   uart_xmitchars_done(dev);
 }
@@ -2365,13 +2523,20 @@ static void up_dma_tx_callback(DMA_HANDLE handle, uint16_t status, void *arg)
 static void up_dma_txavailable(struct uart_dev_s *dev)
 {
   struct up_dev_s *priv = (struct up_dev_s *)dev->priv;
+  irqstate_t flags;
+
+  flags = enter_critical_section();
 
   /* Only send when the DMA is idle */
 
-  if (gd32_dma_tansnum_get(priv->txdma) == 0)
+  if (dev->dmatx.length == 0 &&
+      dev->dmatx.nlength == 0 &&
+      gd32_dma_transnum_get(priv->txdma) == 0)
     {
       uart_xmitchars_dma(dev);
     }
+
+  leave_critical_section(flags);
 }
 #endif
 
@@ -2389,43 +2554,51 @@ static void up_dma_send(struct uart_dev_s *dev)
 {
   struct up_dev_s *priv = (struct up_dev_s *)dev->priv;
 
-  /* We need to stop DMA before reconfiguration */
+  /* Disable DENT and stop DMA before reconfiguration */
 
+  modifyreg32(priv->usartbase + GD32_USART_CTL2_OFFSET, USART_CTL2_DENT, 0);
   gd32_dma_stop(priv->txdma);
-
-  /* Reset the number sent */
 
   dev->dmatx.nbytes = 0;
 
-  /* Make use of setup function to update buffer and its length for
-   * next transfer
-   */
+  struct gd32_dma_config_s dma_config;
 
-  /* Set up DMA on next buffer */
+  dma_config.direction    = DMA_MEMORY_TO_PERIPH;
+  dma_config.memory_addr  = (uint32_t)dev->dmatx.buffer;
+  dma_config.number       = dev->dmatx.length;
+  dma_config.periph_addr  = priv->usartbase +
+                            GD32_USART_TDATA_OFFSET;
+  dma_config.periph_width = DMA_PERIPH_WIDTH_8BIT;
+  dma_config.memory_width = DMA_MEMORY_WIDTH_8BIT;
+  dma_config.periph_inc   = false;
+  dma_config.memory_inc   = true;
+  dma_config.priority     = USART_DMA_PRIO;
+  dma_config.circular     = false;
 
-  dma_single_data_parameter_struct dma_init_struct;
+#ifdef CONFIG_ARMV7M_DCACHE
+  up_clean_dcache((uintptr_t)dev->dmatx.buffer,
+                  (uintptr_t)dev->dmatx.buffer + dev->dmatx.length);
+#endif
 
-  dma_init_struct.direction = DMA_MEMORY_TO_PERIPH;
+  gd32_dma_setup(priv->txdma, &dma_config);
 
-  dma_init_struct.memory0_addr = (uint32_t)dev->dmatx.buffer;
-  dma_init_struct.number = dev->dmatx.length;
-  dma_init_struct.periph_addr = priv->usartbase + GD32_USART_DATA_OFFSET;
-  dma_init_struct.periph_memory_width = DMA_WIDTH_8BITS_SELECT;
-  dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
-  dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_ENABLE;
-  dma_init_struct.priority = USART_DMA_PRIO;
-  dma_init_struct.circular_mode = DMA_CIRCULAR_MODE_DISABLE;
+  /* Clear TC flag before starting DMA (per user manual 25.3.5) */
 
-  /* Configure DMA for USART transmit */
+  up_serialout(priv, GD32_USART_INTC_OFFSET, USART_INTC_TCC);
 
-  gd32_dma_setup(priv->txdma, &dma_init_struct, 1);
-
-  /* Start transmission with the callback on DMA completion */
+  /* Start DMA channel, then enable DENT (per official demo sequence) */
 
   gd32_dma_start(priv->txdma, up_dma_tx_callback,
-                 (void *)dev, USART_DMA_INTEN);
+                 (void *)dev, USART_TXDMA_INTEN);
+  modifyreg32(priv->usartbase + GD32_USART_CTL2_OFFSET, 0, USART_CTL2_DENT);
 
-  while (up_txempty(dev) == 0);
+  /* Match the stable GD32 family DMA TX flow: do not return until the
+   * USART transmitter reports completion for the current DMA submission.
+   */
+
+  while (up_txempty(dev) == 0)
+    {
+    }
 }
 #endif
 
@@ -2475,7 +2648,7 @@ static void up_dma_txint(struct uart_dev_s *dev, bool enable)
  ****************************************************************************/
 
 #if defined(SERIAL_HAVE_RX_DMA) || defined(SERIAL_NOT_HAVE_DMA) || \
-    defined(CONFIG_GD32F4_SERIALBRK_BSDCOMPAT)
+  defined(CONFIG_GD32H7_SERIALBRK_BSDCOMPAT)
 static void up_txint(struct uart_dev_s *dev, bool enable)
 {
   struct up_dev_s *priv = (struct up_dev_s *)dev->priv;
@@ -2748,7 +2921,7 @@ void arm_serialinit(void)
 #ifdef CONSOLE_UART
   uart_register("/dev/console", g_uart_devs[CONSOLE_UART]);
 
-#ifndef CONFIG_GD32F4_SERIAL_DISABLE_REORDERING
+#ifndef CONFIG_GD32H7_SERIAL_DISABLE_REORDERING
   /* If not disabled, register the console UART to ttyS0 and exclude
    * it from initializing it further down
    */
@@ -2777,7 +2950,7 @@ void arm_serialinit(void)
           continue;
         }
 
-#ifndef CONFIG_GD32F4_SERIAL_DISABLE_REORDERING
+#ifndef CONFIG_GD32H7_SERIAL_DISABLE_REORDERING
       /* Don't create a device for the console - we did that above */
 
       if (g_uart_devs[i]->isconsole)
@@ -2812,56 +2985,56 @@ void gd32_serial_dma_poll(void)
 
     flags = enter_critical_section();
 
-#ifdef CONFIG_GD32F4_USART0_RXDMA
+#ifdef CONFIG_GD32H7_USART0_RXDMA
   if (g_usart0priv.rxdma != NULL)
     {
       up_dma_rx_callback(g_usart0priv.rxdma, 0, &g_usart0port);
     }
 #endif
 
-#ifdef CONFIG_GD32F4_USART1_RXDMA
+#ifdef CONFIG_GD32H7_USART1_RXDMA
   if (g_usart1priv.rxdma != NULL)
     {
       up_dma_rx_callback(g_usart1priv.rxdma, 0, &g_usart1port);
     }
 #endif
 
-#ifdef CONFIG_GD32F4_USART2_RXDMA
+#ifdef CONFIG_GD32H7_USART2_RXDMA
   if (g_usart2priv.rxdma != NULL)
     {
       up_dma_rx_callback(g_usart2priv.rxdma, 0, &g_usart2port);
     }
 #endif
 
-#ifdef CONFIG_GD32F4_UART3_RXDMA
+#ifdef CONFIG_GD32H7_UART3_RXDMA
   if (g_uart3priv.rxdma != NULL)
     {
       up_dma_rx_callback(g_uart3priv.rxdma, 0, &g_uart3port);
     }
 #endif
 
-#ifdef CONFIG_GD32F4_UART4_RXDMA
+#ifdef CONFIG_GD32H7_UART4_RXDMA
   if (g_uart4priv.rxdma != NULL)
     {
       up_dma_rx_callback(g_uart4priv.rxdma, 0, &g_uart4port);
     }
 #endif
 
-#ifdef CONFIG_GD32F4_USART5_RXDMA
+#ifdef CONFIG_GD32H7_USART5_RXDMA
   if (g_usart5priv.rxdma != NULL)
     {
       up_dma_rx_callback(g_usart5priv.rxdma, 0, &g_usart5port);
     }
 #endif
 
-#ifdef CONFIG_GD32F4_UART6_RXDMA
+#ifdef CONFIG_GD32H7_UART6_RXDMA
   if (g_uart6priv.rxdma != NULL)
     {
       up_dma_rx_callback(g_uart6priv.rxdma, 0, &g_uart6port);
     }
 #endif
 
-#ifdef CONFIG_GD32F4_UART7_RXDMA
+#ifdef CONFIG_GD32H7_UART7_RXDMA
   if (g_uart7priv.rxdma != NULL)
     {
       up_dma_rx_callback(g_uart7priv.rxdma, 0, &g_uart7port);

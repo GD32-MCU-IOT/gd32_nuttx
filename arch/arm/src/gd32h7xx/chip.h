@@ -49,6 +49,11 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+/* Cache line sizes (bytes) for the Cortex-M7 in GD32H7xx */
+
+#define ARMV7M_DCACHE_LINESIZE 32  /* 32 bytes (8 words) */
+#define ARMV7M_ICACHE_LINESIZE 32  /* 32 bytes (8 words) */
+
 /* Provide the required number of peripheral interrupt vector definitions as
  * well. The definition GD32_IRQ_NEXTINT simply comes from the chip-specific
  * IRQ header file included by arch/gd32h7xx/irq.h.

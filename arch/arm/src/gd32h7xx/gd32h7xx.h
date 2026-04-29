@@ -42,5 +42,6 @@
 #include "gd32h7xx_rcu.h"
 #include "gd32h7xx_syscfg.h"
 #include "gd32h7xx_usart.h"
+#include "gd32h7xx_dma.h"
 
 #endif /* __ARCH_ARM_SRC_GD32H7_GD32H7XX_H */
