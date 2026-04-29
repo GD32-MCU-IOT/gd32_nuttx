@@ -457,7 +457,7 @@ static struct up_dev_s g_usart0priv =
 
 static struct uart_dev_s g_usart0port =
 {
-#if CONSOLE_UART == 0
+#if defined(CONSOLE_UART) && CONSOLE_UART == 0
   .isconsole = true,
 #endif
   .recv      =
@@ -530,7 +530,7 @@ static struct up_dev_s g_usart1priv =
 
 static struct uart_dev_s g_usart1port =
 {
-#if CONSOLE_UART == 1
+#if defined(CONSOLE_UART) && CONSOLE_UART == 1
   .isconsole = true,
 #endif
   .recv      =
@@ -603,7 +603,7 @@ static struct up_dev_s g_usart2priv =
 
 static struct uart_dev_s g_usart2port =
 {
-#if CONSOLE_UART == 2
+#if defined(CONSOLE_UART) && CONSOLE_UART == 2
   .isconsole = true,
 #endif
   .recv      =
@@ -676,7 +676,7 @@ static struct up_dev_s g_uart3priv =
 
 static struct uart_dev_s g_uart3port =
 {
-#if CONSOLE_UART == 3
+#if defined(CONSOLE_UART) && CONSOLE_UART == 3
   .isconsole = true,
 #endif
   .recv      =
@@ -749,7 +749,7 @@ static struct up_dev_s g_uart4priv =
 
 static struct uart_dev_s g_uart4port =
 {
-#if CONSOLE_UART == 4
+#if defined(CONSOLE_UART) && CONSOLE_UART == 4
   .isconsole = true,
 #endif
   .recv      =

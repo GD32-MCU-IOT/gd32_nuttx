@@ -68,6 +68,11 @@
 #endif
 
 #include "gd32e113v_eval.h"
+#ifdef CONFIG_GD32E11X_USBFS
+#  include "gd32e11x_usbfs.h"
+#endif
+
+#include "gd32e113v_eval.h"
 
 /****************************************************************************
  * Public Functions
@@ -367,6 +372,19 @@ int gd32_bringup(void)
 #  endif
         }
     }
+#endif
+
+#ifdef CONFIG_GD32E11X_USBFS
+  /* Initialize USB */
+
+  gd32_usbinitialize();
+#ifdef CONFIG_USBHOST
+  ret = gd32_usbhost_initialize();
+  if (ret != OK)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to initialize USB host: %d\n", ret);
+    }
+#endif
 #endif
 
   UNUSED(ret);
