@@ -102,6 +102,28 @@
 #define GPIO_BTN_USER      (GPIO_CFG_INPUT | GPIO_CFG_CTL_INFLOAT | GPIO_CFG_EXTI | \
                             GPIO_CFG_PORT_B | GPIO_CFG_PIN_14)
 
+/* USB FS
+ *
+ * The GD32E113VB-EVAL board USB FS connector uses the following pins:
+ *   PA9  - VBUS sense input (optional, active high)
+ *   PD13 - PWRON / VBUS power switch enable (active low, host mode only)
+ *   PA11 - USB_DM  } handled automatically by the USB peripheral
+ *   PA12 - USB_DP  }
+ */
+#ifdef CONFIG_GD32E11X_USBFS
+/* NOTE: GPIO_USBFS_VBUS (PA9) conflicts with USART0_TX (PA9).
+ * In host mode VBUS sensing is not needed; use USBFS_GCCFG_VBUSIG instead.
+ * Only define GPIO_USBFS_VBUS when USART0 console is NOT used.
+ */
+#if !defined(CONFIG_USART0_SERIAL_CONSOLE)
+#define GPIO_USBFS_VBUS   (GPIO_CFG_INPUT | GPIO_CFG_CTL_INFLOAT | \
+                              GPIO_CFG_PORT_A | GPIO_CFG_PIN_9)
+#endif
+#define GPIO_USBFS_PWRON  (GPIO_CFG_OUTPUT | GPIO_CFG_CTL_OUTOD | \
+                              GPIO_CFG_SPEED_50MHZ | GPIO_CFG_OUTPUT_SET | \
+                              GPIO_CFG_PORT_D | GPIO_CFG_PIN_13)
+#endif
+
 /* GPIO pins used by the GPIO Subsystem */
 
 #define BOARD_NGPIOIN     1 /* Amount of GPIO Input pins */
@@ -207,6 +229,9 @@ void gd32_spidev_initialize(void);
 
 #ifdef CONFIG_GD32E11X_USBFS
 void gd32_usbinitialize(void);
+#endif
+#if defined(CONFIG_USBHOST) && defined(CONFIG_GD32E11X_USBFS)
+int gd32_usbhost_initialize(void);
 #endif
 
 /****************************************************************************

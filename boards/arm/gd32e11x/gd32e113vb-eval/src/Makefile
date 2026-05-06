@@ -38,6 +38,18 @@ ifeq ($(CONFIG_ARCH_BUTTONS),y)
 CSRCS += gd32e11x_buttons.c
 endif
 
+ifeq ($(CONFIG_ADC),y)
+CSRCS += gd32e11x_adc.c
+endif
+
+ifeq ($(CONFIG_DAC),y)
+CSRCS += gd32e11x_dac.c
+endif
+
+ifeq ($(CONFIG_GD32E11X_CRC),y)
+CSRCS += gd32e11x_crc.c
+endif
+
 ifeq ($(CONFIG_SPI),y)
 CSRCS += gd32e11x_spi.c
 endif
@@ -54,20 +66,12 @@ ifeq ($(CONFIG_MTD_GD25),y)
 CSRCS += gd32e11x_gd25.c
 endif
 
-ifneq ($(CONFIG_WATCHDOG),)
-CSRCS += gd32e11x_wdt.c
-endif
-
-ifeq ($(CONFIG_GD32E11X_CRC),y)
-CSRCS += gd32e11x_crc.c
-endif
-
 ifeq ($(CONFIG_GD32E11X_RTC),y)
 CSRCS += gd32e11x_rtc.c
 endif
 
-ifeq ($(CONFIG_ADC),y)
-CSRCS += gd32e11x_adc.c
+ifneq ($(CONFIG_WATCHDOG),)
+CSRCS += gd32e11x_wdt.c
 endif
 
 ifeq ($(CONFIG_PWM),y)
@@ -78,8 +82,8 @@ ifeq ($(CONFIG_TIMER),y)
 CSRCS += gd32e11x_timer.c
 endif
 
-ifeq ($(CONFIG_DAC),y)
-CSRCS += gd32e11x_dac.c
+ifeq ($(CONFIG_GD32E11X_USBFS),y)
+CSRCS += gd32e11x_usb.c
 endif
 
 include $(TOPDIR)/boards/Board.mk
