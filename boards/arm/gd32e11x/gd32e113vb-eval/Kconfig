@@ -187,4 +187,26 @@ config GD32E113VB_EVAL_RTCTEST
 		Tests counter read/write and (if CONFIG_RTC_ALARM is set)
 		alarm set/wait/cancel.  Results are printed via syslog.
 
+menu "GD32E113VB-EVAL USB Configuration"
+
+if GD32E11X_USBFS
+
+config GD32E113VB_USBHOST_PRIO
+	int "USB host task priority"
+	default 100
+	depends on USBHOST
+	---help---
+		Priority of the USB host task. Default is 100.
+
+config GD32E113VB_USBHOST_STACKSIZE
+	int "USB host task stack size"
+	default 1024
+	depends on USBHOST
+	---help---
+		Stack size for the USB host task. Default is 1024 bytes.
+
+endif # GD32E11X_USBFS
+
+endmenu # GD32E113VB-EVAL USB Configuration
+
 endif # ARCH_BOARD_GD32E113VB_EVAL

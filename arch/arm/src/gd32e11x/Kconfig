@@ -520,6 +520,36 @@ config GD32E11X_USBFS
 	bool "USBFS"
 	default n
 	depends on GD32E11X_HAVE_USBFS
+	select USBHOST_HAVE_ASYNCH if USBHOST
+
+if GD32E11X_USBFS
+
+config GD32E11X_USBFS_RXFIFO_SIZE
+	int "RxFIFO size (words)"
+	default 128
+	---help---
+		Size of the receive FIFO in 32-bit words.
+		Used in both host and device modes.
+		Total FIFO space is 320 words. Default is 128 words (512 bytes).
+
+config GD32E11X_USBFS_NPTXFIFO_SIZE
+	int "Non-periodic TxFIFO size (words)"
+	default 96
+	depends on USBHOST
+	---help---
+		Size of the non-periodic TxFIFO in 32-bit words (host mode).
+		Default is 96 words.
+
+config GD32E11X_USBFS_PTXFIFO_SIZE
+	int "Periodic TxFIFO size (words)"
+	default 96
+	depends on USBHOST
+	---help---
+		Size of the periodic TxFIFO in 32-bit words (host mode).
+		Default is 96 words.
+
+
+endif # GD32E11X_USBFS
 
 config GD32E11X_EXMC
 	bool "EXMC"

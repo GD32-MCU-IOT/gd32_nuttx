@@ -44,6 +44,13 @@ ifeq ($(CONFIG_ARCH_BUTTONS),y)
 CSRCS += gd32h7xx_buttons.c
 endif
 
+ifeq ($(CONFIG_GD32H7_SPI),y)
+CSRCS += gd32h7xx_spi.c
+endif
+
+ifeq ($(CONFIG_MTD_GD25),y)
+CSRCS += gd32h7xx_gd25.c
+endif
 
 ifeq ($(CONFIG_ARCH_BOARD_GD32H7XX_CUSTOM_CLOCKCONFIG),y)
 CSRCS += gd32h7xx_clockconfig.c

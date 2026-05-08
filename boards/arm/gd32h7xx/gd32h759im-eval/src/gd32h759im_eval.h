@@ -49,8 +49,8 @@
 #endif
 
 #ifdef CONFIG_FS_NXFFS
-#  ifndef CONFIG_GD32F4_NXFFS_MOUNTPT
-#    define CONFIG_GD32F4_NXFFS_MOUNTPT "/mnt/gd32nxffs"
+#  ifndef CONFIG_GD32H7_NXFFS_MOUNTPT
+#    define CONFIG_GD32H7_NXFFS_MOUNTPT "/mnt/gd32nxffs"
 #  endif
 #endif
 
@@ -58,7 +58,7 @@
 
 /* LED
  *
- * The GD32H759IM-EVAL board has three LEDs, LED1, LED2, and LED3, that can
+ * The GD32H759IM-EVAL board has two LEDs, LED1 and LED2, that can
  * be controlled by software.
  * The following definitions assume the default Solder Bridges are installed.
  */
@@ -70,7 +70,6 @@
 
 #define LED1            GPIO_LED1
 #define LED2            GPIO_LED2
-#define LED3            GPIO_LED3
 
 #define LED_DRIVER_PATH "/dev/userleds"
 
@@ -99,6 +98,34 @@
 #define GPIO_OUT1         (GPIO_CFG_MODE_OUTPUT | GPIO_CFG_OUTPUT_SET | GPIO_CFG_SPEED_60MHZ | \
                            GPIO_CFG_PORT_B | GPIO_CFG_PIN_1)
 #define GPIO_INT1         (GPIO_CFG_MODE_INPUT | GPIO_CFG_PUPD_NONE | GPIO_CFG_PORT_B | GPIO_CFG_PIN_2)
+
+/* GD25 SPI FLASH
+ *
+ * The GD25 SPI Flash is connected to SPI3 with the following pins:
+ *   SPI3_SCK  - PE2 (AF5)
+ *   SPI3_MISO - PE5 (AF5)
+ *   SPI3_MOSI - PE6 (AF5)
+ *   SPI3_CS   - PE4 (GPIO output, directly controlled)
+ */
+
+#if defined(CONFIG_MTD_GD25) && defined(CONFIG_GD32H7_SPI3)
+#  define HAVE_GD25  1
+#  define SPI_FLASH_CSNUM 3
+#endif
+
+/* GD25 SPI Flash CS pin - directly use PE4 as GPIO output */
+
+#ifdef HAVE_GD25
+#  define GPIO_GD25_CS    (GPIO_CFG_MODE_OUTPUT | GPIO_CFG_PP | \
+                           GPIO_CFG_OUTPUT_SET | GPIO_CFG_SPEED_60MHZ | \
+                           GPIO_CFG_PORT_E | GPIO_CFG_PIN_4)
+#endif
+
+#if defined(HAVE_GD25) && defined(CONFIG_GD32H759IM_EVAL_GD25_BLOCKMOUNT)
+#  if defined(CONFIG_GD32H759IM_EVAL_GD25_LITTLEFS)
+#    define GD25_MOUNT_FSTYPE "littlefs"
+#  endif
+#endif
 
 /* AT24 Serial EEPROM
  *
@@ -132,6 +159,30 @@
  ****************************************************************************/
 
 int gd32_bringup(void);
+
+/****************************************************************************
+ * Name: gd32_spidev_initialize
+ *
+ * Description:
+ *   Called to configure SPI chip select GPIO pins for the board.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32H7_SPI
+void gd32_spidev_initialize(void);
+#endif
+
+/****************************************************************************
+ * Name: gd32_gd25_automount
+ *
+ * Description:
+ *   Initialize, configure, and mount the GD25 SPI FLASH.
+ *
+ ****************************************************************************/
+
+#ifdef HAVE_GD25
+int gd32_gd25_automount(int minor);
+#endif
 
 /****************************************************************************
  * Name: gd32_i2c_initialize

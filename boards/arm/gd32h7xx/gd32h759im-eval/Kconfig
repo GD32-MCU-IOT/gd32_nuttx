@@ -67,7 +67,7 @@ choice
 
 config GD32H759I_600MHZ
 	bool "600 MHz"
-	
+
 config GD32H759I_480MHZ
 	bool "480 MHz"
 
@@ -89,5 +89,37 @@ config GD32H759IM_EVAL_AT24_TEST
 	depends on MTD_AT24XX && (GD32H7_I2C0 || GD32H7_I2C1)
 	---help---
 		Enables AT24C02 EEPROM write/read test on startup.
+
+menu "GD32H759IM-EVAL GD25 Flash Configuration"
+	depends on MTD_GD25
+
+config GD32H759IM_EVAL_GD25_BLOCKMOUNT
+	bool "Enable GD25 block device mount"
+	default n
+	---help---
+		Enable mounting of GD25 flash as a block device
+
+if GD32H759IM_EVAL_GD25_BLOCKMOUNT
+
+choice
+	prompt "GD25 file system type"
+	default GD32H759IM_EVAL_GD25_LITTLEFS
+
+config GD32H759IM_EVAL_GD25_FTL
+	bool "FTL"
+
+config GD32H759IM_EVAL_GD25_NXFFS
+	bool "NXFFS"
+	depends on FS_NXFFS
+
+config GD32H759IM_EVAL_GD25_LITTLEFS
+	bool "LittleFS"
+	depends on FS_LITTLEFS
+
+endchoice
+
+endif # GD32H759IM_EVAL_GD25_BLOCKMOUNT
+
+endmenu # GD25 Flash Configuration
 
 endif

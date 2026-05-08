@@ -59,5 +59,6 @@
 #include "gd32e11x_timer.h"
 #include "gd32e11x_waste.h"
 #include "gd32e11x_wdg.h"
+#include "gd32e11x_usbfs.h"
 
 #endif /* __ARCH_ARM_SRC_GD32E11X_GD32E11X_H */

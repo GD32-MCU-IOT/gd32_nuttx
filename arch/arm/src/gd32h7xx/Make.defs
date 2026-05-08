@@ -51,6 +51,10 @@ ifeq ($(CONFIG_GD32H7_DMA),y)
 CHIP_CSRCS += gd32h7xx_dma.c
 endif
 
+ifeq ($(CONFIG_GD32H7_SPI),y)
+CHIP_CSRCS += gd32h7xx_spi.c
+endif
+
 ifeq ($(CONFIG_GD32H7_I2C),y)
 CHIP_CSRCS += gd32h7xx_i2c.c
 endif

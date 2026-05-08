@@ -68,6 +68,12 @@ void gd32_boardinitialize(void)
 
   gd32_spidev_initialize();
 #endif
+
+#ifdef CONFIG_GD32E11X_USBFS
+  /* Initialize USB GPIO pins (VBUS sense, PWRON) */
+
+  gd32_usbinitialize();
+#endif
 }
 
 /****************************************************************************

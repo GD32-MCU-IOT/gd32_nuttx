@@ -164,6 +164,11 @@
 
 #define RCU_CFG0_USBFSPSC_SHIFT        (22)            /* USBFS prescaler */
 #define RCU_CFG0_USBFSPSC_MASK         (0x3 << RCU_CFG0_USBFSPSC_SHIFT)
+#define RCU_CFG0_USBFSPSC(n)           ((n) << RCU_CFG0_USBFSPSC_SHIFT)
+#  define RCU_CFG0_USBFSPSC_DIV1_5       RCU_CFG0_USBFSPSC(0)  /* CK_PLL / 1.5 */
+#  define RCU_CFG0_USBFSPSC_DIV1         RCU_CFG0_USBFSPSC(1)  /* CK_PLL / 1 */
+#  define RCU_CFG0_USBFSPSC_DIV2_5       RCU_CFG0_USBFSPSC(2)  /* CK_PLL / 2.5 */
+#  define RCU_CFG0_USBFSPSC_DIV2         RCU_CFG0_USBFSPSC(3)  /* CK_PLL / 2 */
 
 #define RCU_CFG0_CKOUT0SEL_SHIFT       (24)            /* CKOUT0 clock source selection */
 #define RCU_CFG0_CKOUT0SEL_MASK        (0xf << RCU_CFG0_CKOUT0SEL_SHIFT)
