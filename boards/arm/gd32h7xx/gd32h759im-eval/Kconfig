@@ -67,7 +67,7 @@ choice
 
 config GD32H759I_600MHZ
 	bool "600 MHz"
-	
+
 config GD32H759I_480MHZ
 	bool "480 MHz"
 
@@ -81,5 +81,37 @@ config ARCH_BOARD_GD32H7XX_CUSTOM_CLOCKCONFIG
 	default n
 	---help---
 		Enables board-specific clock configuration in board/src.
+
+menu "GD32H759IM-EVAL GD25 Flash Configuration"
+	depends on MTD_GD25
+
+config GD32H759IM_EVAL_GD25_BLOCKMOUNT
+	bool "Enable GD25 block device mount"
+	default n
+	---help---
+		Enable mounting of GD25 flash as a block device
+
+if GD32H759IM_EVAL_GD25_BLOCKMOUNT
+
+choice
+	prompt "GD25 file system type"
+	default GD32H759IM_EVAL_GD25_LITTLEFS
+
+config GD32H759IM_EVAL_GD25_FTL
+	bool "FTL"
+
+config GD32H759IM_EVAL_GD25_NXFFS
+	bool "NXFFS"
+	depends on FS_NXFFS
+
+config GD32H759IM_EVAL_GD25_LITTLEFS
+	bool "LittleFS"
+	depends on FS_LITTLEFS
+
+endchoice
+
+endif # GD32H759IM_EVAL_GD25_BLOCKMOUNT
+
+endmenu # GD25 Flash Configuration
 
 endif

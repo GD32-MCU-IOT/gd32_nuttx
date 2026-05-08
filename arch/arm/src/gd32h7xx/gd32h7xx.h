@@ -40,6 +40,7 @@
 #include "gd32h7xx_gpio.h"
 #include "gd32h7xx_lowputc.h"
 #include "gd32h7xx_rcu.h"
+#include "gd32h7xx_spi.h"
 #include "gd32h7xx_syscfg.h"
 #include "gd32h7xx_usart.h"
 #include "gd32h7xx_dma.h"
