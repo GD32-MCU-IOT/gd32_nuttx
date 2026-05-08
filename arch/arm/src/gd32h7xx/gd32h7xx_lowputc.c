@@ -252,14 +252,15 @@ void arm_lowputc(char ch)
   putreg32((uint32_t)(ch & USART_DATA_MASK), GD32_CONSOLE_BASE +
           GD32_USART_TDATA_OFFSET);
 
-  /* Wait until the transmit data register is empty */
+  /* Wait until transmission is physically complete (TC) so that the
+   * character has fully left the shift register before we return.
+   * This prevents garbling if the USART is reconfigured shortly after.
+   */
 
   while ((getreg32(GD32_CONSOLE_BASE + GD32_USART_STAT_OFFSET) &
-          USART_STAT_TBE) == 0);
+          USART_STAT_TC) == 0);
 
 #ifdef GD32_CONSOLE_RS485_DIR
-  while ((getreg32(GD32_CONSOLE_BASE + GD32_USART_STAT_OFFSET) &
-        USART_STAT_TC) == 0);
   gd32_gpio_write(GD32_CONSOLE_RS485_DIR,
                 !GD32_CONSOLE_RS485_DIR_POLARITY);
 #endif

@@ -50,11 +50,9 @@
 #include "gd32h7xx_i2c.h"
 #include "gd32h7xx_rcu.h"
 #include "gd32h7xx_gpio.h"
-#include "hardware/gd32h7xx_i2c.h"
 
 #ifdef CONFIG_GD32H7_I2C_DMA
 #  include "gd32h7xx_dma.h"
-#  include "hardware/gd32h7xx_dma.h"
 #endif
 
 #include <nuttx/cache.h>
@@ -1494,6 +1492,7 @@ static int gd32_i2c_transfer(struct i2c_master_s *dev,
 {
   struct gd32_i2c_priv_s *priv = (struct gd32_i2c_priv_s *)dev;
   int ret;
+  int ret2;
 
   DEBUGASSERT(count > 0);
 
@@ -1614,9 +1613,9 @@ static int gd32_i2c_transfer(struct i2c_master_s *dev,
 #endif
     }
 
-  nxmutex_unlock(&priv->lock);
+  ret2 = nxmutex_unlock(&priv->lock);
 
-  return ret;
+  return (ret < 0) ? ret : ret2;
 }
 
 /****************************************************************************
@@ -1640,7 +1639,12 @@ static int gd32_i2c_reset(struct i2c_master_s *dev)
   gd32_i2c_deinit(priv);
   gd32_i2c_init(priv);
 
-  nxmutex_unlock(&priv->lock);
+  ret = nxmutex_unlock(&priv->lock);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
   return OK;
 }
 #endif
@@ -1787,6 +1791,7 @@ static void gd32_i2c_deinit(struct gd32_i2c_priv_s *priv)
 struct i2c_master_s *gd32_i2cbus_initialize(int port)
 {
   struct gd32_i2c_priv_s *priv;
+  int ret;
 
   i2cinfo("I2C%d: initialize\n", port);
 
@@ -1817,13 +1822,23 @@ struct i2c_master_s *gd32_i2cbus_initialize(int port)
         return NULL;
     }
 
-  nxmutex_lock(&priv->lock);
+  ret = nxmutex_lock(&priv->lock);
+  if (ret < 0)
+    {
+      return NULL;
+    }
+
   if (priv->refs++ == 0)
     {
       gd32_i2c_init(priv);
     }
 
-  nxmutex_unlock(&priv->lock);
+  ret = nxmutex_unlock(&priv->lock);
+  if (ret < 0)
+    {
+      return NULL;
+    }
+
   return (struct i2c_master_s *)priv;
 }
 
@@ -1834,16 +1849,27 @@ struct i2c_master_s *gd32_i2cbus_initialize(int port)
 int gd32_i2cbus_uninitialize(struct i2c_master_s *dev)
 {
   struct gd32_i2c_priv_s *priv = (struct gd32_i2c_priv_s *)dev;
+  int ret;
 
   DEBUGASSERT(dev != NULL);
 
-  nxmutex_lock(&priv->lock);
+  ret = nxmutex_lock(&priv->lock);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
   if (--priv->refs == 0)
     {
       gd32_i2c_deinit(priv);
     }
 
-  nxmutex_unlock(&priv->lock);
+  ret = nxmutex_unlock(&priv->lock);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
   return OK;
 }
 

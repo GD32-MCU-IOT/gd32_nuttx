@@ -53,10 +53,8 @@ ifeq ($(CONFIG_GD32H7_I2C),y)
 CSRCS += gd32h7xx_i2c.c
 endif
 
-ifeq ($(CONFIG_MTD_AT24XX),y)
 ifeq ($(CONFIG_GD32H759IM_EVAL_AT24_TEST),y)
 CSRCS += gd32h7xx_at24.c
-endif
 endif
 
 include $(TOPDIR)/boards/Board.mk
