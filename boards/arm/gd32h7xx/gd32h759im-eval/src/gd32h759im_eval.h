@@ -127,6 +127,19 @@
 #  endif
 #endif
 
+/* AT24 Serial EEPROM
+ *
+ * AT24C02 is connected on I2C1 (PH4/PB11).
+ */
+
+#if defined(CONFIG_MTD_AT24XX) && \
+    defined(CONFIG_GD32H7_I2C1) && \
+    defined(CONFIG_GD32H759IM_EVAL_AT24_TEST)
+#  define HAVE_AT24    1
+#  define AT24_BUS     1
+#  define AT24_MINOR   0
+#endif
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -169,6 +182,42 @@ void gd32_spidev_initialize(void);
 
 #ifdef HAVE_GD25
 int gd32_gd25_automount(int minor);
+#endif
+
+/****************************************************************************
+ * Name: gd32_i2c_initialize
+ *
+ * Description:
+ *   Initialize I2C bus(es) and register /dev/i2cN character devices.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32H7_I2C
+void gd32_i2c_initialize(void);
+#endif
+
+/****************************************************************************
+ * Name: gd32_at24_wr_test
+ *
+ * Description:
+ *   Write and read the AT24 serial EEPROM test.
+ *
+ ****************************************************************************/
+
+#ifdef HAVE_AT24
+int gd32_at24_wr_test(int minor);
+#endif
+
+/****************************************************************************
+ * Name: gd32_at24_multimsg_dma_test
+ *
+ * Description:
+ *   AT24 EEPROM DMA test using multi-message I2C transfers.
+ *
+ ****************************************************************************/
+
+#if defined(HAVE_AT24) && defined(CONFIG_GD32H7_I2C_DMA)
+int gd32_at24_multimsg_dma_test(int minor);
 #endif
 
 /****************************************************************************

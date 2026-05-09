@@ -294,6 +294,26 @@ typedef enum
 #  define GPIO_SPI5_MOSI_PIN  (GPIO_SPI5_MOSI_1 | GPIO_CFG_SPEED_85MHZ)
 #endif
 
+/* I2C0: PB6/SCL, PB7/SDA */
+
+#define GPIO_I2C0_SCL  (GPIO_I2C0_SCL_1 | GPIO_CFG_SPEED_60MHZ)
+#define GPIO_I2C0_SDA  (GPIO_I2C0_SDA_1 | GPIO_CFG_SPEED_60MHZ)
+
+/* I2C1: PH4/SCL, PB11/SDA */
+
+#define GPIO_I2C1_SCL  (GPIO_I2C1_SCL_3 | GPIO_CFG_SPEED_60MHZ)
+#define GPIO_I2C1_SDA  (GPIO_I2C1_SDA_1 | GPIO_CFG_SPEED_60MHZ)
+
+/* I2C2: PA8/SCL, PC9/SDA */
+
+#define GPIO_I2C2_SCL  (GPIO_I2C2_SCL_1 | GPIO_CFG_SPEED_60MHZ)
+#define GPIO_I2C2_SDA  (GPIO_I2C2_SDA_1 | GPIO_CFG_SPEED_60MHZ)
+
+/* I2C3: PD12/SCL, PD13/SDA */
+
+#define GPIO_I2C3_SCL  (GPIO_I2C3_SCL_3 | GPIO_CFG_SPEED_60MHZ)
+#define GPIO_I2C3_SDA  (GPIO_I2C3_SDA_3 | GPIO_CFG_SPEED_60MHZ)
+
 /****************************************************************************
  * Public Data
  ****************************************************************************/
