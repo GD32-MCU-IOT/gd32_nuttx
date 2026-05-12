@@ -72,4 +72,12 @@ ifeq ($(CONFIG_GD32F4_EXMC), y)
 CSRCS += gd32f4xx_extmem.c
 endif
 
+ifeq ($(CONFIG_GD32F4_DCI), y)
+CSRCS += gd32f4xx_dci.c
+endif
+
+ifeq ($(CONFIG_GD32F4_CAMPREVIEW), y)
+CSRCS += gd32f4xx_campreview.c
+endif
+
 include $(TOPDIR)/boards/Board.mk

@@ -1162,7 +1162,7 @@ static void up_disableusartint(struct up_dev_s *priv, uint32_t *ie)
       ctl = up_serialin(priv, GD32_USART_CTL3_OFFSET);
       ctl_ie |= ((ctl & USART_CTL3_USED_INTS) << USART_CFG_CTL3_INT_SHIFT);
 
-      *ie = ctl_ie;
+      *ie = ctl_ie | (USART_CFG_CTL_MASK << USART_CFG_SHIFT);
     }
 
   /* Disable all interrupts */

@@ -302,8 +302,13 @@ config GD32F4_DBG
 	default n
 
 config GD32F4_DCI
-	bool "DCI"
+	bool "DCI (Digital Camera Interface)"
 	default n
+	select GD32F4_DMA1
+	select ARCH_DMA
+	---help---
+		Enable the Digital Camera Interface (DCI) peripheral driver.
+		DCI uses DMA1 for data transfer from camera sensor.
 
 config GD32F4_DMA0
 	bool "DMA0"
@@ -658,6 +663,34 @@ config GD32F4_USART
 config GD32F4_WDGT
 	bool
 	default n
+
+menu "DCI Configuration"
+	depends on GD32F4_DCI
+
+config GD32F4_DCI_DMA_CHANNEL
+	int "DCI DMA channel selection"
+	default 1
+	range 1 2
+	---help---
+		Select DCI DMA channel mapping:
+		1 = DMA1 Channel 1, SubPeripheral 1
+		2 = DMA1 Channel 7, SubPeripheral 1
+
+config GD32F4_DCI_DMA_HIGH_PRIORITY
+	bool "DCI DMA ultra-high priority"
+	default n
+	---help---
+		Use ultra-high priority for DCI DMA channel.
+		Default is high priority.
+
+config GD32F4_DCI_REGDEBUG
+	bool "DCI register debug"
+	default n
+	depends on DEBUG_VIDEO
+	---help---
+		Enable DCI register level debug output.
+
+endmenu # "DCI Configuration"
 
 
 config GD32F4_NOEXT_VECTORS

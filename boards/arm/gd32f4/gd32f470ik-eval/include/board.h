@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include <sys/boardctl.h>
 
 #ifndef __ASSEMBLY__
 #  include <stdint.h>
@@ -507,7 +508,7 @@ typedef enum
 
 #define GPIO_TLI_VSYNC                 GPIO_TLI_VSYNC_2  /* PI9 */
 #define GPIO_TLI_HSYNC                 GPIO_TLI_HSYNC_2  /* PI10 */
-#define GPIO_TLI_DE                    GPIO_TLI_DE_2  
+#define GPIO_TLI_DE                    GPIO_TLI_DE_2
 #define GPIO_TLI_CLK                   GPIO_TLI_PIXCLK_2 /* PG7 */
 #define GPIO_LCD_PWM                   (GPIO_CFG_MODE_OUTPUT | \
                                         GPIO_CFG_PUPD_PULLUP | \
@@ -565,5 +566,66 @@ typedef enum
 /* #define GD32_RCU_PLLSAI_PLLSAIQ    RCU_PLLSAI_PLLSAIQ(BOARD_TLI_PLLSAIQ) */
 
 #endif /* CONFIG_GD32F4_TLI */
+
+/* DCI (Digital Camera Interface) *******************************************/
+
+#ifdef CONFIG_GD32F4_DCI
+
+/* DCI GPIO pin selections for GD32F470IK-EVAL + OV2640 (8-bit parallel)
+ *
+ *   GD32F470IK-EVAL       OV2640
+ *   GPIO     SIGNAL       PIN
+ *   -------- ------------ --------
+ *   PA4      DCI_HSYNC    HREF
+ *   PA6      DCI_PIXCLK   PCLK
+ *   PG9      DCI_VSYNC    VSYNC
+ *   PC6      DCI_D0       D0
+ *   PC7      DCI_D1       D1
+ *   PC8      DCI_D2       D2
+ *   PC9      DCI_D3       D3
+ *   PC11     DCI_D4       D4
+ *   PD3      DCI_D5       D5
+ *   PB8      DCI_D6       D6
+ *   PB9      DCI_D7       D7
+ *
+ * OV2640 control via I2C0 (SCCB):
+ *   PB6      I2C0_SCL     SIOC
+ *   PB7      I2C0_SDA     SIOD
+ *
+ * OV2640 master clock:
+ *   PA8      CKOUT0       XCLK
+ */
+
+#define BOARD_DCI_D0       GPIO_DCI_D0_2     /* PC6  */
+#define BOARD_DCI_D1       GPIO_DCI_D1_2     /* PC7  */
+#define BOARD_DCI_D2       GPIO_DCI_D2_1     /* PC8  */
+#define BOARD_DCI_D3       GPIO_DCI_D3_1     /* PC9  */
+#define BOARD_DCI_D4       GPIO_DCI_D4_1     /* PC11 */
+#define BOARD_DCI_D5       GPIO_DCI_D5_2     /* PD3  */
+#define BOARD_DCI_D6       GPIO_DCI_D6_1     /* PB8  */
+#define BOARD_DCI_D7       GPIO_DCI_D7_1     /* PB9  */
+#define BOARD_DCI_HSYNC    GPIO_DCI_HSYNC_1  /* PA4  */
+#define BOARD_DCI_VSYNC    GPIO_DCI_VSYNC_2  /* PG9  */
+#define BOARD_DCI_PIXCLK   GPIO_DCI_PIXCLK   /* PA6  */
+
+/* DCI clock polarity: capture at rising edge of pixel clock */
+
+#define BOARD_DCI_CK_POLARITY_RISING  1
+
+/* OV2640 SCCB (I2C) configuration */
+
+#define BOARD_DCI_I2C_BUS        0          /* I2C0 for OV2640 SCCB */
+#define BOARD_OV2640_I2C_ADDR    0x30       /* OV2640 7-bit I2C address */
+
+/* OV2640 master clock via CKOUT0 on PA8, aligned with the vendor demo */
+
+#define BOARD_OV2640_MCLK_PIN    (GPIO_CFG_MODE_AF | GPIO_CFG_PUPD_PULLUP | \
+                                  GPIO_CFG_PP | GPIO_CFG_SPEED_200MHZ | \
+                                  GPIO_CFG_AF_0 | GPIO_CFG_PORT_A | \
+                                  GPIO_CFG_PIN_8)
+#define BOARD_OV2640_MCLK_SOURCE  RCU_CFG0_CKOUT0SEL_HXTAL
+#define BOARD_OV2640_MCLK_DIVIDER RCU_CFG0_CKOUT0_DIV2
+
+#endif /* CONFIG_GD32F4_DCI */
 
 #endif /* __BOARDS_ARM_GD32F4_GD32F470IK_EVAL_INCLUDE_BOARD_H */

@@ -58,6 +58,10 @@
 #include <nuttx/video/fb.h>
 #endif
 
+#ifdef CONFIG_GD32F4_DCI
+#include <nuttx/video/v4l2_cap.h>
+#endif
+
 #include "gd32f470i_eval.h"
 
 /****************************************************************************
@@ -369,6 +373,28 @@ int gd32_bringup(void)
   if (ret < 0)
     {
       syslog(LOG_ERR, "ERROR: fb_register() failed: %d\n", ret);
+    }
+#endif
+
+#ifdef CONFIG_GD32F4_DCI
+  /* Initialize the DCI camera interface */
+
+  ret = gd32_dci_setup();
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: gd32_dci_setup() failed: %d\n", ret);
+    }
+#endif
+
+#ifdef CONFIG_GD32F4_CAMPREVIEW
+  /* Start the board-level camera preview thread.
+   * Both fb_register() and gd32_dci_setup() must have been called first.
+   */
+
+  ret = gd32_campreview_start();
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: gd32_campreview_start() failed: %d\n", ret);
     }
 #endif
 

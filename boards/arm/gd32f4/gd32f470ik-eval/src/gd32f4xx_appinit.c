@@ -78,6 +78,10 @@ int nsh_main(int argc, char *argv[]);
 int lvgldemo_main(int argc, char *argv[]);
 #endif
 
+#ifdef CONFIG_EXAMPLES_CAMERA
+int camera_main(int argc, char *argv[]);
+#endif
+
 int weak_function gd32_app_main(int argc, char *argv[])
 {
   task_create("nsh", CONFIG_SYSTEM_NSH_PRIORITY, CONFIG_SYSTEM_NSH_STACKSIZE,
@@ -87,6 +91,12 @@ int weak_function gd32_app_main(int argc, char *argv[])
   task_create("lvgl", CONFIG_EXAMPLES_LVGLDEMO_PRIORITY,
               CONFIG_EXAMPLES_LVGLDEMO_STACKSIZE,
               lvgldemo_main, NULL);
+#endif
+
+#ifdef CONFIG_EXAMPLES_CAMERA
+  task_create("camera", CONFIG_EXAMPLES_CAMERA_PRIORITY,
+              CONFIG_EXAMPLES_CAMERA_STACKSIZE,
+              camera_main, NULL);
 #endif
 
   for (; ; )
