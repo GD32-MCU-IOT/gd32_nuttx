@@ -1202,7 +1202,7 @@ static int up_dma_nextrx(struct up_dev_s *priv)
 {
   size_t dmacount;
 
-  dmacount = gd32_dma_tansnum_get(priv->rxdma);
+  dmacount = gd32_dma_transnum_get(priv->rxdma);
 
   return (RXDMA_BUFFER_SIZE - (int)dmacount);
 }
@@ -2422,7 +2422,7 @@ static void up_dma_txavailable(struct uart_dev_s *dev)
 
   /* Only send when the DMA is idle */
 
-  if (gd32_dma_tansnum_get(priv->txdma) == 0)
+  if (gd32_dma_transnum_get(priv->txdma) == 0)
     {
       uart_xmitchars_dma(dev);
     }

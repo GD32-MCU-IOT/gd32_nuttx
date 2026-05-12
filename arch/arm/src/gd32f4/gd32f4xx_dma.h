@@ -208,7 +208,7 @@ void gd32_dma_start(DMA_HANDLE handle, dma_callback_t callback, void *arg,
 void gd32_dma_stop(DMA_HANDLE handle);
 
 /****************************************************************************
- * Name: gd32_dma_tansnum_get
+ * Name: gd32_dma_transnum_get
  *
  * Description:
  *   Get the number of remaining data to be transferred by the DMA
@@ -218,7 +218,7 @@ void gd32_dma_stop(DMA_HANDLE handle);
  *
  ****************************************************************************/
 
-size_t gd32_dma_tansnum_get(DMA_HANDLE handle);
+size_t gd32_dma_transnum_get(DMA_HANDLE handle);
 
 /****************************************************************************
  * Name: gd32_dma_sample
