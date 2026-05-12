@@ -1018,9 +1018,8 @@ static int spi_hwfeatures(struct spi_dev_s *dev, spi_hwfeatures_t features)
  *
  * Description:
  *   Exchange one word on SPI.
- *   GD32H7xx uses unlimited mode with MSTART.
- *   Note: For efficiency, we do NOT suspend MSTART after each byte.
- *   The caller should use spi_exchange for bulk transfers.
+ *   GD32H7xx uses TXSIZE=1 mode so that MSTART auto-clears after the
+ *   single frame transfer completes.
  *
  ****************************************************************************/
 
@@ -1031,7 +1030,15 @@ static uint32_t spi_send(struct spi_dev_s *dev, uint32_t wd)
 
   DEBUGASSERT(priv != NULL);
 
-  /* Start master transfer first, only if not already started */
+  /* Set TXSIZE=1 before starting transfer.
+   * SPI must be disabled to modify CTL1, re-enable after.
+   */
+
+  spi_enable(priv, false);
+  spi_putreg(priv, GD32_SPI_CTL1_OFFSET, SPI_CTL1_TXSIZE(1));
+  spi_enable(priv, true);
+
+  /* Start master transfer */
 
   spi_modifyreg(priv, GD32_SPI_CTL0_OFFSET, 0, SPI_CTL0_MSTART);
 
@@ -1043,7 +1050,7 @@ static uint32_t spi_send(struct spi_dev_s *dev, uint32_t wd)
       return 0xff;
     }
 
-  /* Write data - use 32-bit access for device memory compatibility */
+  /* Write data */
 
   spi_putreg8(priv, GD32_SPI_TDATA_OFFSET, (uint8_t)(wd & 0xff));
 
@@ -1551,9 +1558,11 @@ static void spi_dmarxcallback(DMA_HANDLE handle, uint16_t isr, void *arg)
 {
   struct gd32_spidev_s *priv = (struct gd32_spidev_s *)arg;
 
-  /* Save the result of the RX DMA */
+  /* Save the result of the RX DMA, mask out FEEIF which is
+   * expected in Direct mode and does not indicate a real error.
+   */
 
-  priv->rxresult = isr;
+  priv->rxresult = isr & ~DMA_INTF_FEEIF;
 
   /* Wake up the waiting thread */
 
@@ -1572,9 +1581,11 @@ static void spi_dmatxcallback(DMA_HANDLE handle, uint16_t isr, void *arg)
 {
   struct gd32_spidev_s *priv = (struct gd32_spidev_s *)arg;
 
-  /* Save the result of the TX DMA */
+  /* Save the result of the TX DMA, mask out FEEIF which is
+   * expected in Direct mode and does not indicate a real error.
+   */
 
-  priv->txresult = isr;
+  priv->txresult = isr & ~DMA_INTF_FEEIF;
 
   /* Wake up the waiting thread */
 
