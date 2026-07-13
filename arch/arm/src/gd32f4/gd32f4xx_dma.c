@@ -894,7 +894,7 @@ void gd32_dma_stop(DMA_HANDLE handle)
 }
 
 /****************************************************************************
- * Name: gd32_dma_tansnum_get
+ * Name: gd32_dma_transnum_get
  *
  * Description:
  *   Get the number of remaining data to be transferred by the DMA
@@ -904,7 +904,7 @@ void gd32_dma_stop(DMA_HANDLE handle)
  *
  ****************************************************************************/
 
-size_t gd32_dma_tansnum_get(DMA_HANDLE handle)
+size_t gd32_dma_transnum_get(DMA_HANDLE handle)
 {
   struct gd32_dma_channel_s *dmachan = (struct gd32_dma_channel_s *)handle;
   uint32_t remain_num;

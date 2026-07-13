@@ -1236,7 +1236,7 @@ static int gd32_i2c_isr_process(struct gd32_i2c_priv_s *priv)
   if ((ctl1 & I2C_CTL1_DMAON) != 0)
     {
 #ifdef CONFIG_DEBUG_I2C_INFO
-      size_t left = gd32_dma_tansnum_get(priv->rxdma);
+      size_t left = gd32_dma_transnum_get(priv->rxdma);
 
       i2cinfo("DMA in progress: %ld [bytes] remainining. Returning.\n",
               left);
