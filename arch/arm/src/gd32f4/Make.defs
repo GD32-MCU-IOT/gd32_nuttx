@@ -77,3 +77,7 @@ endif
 ifeq ($(CONFIG_GD32F4_TLI),y)
 CHIP_CSRCS += gd32f4xx_tli.c
 endif
+
+ifeq ($(CONFIG_GD32F4_DCI),y)
+CHIP_CSRCS += gd32f4xx_dci.c
+endif

@@ -53,5 +53,6 @@
 #include "gd32f4xx_exmc.h"
 #include "gd32f4xx_ipa.h"
 #include "gd32f4xx_tli.h"
+#include "gd32f4xx_dci.h"
 
 #endif /* __ARCH_ARM_SRC_GD32F4_GD32F4XX_H */

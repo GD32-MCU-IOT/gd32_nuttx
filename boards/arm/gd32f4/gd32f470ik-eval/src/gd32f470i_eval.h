@@ -294,5 +294,33 @@ int gd32_sdio_initialize(void);
 void gd32_sdram_initialize(void);
 #endif
 
+/****************************************************************************
+ * Name: gd32_dci_setup
+ *
+ * Description:
+ *   Initialize the DCI (Digital Camera Interface) and OV2640 camera sensor.
+ *   Registers the capture device at /dev/video0.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32F4_DCI
+int gd32_dci_setup(void);
+#endif
+
+/****************************************************************************
+ * Name: gd32_campreview_start
+ *
+ * Description:
+ *   Start the board-level camera preview kernel thread.
+ *   The thread opens /dev/video0 and /dev/fb0, captures 320x240 RGB565
+ *   frames and blits them centred on the 480x272 LCD framebuffer.
+ *   Must be called after fb_register() and gd32_dci_setup() succeed.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_GD32F4_CAMPREVIEW
+int gd32_campreview_start(void);
+#endif
+
 #endif /* __ASSEMBLY__ */
 #endif /* __BOARDS_ARM_GD32F4_GD32F470IK_EVAL_SRC_GD32F470I_EVAL_H */

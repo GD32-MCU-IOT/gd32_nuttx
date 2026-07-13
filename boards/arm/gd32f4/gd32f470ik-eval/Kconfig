@@ -135,4 +135,44 @@ config AT24XX_MTD_BLOCKSIZE
 		The block size must be an even multiple of the pages.
 		The page size of AT2402 on the board is 8 Byte.
 
+config GD32F4_CAMPREVIEW
+	bool "Board-level camera preview (OV2640 → LCD centre)"
+	default n
+	depends on GD32F4_DCI && VIDEO_FB
+	---help---
+		Start a kernel thread that continuously captures 320x240 RGB565
+		frames from the OV2640 via /dev/video0 and blits them centred on
+		the 480x272 TLI framebuffer (/dev/fb0).
+
+		The image is placed at pixel offset (80, 16) so that it appears
+		in the middle of the LCD.  This avoids the NX graphics server and
+		fixes the 6-split artefact caused by mismatched source/destination
+		strides in the upstream camera example.
+
+		Requires CONFIG_GD32F4_DCI and CONFIG_VIDEO_FB to be enabled.
+
+if GD32F4_CAMPREVIEW
+
+config GD32F4_CAMPREVIEW_PRIORITY
+	int "Camera preview thread priority"
+	default 100
+	---help---
+		Scheduling priority of the campreview kernel thread.
+
+config GD32F4_CAMPREVIEW_STACKSIZE
+	int "Camera preview thread stack size (bytes)"
+	default 4096
+	---help---
+		Stack size for the campreview kernel thread.
+
+config GD32F4_CAMPREVIEW_DURATION
+	int "Camera preview run duration (seconds, 0=forever)"
+	default 10
+	---help---
+		How many seconds the camera preview thread will stream video
+		to the LCD before stopping and clearing the screen.
+		Set to 0 to run indefinitely.
+
+endif # GD32F4_CAMPREVIEW
+
 endif # ARCH_BOARD_GD32F470IK_EVAL
