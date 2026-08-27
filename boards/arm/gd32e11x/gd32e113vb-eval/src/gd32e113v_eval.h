@@ -233,6 +233,9 @@ void gd32_usbinitialize(void);
 #if defined(CONFIG_USBHOST) && defined(CONFIG_GD32E11X_USBFS)
 int gd32_usbhost_initialize(void);
 #endif
+#if defined(CONFIG_CUSTOM_HID) && defined(CONFIG_GD32E11X_USBFS)
+int gd32_usbdev_hid_initialize(void);
+#endif
 
 /****************************************************************************
  * Name: gd32_gpio_test

@@ -96,6 +96,24 @@ int gd32_exti_gpio_irq_attach(uint8_t irqpin, xcpt_t irqhandler,
                               void *arg);
 
 /****************************************************************************
+ * Name: gd32_exti_gpio_irq_detach
+ *
+ * Description:
+ *   Detach one pin's callback.  Pins 5-9 and 10-15 share an NVIC vector,
+ *   so the vector is only disabled once no pin in its group has a
+ *   callback left.  The demux handler is never detached.
+ *
+ * Input Parameters:
+ *   cfgset - GPIO pin configuration
+ *
+ * Returned Value:
+ *   OK on success; A negated errno value on failure.
+ *
+ ****************************************************************************/
+
+int gd32_exti_gpio_irq_detach(uint32_t cfgset);
+
+/****************************************************************************
  * Name: gd32_exti_init
  *
  * Description:

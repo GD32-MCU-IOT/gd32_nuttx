@@ -33,7 +33,6 @@
 #include <nuttx/board.h>
 #include <nuttx/irq.h>
 
-#include <nuttx/irq.h>
 #include <arch/board/board.h>
 
 #include "gd32e11x.h"
@@ -142,7 +141,55 @@ int board_button_irq(int id, xcpt_t irqhandler, void *arg)
 
   if ((unsigned)id < NUM_BUTTONS)
     {
-      ret = gd32_gpio_irq_attach(g_buttons[id], irqhandler, arg);
+      irqstate_t flags;
+
+      /* Disable interrupts until we are done.  This guarantees that the
+       * following operations are atomic.
+       */
+
+      flags = enter_critical_section();
+
+      /* Are we attaching or detaching? */
+
+      if (irqhandler != NULL)
+        {
+          uint8_t gpio_irq;
+          uint8_t gpio_irqnum;
+
+          ret = gd32_gpio_exti_irqnum_get(g_buttons[id], &gpio_irqnum);
+
+          if (ret < 0)
+            {
+              leave_critical_section(flags);
+              return ret;
+            }
+
+          ret = gd32_exti_gpioirq_init(g_buttons[id], EXTI_INTERRUPT,
+                                       EXTI_TRIG_FALLING, &gpio_irq);
+
+          if (ret < 0)
+            {
+              leave_critical_section(flags);
+              return ret;
+            }
+
+          /* Attach and enable the interrupt */
+
+          gd32_exti_gpio_irq_attach(gpio_irq, irqhandler, arg);
+          up_enable_irq(gpio_irqnum);
+        }
+      else
+        {
+          /* Detach this button's callback only.  Pins that share the
+           * same NVIC vector (10-15) are unaffected: the vector is only
+           * disabled once every pin sharing it has no callback left.
+           */
+
+          gd32_exti_gpio_irq_detach(g_buttons[id]);
+        }
+
+      leave_critical_section(flags);
+      ret = OK;
     }
 
   return ret;

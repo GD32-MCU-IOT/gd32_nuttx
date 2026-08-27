@@ -39,7 +39,9 @@
 #include <nuttx/usb/usbdev.h>
 #include <nuttx/usb/usbhost.h>
 #include <nuttx/usb/usbdev_trace.h>
-
+#ifdef CONFIG_CUSTOM_HID
+#  include <nuttx/usb/usbdev_custom_hid.h>
+#endif
 #include "arm_internal.h"
 #include "gd32e11x.h"
 #include "gd32e11x_usbfs.h"
@@ -283,6 +285,30 @@ void gd32_usbhost_vbusdrive(int iface, bool enable)
       gd32_gpio_write(GPIO_USBFS_PWRON, true);
     }
 #endif
+}
+#endif
+
+/****************************************************************************
+ * Name: gd32_usbdev_hid_initialize
+ *
+ * Description:
+ *   Register the USB Custom HID device class driver and its /dev/hid0
+ *   character device.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_CUSTOM_HID
+int gd32_usbdev_hid_initialize(void)
+{
+  int ret;
+
+  ret = custom_hid_initialize(0, NULL);
+  if (ret < 0)
+    {
+      uerr("ERROR: custom_hid_initialize() failed: %d\n", ret);
+    }
+
+  return ret;
 }
 #endif
 
