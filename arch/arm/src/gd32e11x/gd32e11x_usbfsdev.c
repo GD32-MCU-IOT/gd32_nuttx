@@ -1400,21 +1400,11 @@ static void gd32_epin_request(struct gd32_usbdev_s *priv,
            * request. If not, raise an assertion here.
            */
 
-          if (privep->epphy == 0)
-            {
-              regval = gd32_getreg(GD32_USBFS_DIEP0TFLEN);
-              regval &= USBFS_DIEP0TFLEN_IEP0TXFD_MASK;
-              regval >>= USBFS_DIEP0TFLEN_IEP0TXFD_SHIFT;
-            }
-          else
-            {
-              regaddr = GD32_USBFS_DIEP1TFLEN +
-                        (((uint32_t)privep->epphy - 1) << 2);
-              regval = gd32_getreg(regaddr);
-              regval &= (0xffff << 16);
-              regval >>= 16;
-            }
-
+          regval = gd32_getreg(privep->epphy == 0 ?
+                                GD32_USBFS_DIEP0TFLEN :
+                                GD32_USBFS_DIEPTFLEN(privep->epphy));
+          regval &= USBFS_DIEPTFLEN_IEPTXFD_MASK;
+          regval >>= USBFS_DIEPTFLEN_IEPTXFD_SHIFT;
           uerr("EP%" PRIu8 " TXLEN=%" PRId32 " nwords=%d\n",
                privep->epphy, regval, nwords);
           DEBUGASSERT(regval >= nwords);
@@ -2104,6 +2094,7 @@ static void gd32_usbreset(struct gd32_usbdev_s *priv)
       /* Reset IN endpoint status */
 
       privep->stalled = false;
+      privep->active  = false;
 
       /* Return read requests to the class implementation */
 
@@ -2113,6 +2104,7 @@ static void gd32_usbreset(struct gd32_usbdev_s *priv)
       /* Reset endpoint status */
 
       privep->stalled = false;
+      privep->active  = false;
     }
 
   gd32_putreg(0xffffffff, GD32_USBFS_DAEPINT);
@@ -2454,8 +2446,14 @@ void gd32_ep0out_stdrequest(struct gd32_usbdev_s *priv,
       {
         usbtrace(TRACE_INTDECODE(GD32_TRACEINTID_GETSETDESC), 0);
         if ((ctrlreq->type & USB_REQ_RECIPIENT_MASK) ==
-             USB_REQ_RECIPIENT_DEVICE)
+             USB_REQ_RECIPIENT_DEVICE ||
+            (ctrlreq->type & USB_REQ_RECIPIENT_MASK) ==
+             USB_REQ_RECIPIENT_INTERFACE)
           {
+            /* Interface-recipient GET_DESCRIPTOR is used by class drivers
+             * such as HID (report/HID descriptors); forward to the class.
+             */
+
             gd32_req_dispatch(priv, &priv->ctrlreq);
           }
         else
@@ -5360,24 +5358,27 @@ static void gd32_hwinitialize(struct gd32_usbdev_s *priv)
   /* EP1 TX */
 
   address += GD32_EP0_TXFIFO_WORDS;
-  regval   = address | (GD32_EP1_TXFIFO_WORDS << 16);
-  gd32_putreg(regval, GD32_USBFS_DIEP1TFLEN);
+  regval   = (address << USBFS_DIEPTFLEN_IEPTXRSAR_SHIFT) |
+             (GD32_EP1_TXFIFO_WORDS << USBFS_DIEPTFLEN_IEPTXFD_SHIFT);
+  gd32_putreg(regval, GD32_USBFS_DIEPTFLEN(1));
 #endif
 
 #if GD32_NENDPOINTS > 2
   /* EP2 TX */
 
   address += GD32_EP1_TXFIFO_WORDS;
-  regval   = address | (GD32_EP2_TXFIFO_WORDS << 16);
-  gd32_putreg(regval, GD32_USBFS_DIEP2TFLEN);
+  regval   = (address << USBFS_DIEPTFLEN_IEPTXRSAR_SHIFT) |
+             (GD32_EP2_TXFIFO_WORDS << USBFS_DIEPTFLEN_IEPTXFD_SHIFT);
+  gd32_putreg(regval, GD32_USBFS_DIEPTFLEN(2));
 #endif
 
 #if GD32_NENDPOINTS > 3
   /* EP3 TX */
 
   address += GD32_EP2_TXFIFO_WORDS;
-  regval   = address | (GD32_EP3_TXFIFO_WORDS << 16);
-  gd32_putreg(regval, GD32_USBFS_DIEP3TFLEN);
+  regval   = (address << USBFS_DIEPTFLEN_IEPTXRSAR_SHIFT) |
+             (GD32_EP3_TXFIFO_WORDS << USBFS_DIEPTFLEN_IEPTXFD_SHIFT);
+  gd32_putreg(regval, GD32_USBFS_DIEPTFLEN(3));
 #endif
 
   /* Flush the FIFOs */

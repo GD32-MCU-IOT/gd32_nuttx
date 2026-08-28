@@ -26,6 +26,7 @@
 
 #include <nuttx/config.h>
 
+#include <nuttx/arch.h>
 #include <nuttx/irq.h>
 
 #include "chip.h"
@@ -431,6 +432,67 @@ int gd32_exti_gpio_irq_attach(uint8_t irqpin, xcpt_t irqhandler, void *arg)
   g_gpio_irq_s[irqpin].irqhandler = irqhandler;
   g_gpio_irq_s[irqpin].arg        = arg;
 
+  return OK;
+}
+
+/****************************************************************************
+ * Name: gd32_exti_gpio_irq_detach
+ *
+ * Description:
+ *   Detach one pin's callback.  Pins 5-9 and 10-15 share an NVIC vector,
+ *   so the vector is only disabled once no pin in its group has a
+ *   callback left.  The demux handler is never detached.
+ *
+ * Input Parameters:
+ *   cfgset - GPIO pin configuration
+ *
+ * Returned Value:
+ *   OK on success; A negated errno value on failure.
+ *
+ ****************************************************************************/
+
+int gd32_exti_gpio_irq_detach(uint32_t cfgset)
+{
+  uint8_t port;
+  uint8_t pin;
+  uint8_t vector;
+  int i;
+
+  /* Verify that this hardware supports the selected GPIO port */
+
+  port = (cfgset & GPIO_CFG_PORT_MASK) >> GPIO_CFG_PORT_SHIFT;
+  if (port >= GD32_NGPIO_PORTS)
+    {
+      return -EINVAL;
+    }
+
+  pin = (cfgset & GPIO_CFG_PIN_MASK) >> GPIO_CFG_PIN_SHIFT;
+  if (pin > 15)
+    {
+      return -EINVAL;
+    }
+
+  /* Clear this pin's callback slot only */
+
+  g_gpio_irq_s[pin].irqhandler = NULL;
+  g_gpio_irq_s[pin].arg        = NULL;
+
+  /* Disable the shared vector only if no other pin sharing it still has
+   * an active callback.
+   */
+
+  vector = g_exti_gpio_irqs[pin];
+
+  for (i = 0; i < 16; i++)
+    {
+      if (g_exti_gpio_irqs[i] == vector &&
+          g_gpio_irq_s[i].irqhandler != NULL)
+        {
+          return OK;
+        }
+    }
+
+  up_disable_irq(vector);
   return OK;
 }
 

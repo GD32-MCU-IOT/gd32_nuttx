@@ -759,6 +759,88 @@ config CDCACM_PRODUCTSTR
 endif # !CDCACM_COMPOSITE
 endif # CDCACM
 
+menuconfig CUSTOM_HID
+	bool "USB Custom HID device support"
+	default n
+	---help---
+		Enables a vendor-defined USB Custom HID device class driver.  The
+		device is enumerated using the native OS HID driver (driverless on
+		the host) and exposes a /dev/hidN character device for exchanging
+		HID reports with a host application.
+
+if CUSTOM_HID
+
+config CUSTOM_HID_EP0MAXPACKET
+	int "Endpoint 0 max packet size"
+	default 64
+	---help---
+		Endpoint 0 max packet size. Default 64.
+
+config CUSTOM_HID_EPIN
+	int "Interrupt IN endpoint number"
+	default 1
+	---help---
+		The logical 7-bit address of a hardware endpoint that supports
+		interrupt IN operation (device to host input reports). Default 1.
+
+config CUSTOM_HID_EPOUT
+	int "Interrupt OUT endpoint number"
+	default 1
+	---help---
+		The logical 7-bit address of a hardware endpoint that supports
+		interrupt OUT operation (host to device output reports). Default 1.
+
+config CUSTOM_HID_EPSIZE
+	int "Interrupt endpoint max packet size"
+	default 8
+	---help---
+		The maximum packet size for the interrupt IN/OUT endpoints and the
+		maximum HID report length. Default 8.
+
+config CUSTOM_HID_EPINTERVAL
+	int "Interrupt endpoint polling interval (ms)"
+	default 32
+	---help---
+		The bInterval value (in milliseconds) for the interrupt endpoints.
+
+config CUSTOM_HID_NRDREQS
+	int "Number of read requests that can be in flight"
+	default 4
+
+config CUSTOM_HID_NWRREQS
+	int "Number of write requests that can be in flight"
+	default 4
+
+config CUSTOM_HID_NPOLLWAITERS
+	int "Number of poll waiters"
+	default 2
+
+config CUSTOM_HID_VENDORID
+	hex "Vendor ID"
+	default 0x28e9
+	---help---
+		The vendor ID code. Default 0x28e9 (GigaDevice).
+
+config CUSTOM_HID_PRODUCTID
+	hex "Product ID"
+	default 0x028a
+	---help---
+		The product ID code. Default 0x028a.
+
+config CUSTOM_HID_VENDORSTR
+	string "Vendor string"
+	default "GigaDevice"
+
+config CUSTOM_HID_PRODUCTSTR
+	string "Product string"
+	default "GD32-CustomHID"
+
+config CUSTOM_HID_SERIALSTR
+	string "Serial number string"
+	default "0"
+
+endif # CUSTOM_HID
+
 menuconfig USBADB
 	bool "USB Android Debug Bridge (ADB) support"
 	default n

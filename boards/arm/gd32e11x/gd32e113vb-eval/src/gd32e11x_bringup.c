@@ -72,6 +72,10 @@
 #  include "gd32e11x_usbfs.h"
 #endif
 
+#ifdef CONFIG_EXAMPLES_CUSTOM_HID
+extern int custom_hid_main(int argc, FAR char *argv[]);
+#endif
+
 #include "gd32e113v_eval.h"
 
 /****************************************************************************
@@ -384,9 +388,32 @@ int gd32_bringup(void)
     {
       syslog(LOG_ERR, "ERROR: Failed to initialize USB host: %d\n", ret);
     }
+
+#endif
+#ifdef CONFIG_CUSTOM_HID
+  ret = gd32_usbdev_hid_initialize();
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to initialize USB Custom HID: %d\n",
+             ret);
+    }
 #endif
 #endif
 
+#ifdef CONFIG_EXAMPLES_CUSTOM_HID
+  /* Auto-start the Custom HID example as a background task, using the same
+   * priority/stack as the builtin so behaviour matches a manual launch.
+   */
+
+  ret = task_create("custom_hid", CONFIG_EXAMPLES_CUSTOM_HID_PRIORITY,
+                    CONFIG_EXAMPLES_CUSTOM_HID_STACKSIZE,
+                    custom_hid_main, NULL);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to start custom_hid: %d\n", errno);
+    }
+
+#endif
   UNUSED(ret);
   return OK;
 }
