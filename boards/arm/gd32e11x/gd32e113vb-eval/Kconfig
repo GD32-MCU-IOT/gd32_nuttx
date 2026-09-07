@@ -133,6 +133,41 @@ endif # GD32E113VB_EVAL_GD25_BLOCKMOUNT
 
 endmenu # GD25 Flash Configuration
 
+menu "GD32E113VB-EVAL PROGMEM Configuration"
+	depends on GD32E11X_PROGMEM
+
+config GD32E113VB_EVAL_PROGMEM_BLOCKMOUNT
+	bool "Enable on chip flash MTD mount"
+	default n
+
+if GD32E113VB_EVAL_PROGMEM_BLOCKMOUNT
+
+choice
+	prompt "PROGMEM file system type"
+	default GD32E113VB_EVAL_PROGMEM_LITTLEFS
+
+config GD32E113VB_EVAL_PROGMEM_LITTLEFS
+	bool "LittleFS"
+	depends on FS_LITTLEFS
+
+config GD32E113VB_EVAL_PROGMEM_NXFFS
+	bool "NXFFS"
+	depends on FS_NXFFS
+
+endchoice
+
+config GD32E113VB_EVAL_PROGMEM_AUTOFMT
+	bool "Format LittleFS if mounting fails"
+	default n
+	depends on GD32E113VB_EVAL_PROGMEM_LITTLEFS
+	---help---
+		Formatting destroys existing data in the PROGMEM region. Enable
+		this only for testing or first-time filesystem initialization.
+
+endif # GD32E113VB_EVAL_PROGMEM_BLOCKMOUNT
+
+endmenu # PROGMEM Configuration
+
 menu "GD32E113VB-EVAL Watchdog Configuration"
   depends on WATCHDOG
 

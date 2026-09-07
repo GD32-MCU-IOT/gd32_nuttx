@@ -30,7 +30,11 @@
 #include <nuttx/config.h>
 #include <nuttx/progmem.h>
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "chip.h"
+#include "arm_internal.h"
 #include "hardware/gd32e11x_fmc.h"
 
 /* FMC state */
@@ -45,7 +49,8 @@ typedef enum
   FMC_WPERR,                       /* erase/program protection error */
   FMC_OPERR,                       /* operation error */
   FMC_PGERR,                       /* program error */
-  FMC_TOERR                        /* timeout error */
+  FMC_TOERR,                       /* timeout error */
+  FMC_PGAERR
 } gd32_fmc_state_enum;
 
 /****************************************************************************
@@ -221,5 +226,12 @@ int gd32_ob_write_protection_disable(uint32_t ob_wp);
  ****************************************************************************/
 
 void gd32_fmc_flag_clear(uint32_t fmc_flag);
+
+gd32_fmc_state_enum gd32_fmc_mass_erase(void);
+gd32_fmc_state_enum gd32_fmc_doubleword_program(uint32_t address,
+                                              uint64_t data);
+gd32_fmc_state_enum gd32_ob_erase(void);
+uint32_t gd32_ob_wp_get(void);
+bool gd32_ob_spc_get(void);
 
 #endif /* __ARCH_ARM_SRC_GD32E11X_GD32E11X_FMC_H */
