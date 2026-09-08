@@ -56,15 +56,16 @@ static uint32_t gd32_pmu_reg_snap[4];
  * Description:
  *   Issue the WFI that parks the core in the selected low-power mode.
  *
- *   ARMv7-M (ARM DDI 0403, B1.5.18) only terminates a WFI on an asynchronous
- *   exception "at a priority that, if PRIMASK was set to 0, would preempt any
- *   currently active exceptions".  Only PRIMASK is neutralised that way, an
- *   interrupt that is masked by BASEPRI is *not* a wake-up event.
+ *   ARMv7-M (ARM DDI 0403, B1.5.18) only terminates a WFI on an
+ *   asynchronous exception "at a priority that, if PRIMASK was set to 0,
+ *   would preempt any currently active exceptions".  Only PRIMASK is
+ *   neutralised that way, an interrupt that is masked by BASEPRI is *not*
+ *   a wake-up event.
  *
- *   NuttX raises BASEPRI to NVIC_SYSH_DISABLE_PRIORITY in up_irq_save(), and
- *   up_idlepm() enters the low-power modes from inside a critical section, so
- *   a bare WFI here could never be woken by the EXTI line that the PM buttons
- *   are attached to.
+ *   NuttX raises BASEPRI to NVIC_SYSH_DISABLE_PRIORITY in up_irq_save(),
+ *   and up_idlepm() enters the low-power modes from inside a critical
+ *   section, so a bare WFI here could never be woken by the EXTI line
+ *   that the PM buttons are attached to.
  *
  *   Swap the BASEPRI mask for a PRIMASK mask across the WFI.  The core wakes
  *   up as expected while the pending handler stays deferred until the caller

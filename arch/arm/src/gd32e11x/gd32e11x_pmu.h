@@ -94,8 +94,8 @@ void gd32_pmu_lvd_disable(void);
  *
  * Description:
  *   Select the LDO output voltage.  This bit is set by software when the
- *   main PLL is closed; this bit is valid after PLL is enabled. After closing
- *   the PLL, LDO output low voltage mode is used.
+ *   main PLL is closed; this bit is valid after PLL is enabled. After
+ *   closing the PLL, LDO output low voltage mode is used.
  *
  * Input Parameters:
  *   ldo_output - PMU_CTL_LDOVS(n), PMU LDO output voltage select
