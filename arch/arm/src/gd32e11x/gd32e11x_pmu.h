@@ -38,8 +38,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-/* Need TODO */
-
 #ifndef __ASSEMBLY__
 
 #undef EXTERN
@@ -54,6 +52,62 @@ extern "C"
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: gd32_pmu_lvd_select
+ *
+ * Description:
+ *   Select low voltage detector threshold.
+ *
+ * Input Parameters:
+ *   lvdt_n - PMU_CTL_LVDT(n), LVD threshold level
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+void gd32_pmu_lvd_select(uint32_t lvdt_n);
+
+/****************************************************************************
+ * Name: gd32_pmu_lvd_enable
+ *
+ * Description:
+ *   Enable LVD
+ *
+ ****************************************************************************/
+
+void gd32_pmu_lvd_enable(void);
+
+/****************************************************************************
+ * Name: gd32_pmu_lvd_disable
+ *
+ * Description:
+ *   Disable LVD
+ *
+ ****************************************************************************/
+
+void gd32_pmu_lvd_disable(void);
+
+/****************************************************************************
+ * Name: gd32_pmu_ldo_output_select
+ *
+ * Description:
+ *   Select the LDO output voltage.  This bit is set by software when the
+ *   main PLL is closed; this bit is valid after PLL is enabled. After closing
+ *   the PLL, LDO output low voltage mode is used.
+ *
+ * Input Parameters:
+ *   ldo_output - PMU_CTL_LDOVS(n), PMU LDO output voltage select
+ *    PMU_CTL_LDOVS(1): LDO output voltage select normal mode
+ *    PMU_CTL_LDOVS(3): LDO output voltage select low mode
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+void gd32_pmu_ldo_output_select(uint32_t ldo_output);
 
 /****************************************************************************
  * Name: gd32_pmu_to_sleepmode
@@ -89,11 +143,8 @@ void gd32_pmu_to_sleepmode(uint8_t sleepmodecmd, bool sleeponexit);
  *       - PMU_LDO_NORMAL:   LDO normal work when pmu enter deep-sleep mode
  *       - PMU_LDO_LOWPOWER: LDO work at low power mode when pmu enter
  *                           deep-sleep mode
- *   lowdrive
- *       - PMU_LOWDRIVER_DISABLE: Low-driver mode disable in deep-sleep mode
- *       - PMU_LOWDRIVER_ENABLE:  Low-driver mode enable in deep-sleep mode
  *
- *   deepsleepmodecmdd - PMU command constants
+ *   deepsleepmodecmd - PMU command constants
  *       - WFI_CMD: use WFI command
  *       - WFE_CMD: use WFE command
  *
@@ -102,8 +153,7 @@ void gd32_pmu_to_sleepmode(uint8_t sleepmodecmd, bool sleeponexit);
  *
  ****************************************************************************/
 
-void gd32_pmu_to_deepsleepmode(uint32_t ldo, uint32_t lowdrive,
-                               uint8_t deepsleepmodecmd);
+void gd32_pmu_to_deepsleepmode(uint32_t ldo, uint8_t deepsleepmodecmd);
 
 /****************************************************************************
  * Name: gd32_pmu_to_standbymode
@@ -144,34 +194,11 @@ void gd32_pmu_wakeup_pin_enable(void);
 void gd32_pmu_wakeup_pin_disable(void);
 
 /****************************************************************************
- * Name: gd32_pmu_backup_ldo_config
- *
- * Description:
- *   Enables the backup ldo, to open Backup SRAM LDO for data protection of
- *   backup SRAM when VDD shut down. When VDD shut down and this bit is
- *   cleared, the data in Backup SRAM will be lost.
- *   Once set, the application should wait that the Backup SRAM LDO flag
- *   (BLDORF) is set to indicate that the data written into the RAM will be
- *   maintained when VDD shut down.
- *
- * Input Parameters:
- *   bkp_ldo - state to set it to
- *           - PMU_BLDOON_OFF: backup SRAM LDO closed
- *           - PMU_BLDOON_ON: backup SRAM LDO closed
- *
- * Returned Value:
- *   None
- *
- ****************************************************************************/
-
-void gd32_pmu_backup_ldo_config(bool bkp_ldo);
-
-/****************************************************************************
  * Name: gd32_pmu_backup_init
  *
  * Description:
  *   Insures the referenced count access to the backup domain
- *   (RTC registers, RTC backup data registers and backup SRAM is consistent
+ *   (RTC registers, and backup data registers is consistent
  *   with the hardware state without relying on a variable.
  *
  *   NOTE: This function should only be called by SoC Start up code.
@@ -214,21 +241,16 @@ void gd32_pmu_backup_write_disable(void);
  *   Get flag state
  *
  * Input Parameters:
- *   flag - PMU_CS_WUF: wakeup flag
+ *   flag - PMU_CS_WUF:  wakeup flag
  *        - PMU_CS_STBF: standby flag
  *        - PMU_CS_LVDF: lvd flag
- *        - PMU_CS_BLDORF: backup SRAM LDO ready flag
- *        - PMU_CS_LDOVSRF: LDO voltage select ready flag
- *        - PMU_CS_HDRF: high-driver ready flag
- *        - PMU_CS_HDSRF: high-driver switch ready flag
- *        - PMU_CS_LDRF: low-driver mode ready flag
  *
  ****************************************************************************/
 
 bool gd32_pmu_flag_get(uint32_t flag);
 
 /****************************************************************************
- * Name: gd32_pmu_backup_write_disable
+ * Name: gd32_pmu_flag_clear
  *
  * Description:
  *   Clear the flag
@@ -240,6 +262,55 @@ bool gd32_pmu_flag_get(uint32_t flag);
  ****************************************************************************/
 
 void gd32_pmu_flag_clear(uint32_t flag);
+
+/****************************************************************************
+ * Name: gd32_pmsleep
+ *
+ * Description:
+ *   Enter SLEEP mode.  Only the CPU clock is stopped; the MCU wakes on any
+ *   interrupt.  Used by the NuttX PM subsystem (up_idlepm()).
+ *
+ * Input Parameters:
+ *   sleeponexit - true: re-enter Sleep on ISR exit (SLEEPONEXIT set)
+ *
+ * Returned Value:
+ *   Zero (OK) after the MCU has been re-awakened.
+ *
+ ****************************************************************************/
+
+int gd32_pmsleep(bool sleeponexit);
+
+/****************************************************************************
+ * Name: gd32_pmdeepsleep
+ *
+ * Description:
+ *   Enter DEEP-SLEEP mode.  SRAM and registers are
+ *   retained; the MCU wakes from an EXTI/RTC event and resumes here.
+ *
+ * Input Parameters:
+ *   lpds - true: keep the LDO in low-power mode while stopped
+ *
+ * Returned Value:
+ *   Zero (OK) after the MCU has been re-awakened.
+ *
+ ****************************************************************************/
+
+int gd32_pmdeepsleep(bool lpds);
+
+/****************************************************************************
+ * Name: gd32_pmstandby
+ *
+ * Description:
+ *   Enter STANDBY mode, the deepest low-power mode.  The MCU is woken by the
+ *   WKUP pin, an RTC event or a reset and resumes from reset; this function
+ *   does not normally return.
+ *
+ * Returned Value:
+ *   Zero (OK) nominally; STANDBY is terminated only by a reset.
+ *
+ ****************************************************************************/
+
+int gd32_pmstandby(void);
 
 #undef EXTERN
 #if defined(__cplusplus)

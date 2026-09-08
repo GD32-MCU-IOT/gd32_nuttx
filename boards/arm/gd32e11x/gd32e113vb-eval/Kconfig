@@ -222,6 +222,22 @@ config GD32E113VB_EVAL_RTCTEST
 		Tests counter read/write and (if CONFIG_RTC_ALARM is set)
 		alarm set/wait/cancel.  Results are printed via syslog.
 
+config PM_BUTTONS
+	bool "PM button support"
+	default n
+	depends on PM && ARCH_IRQBUTTONS
+	---help---
+		Enable PM button EXTI interrupts to support PM testing.  The WKUP
+		user button is used as a wakeup source and reports activity to the
+		power-management subsystem.
+
+config PM_BUTTON_ACTIVITY
+	int "Button PM activity weight"
+	default 10
+	depends on PM_BUTTONS
+	---help---
+		The activity weight reported to the PM subsystem on a button press.
+
 menu "GD32E113VB-EVAL USB Configuration"
 
 if GD32E11X_USBFS

@@ -50,6 +50,14 @@ ifeq ($(CONFIG_GD32E11X_CRC),y)
 CSRCS += gd32e11x_crc.c
 endif
 
+ifeq ($(CONFIG_ARCH_CUSTOM_PMINIT),y)
+CSRCS += gd32e11x_pm.c
+endif
+
+ifeq ($(CONFIG_PM_BUTTONS),y)
+CSRCS += gd32e11x_pmbuttons.c
+endif
+
 ifeq ($(CONFIG_SPI),y)
 CSRCS += gd32e11x_spi.c
 endif

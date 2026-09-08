@@ -93,11 +93,13 @@ static void up_idlepm(void)
       /* Then force the global state change */
 
       ret = pm_changestate(PM_IDLE_DOMAIN, newstate);
-      if (ret < 0)
+      if (ret != OK)
         {
           /* The new state change failed, revert to the preceding state */
 
           pm_changestate(PM_IDLE_DOMAIN, oldstate);
+          leave_critical_section(flags);
+          return;
         }
       else
         {
@@ -117,7 +119,10 @@ static void up_idlepm(void)
           break;
 
         case PM_STANDBY:
-          gd32_pmstop(true);
+#ifdef BOARD_PM_DEEPSLEEP_PREPARE
+          BOARD_PM_DEEPSLEEP_PREPARE();
+#endif
+          gd32_pmdeepsleep(true);
           break;
 
         case PM_SLEEP:
