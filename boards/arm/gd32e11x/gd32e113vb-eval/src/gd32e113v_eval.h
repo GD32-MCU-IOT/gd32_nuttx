@@ -534,4 +534,17 @@ int gd32_timer_driver_setup(const char *devpath, int timer);
 int gd32_rtc_test(void);
 #endif
 
+/****************************************************************************
+ * Name: gd32_pm_buttons
+ *
+ * Description:
+ *   Configure the WKUP user button as an EXTI wakeup source for the NuttX
+ *   power management subsystem.  Called from arm_pminitialize().
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_PM) && defined(CONFIG_PM_BUTTONS)
+void gd32_pm_buttons(void);
+#endif
+
 #endif /* __BOARDS_ARM_GD32E11X_GD32E113VB_EVAL_SRC_GD32E113V_EVAL_H */

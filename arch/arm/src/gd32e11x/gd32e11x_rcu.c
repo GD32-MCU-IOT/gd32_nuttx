@@ -638,6 +638,12 @@ void gd32_clockconfig(void)
   regval &= ~RCU_CTL_HXTALBPS;
   putreg32(regval, GD32_RCU_CTL);
 
+  /* Enable the PMU clock for power control register access. */
+
+  regval  = getreg32(GD32_RCU_APB1EN);
+  regval |= RCU_APB1EN_PMUEN;
+  putreg32(regval, GD32_RCU_APB1EN);
+
 #if defined(CONFIG_ARCH_BOARD_GD32E11X_CUSTOM_CLOCKCONFIG)
 
   /* Invoke Board Custom Clock Configuration */
@@ -743,15 +749,9 @@ void gd32_clock_enable(void)
 
 #else
 
-  /* Invoke standard, fixed clock configuration based on definitions
-   * in board.h
-   */
+  /* Re-run the full bring-up since PLLEN/HXTALEN stay set after wakeup. */
 
-  /* Configure the System clock source, PLL Multiplier and Divider factors,
-   * AHB/APBx prescalers
-   */
-
-  gd32_system_clock_config();
+  gd32_clockconfig();
 
 #endif
 }
