@@ -80,6 +80,22 @@
 #  error "Unknown GD32E11x chip type"
 #endif
 
+#define GD32_FLASH_PAGESIZE             1024
+
+#if defined(CONFIG_GD32E11X_FLASH_CONFIG_8)
+#  define GD32_FLASH_SIZE               (64 * 1024)
+#elif defined(CONFIG_GD32E11X_FLASH_CONFIG_B)
+#  define GD32_FLASH_SIZE               (128 * 1024)
+#elif defined(CONFIG_GD32E11X_GD32E113X8)
+#  define GD32_FLASH_SIZE               (64 * 1024)
+#elif defined(CONFIG_GD32E11X_GD32E113XB)
+#  define GD32_FLASH_SIZE               (128 * 1024)
+#else
+#  error "Unknown GD32E11x FLASH size"
+#endif
+
+#define GD32_FLASH_NPAGES               (GD32_FLASH_SIZE / GD32_FLASH_PAGESIZE)
+
 /* Get customizations for each supported chip and provide alternate function
  * pin-mapping
  *

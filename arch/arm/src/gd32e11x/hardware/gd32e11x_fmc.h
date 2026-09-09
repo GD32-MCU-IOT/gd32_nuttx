@@ -148,4 +148,15 @@
 #define FMC_OB_WP_31                     (0x80000000)  /* erase/program protection of sector 31 */
 #define FMC_OB_WP_ALL                    (0xFFFFFFFF)  /* erase/program protection of all sectors */
 
+#define FMC_WP_PAGES_PER_BIT             (4)
+#define GD32_OB_NWORDS                   (4)
+#define GD32_OB_WORD(n)                  (GD32_OPBYTE_BASE + ((n) << 2))
+#define GD32_OB_WORD_SPC_USER            (0)
+#define GD32_OB_WORD_DATA                (1)
+#define GD32_OB_WORD_WP0                 (2)
+#define GD32_OB_WORD_WP1                 (3)
+#define GD32_OB_WORD_HIGH_ERASED         (0xffff0000)
+#define FMC_NSPC                        (0xa5)
+#define FMC_USPC                        (0xbb)
+
 #endif /* __ARCH_ARM_SRC_GD32E11X_HARDWARE_GD32E11X_FMC_H */

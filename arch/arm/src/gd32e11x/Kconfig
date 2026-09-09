@@ -556,6 +556,33 @@ config GD32E11X_EXMC
 	default n
 	depends on GD32E11X_HAVE_EXMC
 
+config GD32E11X_FMC
+	bool "FMC"
+	default n
+	---help---
+		Enable the on chip flash memory controller driver.
+
+config GD32E11X_PROGMEM
+	bool "PROGMEM"
+	default n
+	depends on GD32E11X_FMC
+	select ARCH_HAVE_PROGMEM
+	select MTD
+	select MTD_PROGMEM
+	---help---
+		Use the end of the internal flash memory as an MTD device.
+		The firmware image must not overlap this region.
+
+config GD32E11X_PROGMEM_SIZE
+	int "PROGMEM region size (KiB)"
+	default 16
+	range 1 63 if GD32E11X_GD32E113X8 || GD32E11X_FLASH_CONFIG_8
+	range 1 127
+	depends on GD32E11X_PROGMEM
+	---help---
+		Size of the region taken from the end of the internal flash.
+		The board checks for image overlap before registering the MTD.
+
 config GD32E11X_ADC
 	bool
 

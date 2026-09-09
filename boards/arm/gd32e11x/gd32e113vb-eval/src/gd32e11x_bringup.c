@@ -218,6 +218,14 @@ int gd32_bringup(void)
     }
 #endif
 
+#ifdef HAVE_PROGMEM
+  ret = gd32_progmem_automount(0);
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: gd32_progmem_automount() failed: %d\n", ret);
+    }
+#endif
+
 #ifdef HAVE_AT24
   /* I2C EEPROM write and read test */
 

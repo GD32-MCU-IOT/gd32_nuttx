@@ -441,6 +441,11 @@ int gd32_crc_test(void);
 int gd32_gd25_automount(int minor);
 #endif
 
+#if defined(CONFIG_GD32E11X_PROGMEM) && defined(CONFIG_MTD_PROGMEM)
+#  define HAVE_PROGMEM 1
+int gd32_progmem_automount(int minor);
+#endif
+
 /****************************************************************************
  * Name: gd32_adc_setup
  *
