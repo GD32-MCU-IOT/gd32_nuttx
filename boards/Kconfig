@@ -4111,7 +4111,7 @@ if ARCH_BOARD_GD32E113VB_EVAL
 source "boards/arm/gd32e11x/gd32e113vb-eval/Kconfig"
 endif
 if ARCH_BOARD_GD32H759IM_EVAL
-source "boards/arm/gd32h7xx/gd32h759im-eval/Kconfig"
+source "boards/arm/gd32h73x_75x/gd32h759im-eval/Kconfig"
 endif
 if ARCH_BOARD_TEENSY_LC
 source "boards/arm/kl/teensy-lc/Kconfig"

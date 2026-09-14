@@ -174,7 +174,7 @@ config ARCH_CHIP_GD32E11X
 	---help---
 		GD32MCU GD32E11x architectures (ARM Cortex-M4).
 
-config ARCH_CHIP_GD32H7XX
+config ARCH_CHIP_GD32H73X_75X
 	bool "GD32MCU GD32 H7"
 	select ARCH_CORTEXM7
 	select ARCH_HAVE_MPU
@@ -1191,7 +1191,7 @@ config ARCH_CHIP
 	default "eoss3"		if ARCH_CHIP_EOSS3
 	default "gd32f4"	if ARCH_CHIP_GD32F4
 	default "gd32e11x"	if ARCH_CHIP_GD32E11X
-	default "gd32h7xx"	if ARCH_CHIP_GD32H7XX
+	default "gd32h73x_75x"	if ARCH_CHIP_GD32H73X_75X
 	default "imx1"		if ARCH_CHIP_IMX1
 	default "imx6"		if ARCH_CHIP_IMX6
 	default "imx9"		if ARCH_CHIP_IMX9_CORTEX_M
@@ -1632,8 +1632,8 @@ endif
 if ARCH_CHIP_GD32E11X
 source "arch/arm/src/gd32e11x/Kconfig"
 endif
-if ARCH_CHIP_GD32H7XX
-source "arch/arm/src/gd32h7xx/Kconfig"
+if ARCH_CHIP_GD32H73X_75X
+source "arch/arm/src/gd32h73x_75x/Kconfig"
 endif
 if ARCH_CHIP_IMX1
 source "arch/arm/src/imx1/Kconfig"
