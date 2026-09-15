@@ -47,6 +47,74 @@
 static uint32_t gd32_pmu_reg_snap[4];
 
 /****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: gd32_pmu_wfi
+ *
+ * Description:
+ *   Issue the WFI that parks the core in the selected low-power mode.
+ *
+ *   ARMv7-M (ARM DDI 0403, B1.5.18) only terminates a WFI on an
+ *   asynchronous exception "at a priority that, if PRIMASK was set to 0,
+ *   would preempt any currently active exceptions".  Only PRIMASK is
+ *   neutralised that way, an interrupt that is masked by BASEPRI is *not*
+ *   a wake-up event.
+ *
+ *   NuttX raises BASEPRI to NVIC_SYSH_DISABLE_PRIORITY in up_irq_save(),
+ *   and up_idlepm() enters the low-power modes from inside a critical
+ *   section, so a bare WFI here could never be woken by the EXTI line
+ *   that the PM buttons are attached to.
+ *
+ *   Swap the BASEPRI mask for a PRIMASK mask across the WFI.  The core wakes
+ *   up as expected while the pending handler stays deferred until the caller
+ *   leaves its critical section, so the critical section semantics are kept.
+ *
+ ****************************************************************************/
+
+static inline void gd32_pmu_wfi(void)
+{
+  uint8_t basepri = getbasepri();
+  uint8_t primask = getprimask();
+  uint32_t icsr;
+
+  /* Block the handlers with PRIMASK first and only then drop the BASEPRI
+   * mask, so that no interrupt can be taken in between.
+   */
+
+  setprimask(1);
+  setbasepri(0);
+
+  /* Park a pending SysTick across the WFI so it is not consumed as the
+   * wake-up event, then re-post it afterwards so no tick is lost.
+   */
+
+  icsr = getreg32(NVIC_INTCTRL);
+  if ((icsr & NVIC_INTCTRL_PENDSTSET) != 0)
+    {
+      putreg32(NVIC_INTCTRL_PENDSTCLR, NVIC_INTCTRL);
+    }
+
+  /* Barrier so the posted SLEEPDEEP write is effective before WFI runs. */
+
+  __asm__ __volatile__ ("dsb" : : : "memory");
+  __asm__ __volatile__ ("isb" : : : "memory");
+
+  asm("wfi");
+
+  if ((icsr & NVIC_INTCTRL_PENDSTSET) != 0)
+    {
+      putreg32(NVIC_INTCTRL_PENDSTSET, NVIC_INTCTRL);
+    }
+
+  /* Re-arm the BASEPRI mask before releasing PRIMASK, same reason. */
+
+  setbasepri(basepri);
+  setprimask(primask);
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -320,7 +388,7 @@ void gd32_pmu_to_sleepmode(uint8_t sleepmodecmd, bool sleeponexit)
 
   if (sleepmodecmd == WFI_CMD)
     {
-      asm("wfi");
+      gd32_pmu_wfi();
     }
   else
     {
@@ -397,14 +465,12 @@ void gd32_pmu_to_deepsleepmode(uint32_t ldo, uint32_t lowdrive,
 
   putreg32((0x00010004u & gd32_pmu_reg_snap[0]), NVIC_SYSTICK_CTRL);
   putreg32(0xff7ff831u, NVIC_IRQ0_31_CLEAR);
-  putreg32(0xff7ff831u, NVIC_IRQ32_63_CLEAR);
-  putreg32(0xff7ff831u, NVIC_IRQ64_95_CLEAR);
-
-  /* Select WFI or WFE command to enter sleep mode */
+  putreg32(0xbffff8ffu, NVIC_IRQ32_63_CLEAR);
+  putreg32(0xffffefffu, NVIC_IRQ64_95_CLEAR);
 
   if (deepsleepmodecmd == WFI_CMD)
     {
-      asm("wfi");
+      gd32_pmu_wfi();
     }
   else
     {
@@ -663,6 +729,101 @@ void gd32_pmu_flag_clear(uint32_t flag)
       default:
         break;
     }
+}
+
+/****************************************************************************
+ * Name: gd32_pmsleep
+ *
+ * Description:
+ *   Enter SLEEP mode.  Only the CPU clock is stopped, all peripherals keep
+ *   running and the MCU wakes on any interrupt (or event).
+ *
+ * Input Parameters:
+ *   sleeponexit - true:  the MCU re-enters Sleep as soon as it exits the
+ *                        lowest priority ISR (SLEEPONEXIT set).
+ *               - false: the MCU enters Sleep only on the WFI/WFE below.
+ *
+ * Returned Value:
+ *   Zero (OK) after the MCU has been re-awakened.
+ *
+ ****************************************************************************/
+
+int gd32_pmsleep(bool sleeponexit)
+{
+  gd32_pmu_to_sleepmode(WFI_CMD, sleeponexit);
+  return OK;
+}
+
+/****************************************************************************
+ * Name: gd32_pmdeepsleep
+ *
+ * Description:
+ *   Enter DEEP-SLEEP mode.  The CPU and most clocks are stopped while SRAM
+ *   and register contents are retained.  The MCU is woken by an EXTI line
+ *   or an RTC event, after which execution resumes from this function.
+ *
+ * Input Parameters:
+ *   lpds - true:  keep the internal LDO in low-power mode while stopped to
+ *                 further reduce consumption.
+ *        - false: keep the LDO in normal mode for a faster wakeup.
+ *
+ * Returned Value:
+ *   Zero (OK) after the MCU has been re-awakened.
+ *
+ ****************************************************************************/
+
+int gd32_pmdeepsleep(bool lpds)
+{
+  /* Low-driver mode is not supported yet, reserved for future use */
+
+  gd32_pmu_to_deepsleepmode(lpds ? PMU_LDO_LOWPOWER : PMU_LDO_NORMAL,
+                             PMU_LOWDRIVER_DISABLE, WFI_CMD);
+
+#ifdef CONFIG_PM
+  /* Leaving Deep-sleep mode switches the system clock back to IRC16M and
+   * turns the PLL off.  The clocking must be re-established here or every
+   * clock-derived peripheral (SysTick, the serial console baud rate, ...)
+   * would keep running from the wrong frequency.
+   */
+
+  gd32_clock_enable();
+#endif
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: gd32_pmstandby
+ *
+ * Description:
+ *   Enter STANDBY mode, the deepest low-power mode.  The 1.2V core domain
+ *   is powered off; only the backup domain and standby circuitry remain
+ *   alive.  The MCU is woken by the WKUP pin, an RTC event or an
+ *   external/watchdog reset, and resumes execution from reset (this
+ *   function does not return).
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   Zero (OK) is returned nominally, but STANDBY can only be terminated by
+ *   a reset so this function does not normally return.
+ *
+ ****************************************************************************/
+
+int gd32_pmstandby(void)
+{
+  /* Standby can only be left through the WKUP pin, an RTC event or a
+   * reset.  Make sure the WKUP pin (PA0) is armed before stopping the
+   * core domain, otherwise the board could only be recovered with a
+   * reset.
+   */
+
+  gd32_pmu_wakeup_pin_enable();
+  gd32_pmu_flag_clear(PMU_FLAG_RESET_WAKEUP);
+
+  gd32_pmu_to_standbymode(WFI_CMD);
+  return OK;
 }
 
 #endif /* CONFIG_GD32F4_PMU */
