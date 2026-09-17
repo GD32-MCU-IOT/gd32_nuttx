@@ -126,6 +126,9 @@ static void up_idlepm(void)
           break;
 
         case PM_SLEEP:
+#ifdef BOARD_PM_DEEPSLEEP_PREPARE
+          BOARD_PM_DEEPSLEEP_PREPARE();
+#endif
           gd32_pmstandby();
           break;
 

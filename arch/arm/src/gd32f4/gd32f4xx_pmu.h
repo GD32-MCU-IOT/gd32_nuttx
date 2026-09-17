@@ -388,6 +388,63 @@ bool gd32_pmu_flag_get(uint32_t flag);
 
 void gd32_pmu_flag_clear(uint32_t flag);
 
+/****************************************************************************
+ * Name: gd32_pmsleep
+ *
+ * Description:
+ *   Enter SLEEP mode.  Only the CPU clock is stopped, all peripherals keep
+ *   running and the MCU wakes on any interrupt (or event).
+ *
+ * Input Parameters:
+ *   sleeponexit - true:  the MCU re-enters Sleep as soon as it exits the
+ *                        lowest priority ISR (SLEEPONEXIT set).
+ *               - false: the MCU enters Sleep only on the WFI/WFE below.
+ *
+ * Returned Value:
+ *   Zero (OK) after the MCU has been re-awakened.
+ *
+ ****************************************************************************/
+
+int gd32_pmsleep(bool sleeponexit);
+
+/****************************************************************************
+ * Name: gd32_pmdeepsleep
+ *
+ * Description:
+ *   Enter DEEP-SLEEP mode.  The CPU and most clocks are stopped while SRAM
+ *   and register contents are retained.  The MCU is woken by an EXTI line
+ *   or an RTC event, after which execution resumes from this function.
+ *
+ * Input Parameters:
+ *   lpds - true:  keep the internal LDO in low-power mode while stopped to
+ *                 further reduce consumption.
+ *        - false: keep the LDO in normal mode for a faster wakeup.
+ *
+ * Returned Value:
+ *   Zero (OK) after the MCU has been re-awakened.
+ *
+ ****************************************************************************/
+
+int gd32_pmdeepsleep(bool lpds);
+
+/****************************************************************************
+ * Name: gd32_pmstandby
+ *
+ * Description:
+ *   Enter STANDBY mode, the deepest low-power mode.  The MCU is woken by
+ *   the WKUP pin, an RTC event or a reset, and resumes execution from
+ *   reset (this function does not return).
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   Zero (OK) nominally; STANDBY is terminated only by a reset.
+ *
+ ****************************************************************************/
+
+int gd32_pmstandby(void);
+
 #undef EXTERN
 #if defined(__cplusplus)
 }

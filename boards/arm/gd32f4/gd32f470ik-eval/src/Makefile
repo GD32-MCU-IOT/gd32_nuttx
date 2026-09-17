@@ -80,4 +80,12 @@ ifeq ($(CONFIG_GD32F4_CAMPREVIEW), y)
 CSRCS += gd32f4xx_campreview.c
 endif
 
+ifeq ($(CONFIG_ARCH_CUSTOM_PMINIT),y)
+CSRCS += gd32f4xx_pm.c
+endif
+
+ifeq ($(CONFIG_PM_BUTTONS),y)
+CSRCS += gd32f4xx_pmbuttons.c
+endif
+
 include $(TOPDIR)/boards/Board.mk

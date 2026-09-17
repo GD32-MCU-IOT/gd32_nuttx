@@ -42,6 +42,23 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+#if defined(CONFIG_PM) && defined(CONFIG_ARCH_CUSTOM_PMINIT)
+#  define BOARD_PM_DEEPSLEEP_PREPARE() gd32_board_deepsleep_prepare()
+
+#  ifndef __ASSEMBLY__
+#    ifdef __cplusplus
+extern "C"
+{
+#    endif
+
+void gd32_board_deepsleep_prepare(void);
+
+#    ifdef __cplusplus
+}
+#    endif
+#  endif
+#endif
+
 /* Clocking *****************************************************************/
 
 /* The GD32F470IK-EVAL board features a single 25MHz crystal.

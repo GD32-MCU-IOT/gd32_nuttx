@@ -322,5 +322,18 @@ int gd32_dci_setup(void);
 int gd32_campreview_start(void);
 #endif
 
+/****************************************************************************
+ * Name: gd32_pm_buttons
+ *
+ * Description:
+ *   Configure the TAMPER user button as an EXTI wakeup source for the
+ *   NuttX power management subsystem.  Called from arm_pminitialize().
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_PM) && defined(CONFIG_PM_BUTTONS)
+void gd32_pm_buttons(void);
+#endif
+
 #endif /* __ASSEMBLY__ */
 #endif /* __BOARDS_ARM_GD32F4_GD32F470IK_EVAL_SRC_GD32F470I_EVAL_H */
