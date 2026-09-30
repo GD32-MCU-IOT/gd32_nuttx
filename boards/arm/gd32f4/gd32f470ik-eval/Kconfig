@@ -175,4 +175,19 @@ config GD32F4_CAMPREVIEW_DURATION
 
 endif # GD32F4_CAMPREVIEW
 
+config PM_BUTTONS
+	bool "PM Button activity monitor"
+	default n
+	depends on PM && ARCH_BUTTONS
+	---help---
+		Enable PM button activity monitor for waking up the system
+		from sleep states.
+
+config PM_BUTTON_ACTIVITY
+	int "PM button activity level"
+	default 10
+	depends on PM_BUTTONS
+	---help---
+		PM activity level to report when a button is pressed.
+
 endif # ARCH_BOARD_GD32F470IK_EVAL

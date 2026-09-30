@@ -45,7 +45,7 @@
 
 static const uint32_t g_button_boards[NUM_BUTTONS] =
 {
-  GPIO_BTN_USER, GPIO_BTN_TAMPER, GPIO_BTN_WAKEUP
+  GPIO_BTN_WAKEUP, GPIO_BTN_TAMPER, GPIO_BTN_USER
 };
 
 /****************************************************************************

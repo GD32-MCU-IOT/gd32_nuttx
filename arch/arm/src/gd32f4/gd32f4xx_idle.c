@@ -35,6 +35,7 @@
 #include <nuttx/irq.h>
 
 #include "chip.h"
+#include "gd32f4xx.h"
 #include "gd32f4xx_pmu.h"
 #include "arm_internal.h"
 
@@ -117,10 +118,16 @@ static void up_idlepm(void)
           break;
 
         case PM_STANDBY:
-          gd32_pmstop(true);
+#ifdef BOARD_PM_DEEPSLEEP_PREPARE
+          BOARD_PM_DEEPSLEEP_PREPARE();
+#endif
+          gd32_pmdeepsleep(true);
           break;
 
         case PM_SLEEP:
+#ifdef BOARD_PM_DEEPSLEEP_PREPARE
+          BOARD_PM_DEEPSLEEP_PREPARE();
+#endif
           gd32_pmstandby();
           break;
 
